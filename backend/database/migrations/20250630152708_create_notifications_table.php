@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Phinx\Migration\AbstractMigration;
 
-final class CreateUsersTable extends AbstractMigration
+final class CreateNotificationsTable extends AbstractMigration
 {
     /**
      * Change Method.
@@ -19,15 +19,13 @@ final class CreateUsersTable extends AbstractMigration
      */
     public function change(): void
     {
-        $this->table('users', ['id' => false, 'primary_key' => ['id']])
+       $this->table('notifications', ['id' => false, 'primary_key' => ['id']])
             ->addColumn('id', 'integer', ['identity' => true, 'signed' => false])
-            ->addColumn('name', 'string')
-            ->addColumn('matric_number', 'string', ['limit' => 20])
-            ->addColumn('email', 'string')
-            ->addColumn('password', 'string')
-            ->addColumn('role', 'enum', ['values' => ['student', 'lecturer', 'advisor', 'admin']])
-            ->addTimestamps()
-            ->addIndex(['matric_number'], ['unique' => true])
+            ->addColumn('user_id', 'integer', ['signed' => false])
+            ->addColumn('message', 'text')
+            ->addColumn('seen', 'boolean', ['default' => false])
+            ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
+            ->addForeignKey('user_id', 'users', 'id')
             ->create();
     }
 }

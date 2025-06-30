@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Phinx\Migration\AbstractMigration;
 
-final class CreateUsersTable extends AbstractMigration
+final class CreateStudentAssessmentsTable extends AbstractMigration
 {
     /**
      * Change Method.
@@ -19,15 +19,14 @@ final class CreateUsersTable extends AbstractMigration
      */
     public function change(): void
     {
-        $this->table('users', ['id' => false, 'primary_key' => ['id']])
+        $this->table('student_assessments', ['id' => false, 'primary_key' => ['id']])
             ->addColumn('id', 'integer', ['identity' => true, 'signed' => false])
-            ->addColumn('name', 'string')
-            ->addColumn('matric_number', 'string', ['limit' => 20])
-            ->addColumn('email', 'string')
-            ->addColumn('password', 'string')
-            ->addColumn('role', 'enum', ['values' => ['student', 'lecturer', 'advisor', 'admin']])
-            ->addTimestamps()
-            ->addIndex(['matric_number'], ['unique' => true])
+            ->addColumn('student_id', 'integer', ['signed' => false])
+            ->addColumn('assessment_id', 'integer', ['signed' => false])
+            ->addColumn('obtained_mark', 'decimal', ['precision' => 5, 'scale' => 2])
+            ->addColumn('updated_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
+            ->addForeignKey('student_id', 'users', 'id')
+            ->addForeignKey('assessment_id', 'assessments', 'id')
             ->create();
     }
 }
