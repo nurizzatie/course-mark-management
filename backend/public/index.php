@@ -101,5 +101,8 @@ $app->get('/dashboard', function ($request, $response, $args) {
     ]);
 });
 
+// Load routes from folder
+(require __DIR__ . '/../routes/auth.php')($app);
+
 // Final run
 $app->run();

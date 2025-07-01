@@ -1,18 +1,20 @@
 <template>
-  <div>
-    <h1>Check Console for API response</h1>
+  <div id="app">
+    <router-view />
   </div>
 </template>
 
 <script>
-import api from '@/api';
-
 export default {
-  name: 'HelloWorld',
-  mounted() {
-    api.get('/hello')
-      .then(response => console.log(response.data))
-      .catch(error => console.error(error));
-  }
+  name: 'App'
 }
 </script>
+
+<style>
+/* Optional basic styling */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+</style>
