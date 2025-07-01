@@ -34,6 +34,7 @@ class ComposerStaticInit63661d32234c94a7c47675fbaa16f77c
             'Symfony\\Component\\Filesystem\\' => 29,
             'Symfony\\Component\\Console\\' => 26,
             'Symfony\\Component\\Config\\' => 25,
+            'Slim\\Views\\' => 11,
             'Slim\\Psr7\\' => 10,
             'Slim\\' => 5,
         ),
@@ -126,6 +127,10 @@ class ComposerStaticInit63661d32234c94a7c47675fbaa16f77c
         array (
             0 => __DIR__ . '/..' . '/symfony/config',
         ),
+        'Slim\\Views\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/slim/php-view/src',
+        ),
         'Slim\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/slim/psr7/src',
@@ -144,8 +149,8 @@ class ComposerStaticInit63661d32234c94a7c47675fbaa16f77c
         ),
         'Psr\\Http\\Server\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-server-handler/src',
-            1 => __DIR__ . '/..' . '/psr/http-server-middleware/src',
+            0 => __DIR__ . '/..' . '/psr/http-server-middleware/src',
+            1 => __DIR__ . '/..' . '/psr/http-server-handler/src',
         ),
         'Psr\\Http\\Message\\' => 
         array (
