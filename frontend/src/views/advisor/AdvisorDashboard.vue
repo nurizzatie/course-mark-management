@@ -1,6 +1,6 @@
 <template>
-  <AppLayout :role="'Student'" :navItems="navItems" :pageTitle="pageTitle">
-    <h2 class="mb-4 fw-bold">Welcome, Student</h2>
+  <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="pageTitle">
+    <h2 class="mb-4 fw-bold">Welcome, Advisor</h2>
     <!-- <div class="row g-3">
       <div class="col-md-6 col-lg-3">
         <StatCard title="Total Students" value="120" subtitle="Current semester" bgClass="bg-success" />
@@ -23,7 +23,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 // import StatCard from '@/components/StatCard.vue';
 
 export default {
-  name: 'StudentDashboard',
+  name: 'AdvisorDashboard',
   components: { 
     AppLayout, 
     // StatCard 
@@ -31,7 +31,7 @@ export default {
   data() {
     return {
       navItems: [
-        { name: 'Dashboard', link: '/student/dashboard' },
+        { name: 'Dashboard', link: '/advisor/dashboard' },
         //add other nav-link name and routes
       ],
       pageTitle: 'Dashboard',

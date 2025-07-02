@@ -70,16 +70,16 @@ export default {
         // Redirect based on role
         switch (user.role) {
           case 'student':
-            this.$router.push('/dashboard/student');
+            this.$router.push('/student/dashboard');
             break;
           case 'lecturer':
-            this.$router.push('/dashboard/lecturer');
+            this.$router.push('/lecturer/dashboard');
             break;
           case 'advisor':
-            this.$router.push('/dashboard/advisor');
+            this.$router.push('/advisor/dashboard');
             break;
           case 'admin':
-            this.$router.push('/dashboard/admin');
+            this.$router.push('/admin/dashboard');
             break;
           default:
             this.error = 'Unknown role';
