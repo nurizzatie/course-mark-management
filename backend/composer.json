@@ -9,5 +9,11 @@
     },
     "require-dev": {
         "robmorgan/phinx": "^0.16.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
     }
+
 }

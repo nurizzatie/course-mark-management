@@ -22,20 +22,18 @@ $container->set('view', function () {
 });
 
 // DB connection
-$container->set('db', function () {
+$container->set(PDO::class, function () {
     $host = $_ENV['DB_HOST'];
-    $db = $_ENV['DB_NAME'];
+    $db   = $_ENV['DB_NAME'];
     $user = $_ENV['DB_USER'];
     $pass = $_ENV['DB_PASS'];
 
-    $dsn = "mysql:host=127.0.0.1;port=3306;dbname=$db;charset=utf8mb4";
+    $dsn = "mysql:host=127.0.0.1;dbname=$db;charset=utf8mb4";
 
-    $options = [
+    return new PDO($dsn, $user, $pass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ];
-
-    return new PDO($dsn, $user, $pass, $options);
+    ]);
 });
 
 // Create app
@@ -48,7 +46,7 @@ $app->add(function (Request $request, Handler $handler): Response {
     $response = $handler->handle($request);
     return $response
         ->withHeader('Access-Control-Allow-Origin', '*')
-        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
+        ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, X-User')
         ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
 });
 
@@ -160,11 +158,9 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 });
 
 
-
-
-
 // Load routes from folder
 (require __DIR__ . '/../routes/auth.php')($app);
+(require __DIR__ . '/../routes/lecturer.php')($app);
 
 // Final run
 $app->run();
