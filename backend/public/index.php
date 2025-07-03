@@ -24,11 +24,11 @@ $container->set('view', function () {
 // DB connection
 $container->set('db', function () {
     $host = $_ENV['DB_HOST'];
-    $db   = $_ENV['DB_NAME'];
+    $db = $_ENV['DB_NAME'];
     $user = $_ENV['DB_USER'];
     $pass = $_ENV['DB_PASS'];
 
-   $dsn = "mysql:host=127.0.0.1;port=3306;dbname=$db;charset=utf8mb4";
+    $dsn = "mysql:host=127.0.0.1;port=3306;dbname=$db;charset=utf8mb4";
 
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -99,7 +99,69 @@ $app->get('/dashboard', function ($request, $response, $args) {
         'total' => $total,
         'totalPossible' => $totalPossible
     ]);
+
+
 });
+
+// POST /api/calculate-gpa
+$app->get('/api/calculate-gpa', function ($request, $response) {
+    $body = $request->getBody()->getContents();
+    $data = json_decode($body, true);
+
+    if (!isset($data['courses']) || !is_array($data['courses'])) {
+        $response->getBody()->write(json_encode(['error' => 'Missing or invalid course list']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    $gradeMap = [
+        'A+' => 4.0, 'A' => 4.0, 'A-' => 3.67,
+        'B+' => 3.33, 'B' => 3.0, 'B-' => 2.67,
+        'C+' => 2.33, 'C' => 2.0, 'C-' => 1.67,
+        'D+' => 1.33, 'D' => 1.0, 'D-' => 0.67,
+        'E' => 0.0
+    ];
+
+    $totalCredits = 0;
+    $totalPoints = 0;
+
+    foreach ($data['courses'] as $course) {
+        $courseName = $course['name'] ?? 'Unnamed Course';
+        $credit = $course['credit'] ?? 0;
+        $grade = $course['grade'] ?? null;
+        $point = $gradeMap[$grade] ?? null;
+
+        if ($credit > 0 && isset($gradeMap[$grade])) {
+            $totalCredits += $credit;
+            $totalPoints += $gradeMap[$grade] * $credit;
+        }
+    }
+
+    $gpa = $totalCredits > 0 ? round($totalPoints / $totalCredits, 2) : 0;
+
+    $response->getBody()->write(json_encode(['Your GPA is: ' => $gpa]));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+});
+
+
+// GET /api/student/{id}/courses
+$app->get('/api/student/{id}/courses', function ($request, $response, $args) {
+    $db = $this->get('db');
+
+    // No WHERE clause, no :studentId, no execute()
+    $stmt = $db->query("
+        SELECT course_code, course_name, credit_hours
+        FROM courses
+    ");
+
+    $courses = $stmt->fetchAll();
+
+    $response->getBody()->write(json_encode($courses));
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+
+
+
 
 // Load routes from folder
 (require __DIR__ . '/../routes/auth.php')($app);

@@ -6,6 +6,11 @@ import AdvisorDashboard from '@/views/advisor/AdvisorDashboard.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
 
+import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue';
+import GpaCalculator from '@/views/student/performance/GpaCalculator.vue';
+import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue';
+import WhatIf from '@/views/student/performance/WhatIf.vue';
+
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
@@ -13,8 +18,21 @@ const routes = [
   { path: '/lecturer/dashboard', component: LecturerDashboard },
   { path: '/advisor/dashboard', component: AdvisorDashboard },
   { path: '/admin/dashboard', component: AdminDashboard },
-  { path: '/lecturer/profile', component: LecturerProfile }
+  { path: '/lecturer/profile', component: LecturerProfile },
+  
+  { 
+    path: '/student/performance', component: PerformanceToolsLayout,
+    children: [
+      { path: '', redirect: '/student/performance/gpa' },
+    { path: 'gpa', component: GpaCalculator },
+    { path: 'cgpa', component: CumulativeGpa },
+    { path: 'what-if', component: WhatIf }
+  ]
+}
+
 ];
+
+
 
 const router = createRouter({
   history: createWebHistory(),
