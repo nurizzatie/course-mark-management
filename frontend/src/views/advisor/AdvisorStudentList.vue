@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import StudentList from '@/components/advisor/StudentList.vue'; // ✅ Correct path now
+import StudentList from '@/components/advisor/StudentList.vue';
 
 export default {
   name: 'AdvisorStudentList',

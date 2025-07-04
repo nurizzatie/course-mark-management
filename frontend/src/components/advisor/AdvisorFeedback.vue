@@ -23,17 +23,21 @@ export default {
   },
   methods: {
     submitFeedback() {
-      axios.post(`http://localhost:8080/advisor/${this.student.id}/feedback`, {
-        remarks: this.feedback
-      })
-      .then(() => {
-        alert('Feedback submitted successfully');
-        this.$emit('close');
-      })
-      .catch(err => {
-        console.error('Failed to submit feedback:', err);
-      });
-    }
+  axios.post('http://localhost:8080/api/advisor/feedback', {
+    advisor_id: 1, // Replace this with dynamic advisor_id later if needed
+    student_id: this.student.id,
+    meeting_date: new Date().toISOString().slice(0, 10), // e.g., "2025-07-03"
+    note: this.feedback
+  })
+  .then(() => {
+    alert('Feedback submitted successfully');
+    this.$emit('close');
+  })
+  .catch(err => {
+    console.error('Failed to submit feedback:', err);
+  });
+}
+
   }
 }
 </script>

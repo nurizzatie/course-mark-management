@@ -37,22 +37,48 @@ export default {
   name: 'StudentList',
   data() {
     return {
-      students: []
+      students: [],
+      advisorId: 1 // Hardcoded for now — replace with real login-based advisor ID
     };
   },
   methods: {
     async fetchStudents() {
       try {
-        const response = await axios.get('http://localhost/backend/public/api/advisor/students');
+        const response = await axios.get('http://localhost:8080/api/advisor/students');
         this.students = response.data;
       } catch (err) {
         console.error('Error fetching students:', err);
       }
     },
-    submitFeedback(student) {
-      alert(`Open feedback form for ${student.name} (${student.matric_number})`);
-      // Later, this will open AdvisorNoteForm.vue or a modal
+
+    async submitFeedback(student) {
+      const advisorId = localStorage.getItem('advisor_id'); // This is user.id for the advisor
+      const studentId = student.id; // This is user.id for the student
+      const meetingDate = prompt(`Enter meeting date for ${student.name} (YYYY-MM-DD):`);
+      const note = prompt(`Enter feedback note for ${student.name}:`);
+
+
+      if (!meetingDate || !note) {
+        alert('Meeting date and note are required.');
+        return;
+      }
+
+      const payload = {
+        advisor_id: advisorId,
+        student_id: studentId,
+        meeting_date: meetingDate,
+        note: note
+      };
+
+      try {
+        const res = await axios.post('http://localhost:8080/api/advisor/feedback', payload);
+        alert(res.data.message || 'Feedback submitted!');
+      } catch (err) {
+        console.error('Error submitting feedback:', err);
+        alert('Failed to submit feedback.');
+      }
     }
+
   },
   mounted() {
     this.fetchStudents();
@@ -65,5 +91,7 @@ table {
   border-collapse: collapse;
 }
 </style>
+
+
 
 
