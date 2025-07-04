@@ -198,14 +198,11 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 // --- Load Routes from External Files ---
 // This is where your GradePredictorController route is loaded!
 (require __DIR__ . '/../routes/auth.php')($app);
-<<<<<<< HEAD
 (require __DIR__ . '/../routes/advisor.php')($app);
 
-=======
 (require __DIR__ . '/../routes/grade_predictor.php')($app);
 (require __DIR__ . '/../routes/assessments.php')($app);
 require __DIR__ . '/../dependencies.php';
->>>>>>> 0432e4e982f9c3e1919bc40e31f669e9ea6df021
 
 
 
