@@ -5,6 +5,7 @@ import LecturerDashboard from '@/views/lecturer/LecturerDashboard.vue';
 import AdvisorDashboard from '@/views/advisor/AdvisorDashboard.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
+import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue';
 
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue';
 import GpaCalculator from '@/views/student/performance/GpaCalculator.vue';
@@ -19,6 +20,11 @@ const routes = [
   { path: '/advisor/dashboard', component: AdvisorDashboard },
   { path: '/admin/dashboard', component: AdminDashboard },
   { path: '/lecturer/profile', component: LecturerProfile },
+  {
+    path: '/advisor/students',
+    name: 'AdvisorStudentList',
+    component: AdvisorStudentList
+  },
   
   { 
     path: '/student/performance', component: PerformanceToolsLayout,
@@ -29,6 +35,7 @@ const routes = [
     { path: 'what-if', component: WhatIf }
   ]
 }
+
 
 ];
 
