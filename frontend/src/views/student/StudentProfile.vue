@@ -2,7 +2,7 @@
   <AppLayout :role="'Lecturer'" :navItems="navItems" :pageTitle="pageTitle">
     <h2 class="mb-4">Profile</h2>
     <div class="row g-3">
-      <!-- <div class="col-md-6 col-lg-3">
+      <div class="col-md-6 col-lg-3">
         <StatCard title="Total Students" value="120" subtitle="Current semester" bgClass="bg-success" />
       </div>
       <div class="col-md-6 col-lg-3">
@@ -13,7 +13,7 @@
       </div>
       <div class="col-md-6 col-lg-3">
         <StatCard title="Recent Feedbacks" value="12" subtitle="Last 7 days" bgClass="bg-danger" />
-      </div> -->
+      </div>
     </div>
   </AppLayout>
 </template>
