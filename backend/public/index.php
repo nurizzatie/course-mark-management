@@ -161,6 +161,8 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 // Load routes from folder
 (require __DIR__ . '/../routes/auth.php')($app);
 (require __DIR__ . '/../routes/lecturer.php')($app);
+(require __DIR__ . '/../routes/adminRoutes.php')($app);
+
 
 // Final run
 $app->run();
