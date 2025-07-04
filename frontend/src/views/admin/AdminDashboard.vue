@@ -1,41 +1,107 @@
 <template>
   <AppLayout :role="'Admin'" :navItems="navItems" :pageTitle="pageTitle">
-    <h2 class="mb-4 fw-bold">Welcome, Admin</h2>
-    <!-- <div class="row g-3">
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Total Students" value="120" subtitle="Current semester" bgClass="bg-success" />
+    <div class="container py-4">
+      <h2 class="mb-4 fw-bold">Welcome, Admin</h2>
+
+      <div class="row g-4">
+        <!-- Manage Users -->
+        <div class="col-md-6 col-lg-3">
+          <router-link to="/admin/users" class="card card-link h-100 bg-primary text-white">
+            <div class="card-body">
+              <h5 class="card-title">Manage User Accounts</h5>
+              <p class="card-text small">Create, edit, or remove users and assign roles.</p>
+            </div>
+          </router-link>
+        </div>
+
+        <!-- Assign Lecturers -->
+        <div class="col-md-6 col-lg-3">
+          <router-link to="/admin/assign" class="card card-link h-100 bg-success text-white">
+            <div class="card-body">
+              <h5 class="card-title">Assign Lecturers</h5>
+              <p class="card-text small">Map lecturers to their assigned courses.</p>
+            </div>
+          </router-link>
+        </div>
+
+        <!-- View Logs -->
+        <div class="col-md-6 col-lg-3">
+          <router-link to="/admin/logs" class="card card-link h-100 bg-warning text-dark">
+            <div class="card-body">
+              <h5 class="card-title">System Logs</h5>
+              <p class="card-text small">Review login activity and mark update logs.</p>
+            </div>
+          </router-link>
+        </div>
+
+        <!-- Reset Passwords -->
+        <div class="col-md-6 col-lg-3">
+          <router-link to="/admin/reset" class="card card-link h-100 bg-danger text-white">
+            <div class="card-body">
+              <h5 class="card-title">Reset Passwords</h5>
+              <p class="card-text small">Securely reset user login credentials.</p>
+            </div>
+          </router-link>
+        </div>
       </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Courses Taught" value="4" subtitle="Active courses" bgClass="bg-primary" />
+
+      <!-- Optional: Chart Section -->
+      <div class="mt-5">
+        <h4 class="fw-semibold mb-3">Activity Overview</h4>
+        <canvas id="adminChart"></canvas>
       </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Pending Marks" value="8" subtitle="Assignments not submitted" bgClass="bg-warning" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Recent Feedbacks" value="12" subtitle="Last 7 days" bgClass="bg-danger" />
-      </div>
-    </div> -->
+    </div>
   </AppLayout>
 </template>
 
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
-// import StatCard from '@/components/StatCard.vue';
+import Chart from 'chart.js/auto';
 
 export default {
   name: 'AdminDashboard',
-  components: { 
-    AppLayout, 
-    // StatCard 
-  },
+  components: { AppLayout },
   data() {
     return {
       navItems: [
         { name: 'Dashboard', link: '/admin/dashboard' },
-        //add other nav-link name and routes
+        { name: 'Users', link: '/admin/users' },
+        { name: 'Assign', link: '/admin/assign' },
+        { name: 'Logs', link: '/admin/logs' },
+        { name: 'Reset Passwords', link: '/admin/reset' },
       ],
-      pageTitle: 'Dashboard',
+      pageTitle: 'Dashboard'
     }
+  },
+  mounted() {
+    const ctx = document.getElementById('adminChart');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Users', 'Courses', 'Logins', 'Resets'],
+        datasets: [{
+          label: 'Weekly Activity',
+          data: [30, 12, 45, 6],
+          backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } }
+      }
+    });
   }
 }
 </script>
+
+<style scoped>
+.card-link {
+  text-decoration: none;
+  border-radius: 1rem;
+  transition: transform 0.2s ease;
+}
+.card-link:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+</style>

@@ -159,7 +159,7 @@ export default {
         const res = await fetch(`http://localhost:8080/api/student/${studentId}/courses`);
         const data = await res.json();
         this.courses = data.map(course => ({
-          name: `${course.code} - ${course.name}`,
+          name: `${course.course_code} - ${course.course_name}`,
           credit: course.credit_hour,
           grade: ''
         }));
