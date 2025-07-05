@@ -32,12 +32,16 @@ export default {
         { name: 'Student List', link: '/advisor/students' },
         { name: 'Review Marks', link: '/advisor/reviews' },
         { name: 'Performance Analytics', link: '/advisor/analytics' },
+        { name: 'High-Risk Students', link: '/advisor/high-risk-students' },
+        { name: 'Advisor Notes', link: '/advisor/notes' }, 
         { name: 'Profile', link: '/advisor/profile' }
       ],
       pageTitle: 'Dashboard',
-    }
+    };
   }
 }
 </script>
+
+
 
 

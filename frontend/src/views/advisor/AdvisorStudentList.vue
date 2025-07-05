@@ -1,8 +1,8 @@
 <template>
-  <div class="p-6 max-w-4xl mx-auto">
-    <p style="color: green;">AdvisorStudentList.vue is loaded</p>
+  <div class="p-6 max-w-5xl mx-auto">
+    <p class="text-green-700 font-medium mb-2">AdvisorStudentList.vue is loaded</p>
 
-    <!-- Back button here -->
+    <!-- Back button -->
     <nav class="mb-4">
       <button
         @click="goBackToDashboard"
@@ -12,7 +12,7 @@
       </button>
     </nav>
 
-    <!-- Student List -->
+    <!-- Student List Component -->
     <StudentList />
   </div>
 </template>
@@ -22,21 +22,15 @@ import StudentList from '@/components/advisor/StudentList.vue';
 
 export default {
   name: 'AdvisorStudentList',
-  components: {
-    StudentList
-  },
+  components: { StudentList },
   methods: {
     goBackToDashboard() {
       this.$router.push({ name: 'AdvisorDashboard' });
     }
-  },
-
-  mounted() {
-  console.log('AdvisorStudentList.vue is mounted');
-}
-
+  }
 };
 </script>
+
 
 
 

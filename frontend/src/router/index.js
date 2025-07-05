@@ -13,6 +13,7 @@ import GpaCalculator from '@/views/student/performance/GpaCalculator.vue';
 import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue';
 import WhatIf from '@/views/student/performance/WhatIf.vue';
 import AdvisorProfile from '@/views/advisor/AdvisorProfile.vue';
+import HighRiskStudents from '@/views/advisor/HighRiskStudents.vue';
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -27,8 +28,8 @@ const routes = [
   { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
   { path: '/advisor/dashboard', name: 'AdvisorDashboard', component: AdvisorDashboard },
   { path: '/advisor/profile', name: 'AdvisorProfile', component: AdvisorProfile },
-
-  
+  { path: '/advisor/high-risk-students', name: 'HighRiskStudents', component: HighRiskStudents},
+  { path: '/advisor/notes', name: 'AdvisorNotes', component: () => import('@/views/advisor/AdvisorNotes.vue')},
 
 
   {
