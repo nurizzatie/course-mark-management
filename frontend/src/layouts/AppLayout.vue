@@ -1,12 +1,20 @@
 <template>
   <div class="d-flex">
+    <!-- ✅ Sidebar (maroon, from AppSidebar.vue) -->
     <AppSidebar :navItems="navItems" @navigate="handleNavigation" />
 
+    <!-- ✅ Main Content -->
     <div class="flex-grow-1">
       <!-- Navbar -->
-      <AppNavbar :pageTitle="pageTitle" :notifications="notifications" :showNotification="role === 'Lecturer' || role === 'Student'" @logout="handleLogout" @update-notification="updateNotification"/>
+      <AppNavbar
+        :pageTitle="pageTitle"
+        :notifications="notifications"
+        :showNotification="role === 'Lecturer' || role === 'Student'"
+        @logout="handleLogout"
+        @update-notification="updateNotification"
+      />
 
-      <!-- Main Content -->
+      <!-- Page content slot -->
       <div class="p-4">
         <slot />
       </div>
@@ -32,17 +40,8 @@ export default {
     },
     role: {
       type: String,
-      required: true
+      required: true,
     },
-  },
-  methods: {
-    handleNavigation() {},
-    handleLogout() {
-      this.$router.push('/login')
-    },
-    updateNotification(index) {
-      this.notifications[index].read = true
-    }
   },
   data() {
     return {
@@ -68,5 +67,14 @@ export default {
       ],
     };
   },
-}
+  methods: {
+    handleNavigation() {},
+    handleLogout() {
+      this.$router.push('/login');
+    },
+    updateNotification(index) {
+      this.notifications[index].read = true;
+    },
+  },
+};
 </script>

@@ -54,7 +54,7 @@ export default {
     async submitFeedback(student) {
       const advisorId = localStorage.getItem('advisor_id'); // This is user.id for the advisor
       const studentId = student.id; // This is user.id for the student
-      const meetingDate = prompt(`Enter meeting date for ${student.name} (YYYY-MM-DD):`);
+      const meetingDate = prompt(`Enter meeting date for ${student.name} (DD/MM/YYYY):`);
       const note = prompt(`Enter feedback note for ${student.name}:`);
 
 
