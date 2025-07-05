@@ -81,7 +81,7 @@ class AdvisorController
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
 }
-
+//get student analytics
 public function getAnalytics(Request $request, Response $response, $args): Response
 {
     try {

@@ -1,44 +1,37 @@
 <template>
   <div class="p-6 max-w-4xl mx-auto">
-    <p style="color: green;">AdvisorStudentList.vue is loaded</p>
+    <p style="color: green;">AdvisorProfile.vue is loaded</p>
 
-    <!-- Back button here -->
+    <!-- Back button -->
     <nav class="mb-4">
       <button
         @click="goBackToDashboard"
         class="bg-yellow-400 hover:bg-yellow-500 px-4 py-2 rounded"
       >
-        ⬅ Back To AdvisorDashboard
+        ⬅ Back To Advisor Dashboard
       </button>
     </nav>
 
-    <!-- Student List -->
-    <StudentList />
+    <!-- Advisor Profile component -->
+    <Profile />
   </div>
 </template>
 
 <script>
-import StudentList from '@/components/advisor/StudentList.vue';
+import Profile from '@/components/advisor/Profile.vue';
 
 export default {
-  name: 'AdvisorStudentList',
+  name: 'AdvisorProfile',
   components: {
-    StudentList
+    Profile
   },
   methods: {
     goBackToDashboard() {
       this.$router.push({ name: 'AdvisorDashboard' });
     }
   },
-
   mounted() {
-  console.log('AdvisorStudentList.vue is mounted');
-}
-
+    console.log('AdvisorProfile.vue is mounted');
+  }
 };
 </script>
-
-
-
-
-
