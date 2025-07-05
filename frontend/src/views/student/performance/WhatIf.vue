@@ -1,35 +1,6 @@
 <template>
   <div class="grade-predictor">
-    <!-- 🔽 Collapsible Instructions -->
-    <div class="mb-4">
-      <button
-        class="btn btn-primary"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#gradePredictorInstructions"
-        aria-expanded="false"
-        aria-controls="gradePredictorInstructions"
-      >
-        📘 How to Use Grade Predictor
-      </button>
 
-      <div class="collapse mt-3" id="gradePredictorInstructions">
-        <div class="card card-body">
-          <h5 class="mb-3">🎯 Grade Predictor Tool</h5>
-          <p><strong>Simulate your future academic performance.</strong></p>
-          <ul>
-            <li>Forecast your semester or cumulative GPA.</li>
-            <li>Strategize which subjects need focus to reach your target.</li>
-            <li>Test different grade combinations for better academic planning.</li>
-          </ul>
-          <p class="mt-3">
-            <strong>📝 Note:</strong> Confirmed grades from lecturers are
-            <span class="text-danger">locked</span> and cannot be changed.
-            You can only modify grades for courses that are still pending or ungraded.
-          </p>
-        </div>
-      </div>
-    </div>
 
     <!-- 🎓 Course Selector -->
     <div class="mb-3">
@@ -53,35 +24,81 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="a in assessments" :key="a.id">
-          <td>{{ a.title }}</td>
-          <td>{{ a.weight_percentage }}</td>
-          <td>{{ a.max_mark }}</td>
-          <td>
-            <input
-              v-if="a.canPredict"
-              type="number"
-              class="form-control"
-              v-model.number="a.predicted_mark"
-              :max="a.max_mark"
-              min="0"
-            />
-            <span v-else class="text-success fw-bold">{{ a.obtained_mark }}</span>
-          </td>
-        </tr>
-      </tbody>
+  <tr v-for="a in assessments" :key="a.id">
+    <td>{{ a.title }}</td>
+    <td>{{ a.weight_percentage }}</td>
+    <td>{{ a.max_mark }}</td>
+    <td>
+      <div class="position-relative">
+        <template v-if="a.canPredict">
+          <input
+            type="number"
+            class="form-control"
+            v-model.number="a.predicted_mark"
+            :max="a.max_mark"
+            min="0"
+            :class="{ 'is-invalid': a.predicted_mark > a.max_mark }"
+          />
+          <div v-if="a.predicted_mark > a.max_mark" class="invalid-feedback">
+            Cannot exceed {{ a.max_mark }}
+          </div>
+        </template>
+
+        <template v-else>
+          <span class="text-success fw-bold">{{ a.obtained_mark }}</span>
+        </template>
+      </div>
+    </td>
+  </tr>
+</tbody>
+
     </table>
 
-    <!-- 🎯 Prediction Button -->
-    <button class="btn btn-success mt-2" @click="predictGrade">🎯 Predict</button>
+   <!-- 🔽 Buttons Row -->
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <!-- How It Works Button -->
+  <button
+    class="btn btn-primary btn-sm"
+    type="button"
+    data-bs-toggle="collapse"
+    data-bs-target="#gradePredictorInstructions"
+    aria-expanded="false"
+    aria-controls="gradePredictorInstructions"
+  >
+    📘 How It Works
+  </button>
 
-    <!-- 📊 Prediction Result -->
-    <div v-if="predictionResult" class="alert alert-info mt-3">
-      <strong>Predicted Percentage:</strong> {{ predictionResult.predicted_percentage }}% <br />
-      <strong>Predicted Grade:</strong> {{ predictionResult.predicted_grade }} <br />
-      <strong>Predicted CGPA:</strong> {{ predictionResult.predicted_cgpa }}
-    </div>
+  <!-- Predict Button -->
+  <button class="btn btn-success btn-sm" @click="predictGrade">
+    🎯 Predict
+  </button>
+</div>
+
+<!-- 🔽 Collapsible Instructions -->
+<div class="collapse mt-3" id="gradePredictorInstructions">
+  <div class="card card-body">
+    <h5 class="mb-3">🎯 Grade Predictor Tool</h5>
+    <p><strong>Simulate your future academic performance.</strong></p>
+    <ul>
+      <li>Forecast your semester or cumulative GPA.</li>
+      <li>Strategize which subjects need focus to reach your target.</li>
+      <li>Test different grade combinations for better academic planning.</li>
+    </ul>
+    <p class="mt-3">
+      <strong>📝 Note:</strong> Confirmed grades from lecturers are
+      <span class="text-danger">locked</span> and cannot be changed.
+      You can only modify grades for courses that are still pending or ungraded.
+    </p>
   </div>
+</div>
+
+<!-- 📊 Prediction Result -->
+<div v-if="predictionResult" class="alert alert-info mt-3">
+  <strong>Predicted Percentage:</strong> {{ predictionResult.predicted_percentage }}% <br />
+  <strong>Predicted Grade:</strong> {{ predictionResult.predicted_grade }} <br />
+  <strong>Predicted CGPA:</strong> {{ predictionResult.predicted_cgpa }}
+</div>
+</div>
 </template>
 
 <script>
@@ -148,39 +165,50 @@ export default {
     },
 
     async predictGrade() {
-      const predicted_scores = this.assessments
-        .filter(a => a.canPredict && a.predicted_mark !== '')
-        .map(a => ({
-          assessment_id: a.id,
-          expected_mark: a.predicted_mark
-        }));
 
-      const body = {
-        student_id: this.studentId,
-        course_id: this.selectedCourse,
-        predicted_scores
-      };
+  const hasInvalidInput = this.assessments.some(
+    a => a.canPredict && a.predicted_mark > a.max_mark
+  );
 
-      try {
-        const res = await fetch('http://localhost:8080/api/grade-predictor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
+  if (hasInvalidInput) {
+    alert("One or more predicted marks exceed the maximum allowed.");
+    return;
+  }
 
-        const result = await res.json();
-        if (res.ok) {
-          this.predictionResult = result;
-          console.log("📊 Prediction result:", result);
-        } else {
-          this.predictionResult = null;
-          alert(result.error || "Prediction failed.");
-        }
-      } catch (e) {
-        console.error("❌ Prediction error:", e);
-        alert("Prediction failed.");
-      }
+  const predicted_scores = this.assessments
+    .filter(a => a.canPredict && a.predicted_mark !== '')
+    .map(a => ({
+      assessment_id: a.id,
+      expected_mark: a.predicted_mark
+    }));
+
+  const body = {
+    student_id: this.studentId,
+    course_id: this.selectedCourse,
+    predicted_scores
+  };
+
+  try {
+    const res = await fetch('http://localhost:8080/api/grade-predictor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      this.predictionResult = result;
+      console.log("📊 Prediction result:", result);
+    } else {
+      this.predictionResult = null;
+      alert(result.error || "Prediction failed.");
     }
+  } catch (e) {
+    console.error("❌ Prediction error:", e);
+    alert("Prediction failed.");
+  }
+}
+
   },
   watch: {
     selectedCourse(newCourseId) {
@@ -197,7 +225,7 @@ export default {
 
 <style scoped>
 .grade-predictor {
-  max-width: 100%;
+ max-width: 100%;
   margin: auto;
   padding: 2rem;
   background: #fff;
