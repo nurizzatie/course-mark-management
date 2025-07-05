@@ -16,7 +16,7 @@
 
         <!-- Assign Lecturers -->
         <div class="col-md-6 col-lg-3">
-          <router-link to="/admin/assign" class="card card-link h-100 bg-success text-white">
+          <router-link to="/admin/assign-lecturers" class="card card-link h-100 bg-success text-white">
             <div class="card-body">
               <h5 class="card-title">Assign Lecturers</h5>
               <p class="card-text small">Map lecturers to their assigned courses.</p>
@@ -45,7 +45,7 @@
         </div>
       </div>
 
-      <!-- Optional: Chart Section -->
+      <!-- Chart Section -->
       <div class="mt-5">
         <h4 class="fw-semibold mb-3">Activity Overview</h4>
         <canvas id="adminChart"></canvas>
@@ -55,26 +55,21 @@
 </template>
 
 <script>
-import AppLayout from '@/layouts/AppLayout.vue';
-import Chart from 'chart.js/auto';
+import AppLayout from '@/layouts/AppLayout.vue'
+import Chart from 'chart.js/auto'
+import navItems from '@/constants/adminNavItems'
 
 export default {
   name: 'AdminDashboard',
   components: { AppLayout },
   data() {
     return {
-      navItems: [
-        { name: 'Dashboard', link: '/admin/dashboard' },
-        { name: 'Users', link: '/admin/users' },
-        { name: 'Assign', link: '/admin/assign' },
-        { name: 'Logs', link: '/admin/logs' },
-        { name: 'Reset Passwords', link: '/admin/reset' },
-      ],
+      navItems,
       pageTitle: 'Dashboard'
     }
   },
   mounted() {
-    const ctx = document.getElementById('adminChart');
+    const ctx = document.getElementById('adminChart')
     new Chart(ctx, {
       type: 'bar',
       data: {
@@ -89,7 +84,7 @@ export default {
         responsive: true,
         plugins: { legend: { display: false } }
       }
-    });
+    })
   }
 }
 </script>
