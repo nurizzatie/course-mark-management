@@ -1,34 +1,52 @@
-<<<<<<< HEAD
 import { createRouter, createWebHistory } from 'vue-router';
+
 import Login from '@/views/Login.vue';
-import StudentDashboard from '@/views/student/StudentDashboard.vue';
+
+// Lecturer Pages
 import LecturerDashboard from '@/views/lecturer/LecturerDashboard.vue';
-import AdvisorDashboard from '@/views/advisor/AdvisorDashboard.vue';
-import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
-import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue';
-import AdvisorMarkReview from '@/views/advisor/AdvisorMarkReview.vue'; 
-import AdvisorAnalytics from '@/views/advisor/AdvisorAnalytics.vue';
+import LecturerManageStudents from '@/views/lecturer/LecturerManageStudents.vue';
+import LecturerCourses from '@/views/lecturer/LecturerCourses.vue';
+import LecturerAssessments from '@/views/lecturer/LecturerAssessments.vue';
+import LecturerMarks from '@/views/lecturer/LecturerMarks.vue';
+
+// Student performance routes & pages
+import StudentDashboard from '@/views/student/StudentDashboard.vue';
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue';
 import GpaCalculator from '@/views/student/performance/GpaCalculator.vue';
 import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue';
 import WhatIf from '@/views/student/performance/WhatIf.vue';
 
+// Advisor Pages
+import AdvisorDashboard from '@/views/advisor/AdvisorDashboard.vue';
+import AdvisorAnalytics from '@/views/advisor/AdvisorAnalytics.vue';
+import AdvisorMarkReview from '@/views/advisor/AdvisorMarkReview.vue';
+import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue';
+
+// Admin Pages 
+import AdminDashboard from '@/views/admin/AdminDashboard.vue'
+import ManageUsers from '@/views/admin/ManageUsers.vue'
+import AssignLecturers from '@/views/admin/AssignLecturers.vue'
+import Logs from '@/views/admin/Logs.vue'
+import ResetPassword from '@/views/admin/ResetPassword.vue'
+
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
-  { path: '/student/dashboard', component: StudentDashboard },
-  { path: '/lecturer/dashboard', component: LecturerDashboard },
+  { path: '/student/dashboard', component: StudentDashboard },  
   { path: '/advisor/dashboard', component: AdvisorDashboard },
-  { path: '/admin/dashboard', component: AdminDashboard },
+  
+  // Lecturer routes
+  { path: '/lecturer/dashboard', component: LecturerDashboard },
   { path: '/lecturer/profile', component: LecturerProfile },
-  { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
-  { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
-  { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
+  { path: '/lecturer/students', component: LecturerManageStudents },
+  { path: '/lecturer/courses', component: LecturerCourses },
+  { path: '/lecturer/courses/:id/assessments', component: LecturerAssessments },
+  { path: '/lecturer/courses/:id/marks', component: LecturerMarks },
+  
+  // Student routes
   { path: '/student/course/:id',name: 'StudentCourseMarks',component: () => import('@/views/student/StudentCourseMarks.vue')},
   { path: '/student/request-remark', name: 'RequestRemark', component: () => import('@/views/student/RequestRemark.vue')},
-
-
   {
     path: '/student/performance',
     component: PerformanceToolsLayout,
@@ -38,33 +56,14 @@ const routes = [
       { path: 'cgpa', component: CumulativeGpa },
       { path: 'what-if', component: WhatIf }
     ]
-  }
-
-  
-];
-=======
-import { createRouter, createWebHistory } from 'vue-router'
-import Login from '@/views/Login.vue'
-
-// Admin Pages (using <AppLayout.vue> inside each component)
-import AdminDashboard from '@/views/admin/AdminDashboard.vue'
-import ManageUsers from '@/views/admin/ManageUsers.vue'
-import AssignLecturers from '@/views/admin/AssignLecturers.vue'
-import Logs from '@/views/admin/Logs.vue'
-import ResetPassword from '@/views/admin/ResetPassword.vue'
-
-const routes = [
-  {
-    path: '/',
-    redirect: '/login'
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: Login
   },
 
-  // ✅ Flat admin routes using AppLayout inside each page
+  // Advisor routes
+  { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
+  { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
+  { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
+
+  // Flat admin routes using AppLayout inside each page
   {
     path: '/admin/dashboard',
     name: 'AdminDashboard',
@@ -90,17 +89,11 @@ const routes = [
     name: 'ResetPassword',
     component: ResetPassword
   }
-]
->>>>>>> 191619496ae9cc028e904bd6d4a5d03d1883683c
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
+});
 
-<<<<<<< HEAD
 export default router;
-
-=======
-export default router
->>>>>>> 191619496ae9cc028e904bd6d4a5d03d1883683c
