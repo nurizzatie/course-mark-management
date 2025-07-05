@@ -23,22 +23,21 @@
           v-if="showNotification"
           :notifications="notifications"
           @update-notification="updateNotification"
-        />
+      />
 
         <span class="badge bg-light text-dark fs-6">{{ user.role.charAt(0).toUpperCase() + user.role.slice(1) }}</span>
 
         <!-- User Dropdown -->
         <div class="dropdown">
-          <button
-            class="btn dropdown-toggle"
-            type="button"
-            id="userDropdown"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            {{ user.name }}
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+        <button
+          class="btn dropdown-toggle"
+          type="button"
+          ref="userDropdown"
+          @click="toggleUserDropdown"
+        >
+          {{ user.name }}
+        </button>
+          <ul class="dropdown-menu dropdown-menu-end" ref="userDropdownMenu">
             <li>
               <a class="dropdown-item d-flex align-items-center" href="#" @click.prevent="goToProfile">
                 <i class="fas fa-user me-2 text-secondary"></i>
@@ -61,11 +60,17 @@
 
 <script>
 import NotificationDropdown from '@/components/NotificationDropdown.vue';
+import * as bootstrap from 'bootstrap';
 
 export default {
   name: 'AppNavbar',
   components: {
     NotificationDropdown,
+  },
+  data() {
+    return {
+      dropdownInstance: null
+    };
   },
   props: {
     pageTitle: {
@@ -80,6 +85,12 @@ export default {
       type: Boolean,
       default: false,
     },  
+  },
+  mounted() {
+    const dropdownEl = this.$refs.userDropdown;
+    if (dropdownEl) {
+      this.dropdownInstance = new bootstrap.Dropdown(dropdownEl);
+    }
   },
   computed: {
     user() {
@@ -99,6 +110,11 @@ export default {
     updateNotification(index) {
       this.$emit('update-notification', index);
     },
+    toggleUserDropdown() {
+      if (this.dropdownInstance) {
+        this.dropdownInstance.toggle();
+      }
+    }
   },
 }
 </script>

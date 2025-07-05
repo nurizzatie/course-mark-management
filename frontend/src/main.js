@@ -1,5 +1,6 @@
 // Import Bootstrap globally
 import 'bootstrap/dist/css/bootstrap.min.css';
+import '@popperjs/core'; 
 import * as bootstrap from 'bootstrap';
 
 // Import fontawesome globally

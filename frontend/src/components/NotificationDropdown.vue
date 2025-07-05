@@ -3,9 +3,11 @@
     <button
       class="btn position-relative"
       id="notificationDropdown"
-      data-bs-toggle="dropdown"
-      aria-expanded="false"
+      ref="notifDropdown"
+      type="button"
+      @click="toggleDropdown"
     >
+
       <i class="fas fa-bell text-dark"></i>
       <span
         v-if="unreadCount > 0"
@@ -15,7 +17,11 @@
       </span>
     </button>
 
-    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown" style="min-width: 250px;">
+    <ul
+      class="dropdown-menu dropdown-menu-end shadow-sm"
+      ref="notifDropdownMenu"
+      style="min-width: 280px; max-width: 320px; max-height: 300px; overflow-y: auto;"
+    >
       <li v-if="notifications.length === 0">
         <span class="dropdown-item-text text-muted">No notifications</span>
       </li>
@@ -27,10 +33,10 @@
           href="#"
           class="dropdown-item d-flex align-items-start"
           :class="{ 'fw-bold': !notification.read }"
-          @click.prevent="openNotification(index)"
+          @click.prevent="openNotification(index, notification)"
         >
           <i :class="iconClass(notification.type) + ' me-2 mt-1'"></i>
-          <div class="flex-grow-1">
+          <div class="flex-grow-1 text-wrap">
             <div>{{ notification.message }}</div>
             <small class="text-muted">{{ notification.time }}</small>
           </div>
@@ -41,6 +47,8 @@
 </template>
 
 <script>
+import * as bootstrap from 'bootstrap';
+
 export default {
   name: 'NotificationDropdown',
   props: {
@@ -49,18 +57,38 @@ export default {
       default: () => [],
     },
   },
+  emits: ['update-notification'],
+  data() {
+    return {
+      dropdownInstance: null,
+    };
+  },
   computed: {
     unreadCount() {
       return this.notifications.filter(n => !n.read).length;
     },
   },
+  mounted() {
+    const el = this.$refs.notifDropdown;
+    if (el) {
+      this.dropdownInstance = new bootstrap.Dropdown(el);
+    }
+  },
   methods: {
-    openNotification(index) {
-      const notification = this.notifications[index];
+    toggleDropdown() {
+      if (this.dropdownInstance) {
+        this.dropdownInstance.toggle();
+      }
+    },
+    openNotification(index, notification) {
       if (!notification.read) {
         this.$emit('update-notification', index);
       }
-      alert(`Opening: ${notification.message}`);
+
+      // Navigate if course_id exists
+      if (notification.course_id) {
+        this.$router.push(`/student/course/${notification.course_id}`);
+      }
     },
     iconClass(type) {
       switch (type) {
