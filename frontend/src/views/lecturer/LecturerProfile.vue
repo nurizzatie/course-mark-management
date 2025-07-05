@@ -28,10 +28,10 @@ export default {
   data() {
     return {
       navItems: [
-        { name: 'Dashboard', link: '/lecturer/dashboard', active: false },
-        { name: 'My Courses', link: '/lecturer/courses', active: false },
-        { name: 'Student List', link: '/lecturer/students', active: false },
-        { name: 'Profile', link: '/lecturer/profile', active: true }
+        { name: 'Dashboard', link: '/lecturer/dashboard' },
+        { name: 'My Courses', link: '/lecturer/courses' },
+        { name: 'Student Enrollment', link: '/lecturer/students' },
+        { name: 'Profile', link: '/lecturer/profile'}
       ],
       pageTitle: 'Profile',
     }

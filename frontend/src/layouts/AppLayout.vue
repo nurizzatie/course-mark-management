@@ -1,21 +1,9 @@
 <template>
-  <div class="d-flex">
-    <!-- ✅ Sidebar (maroon, from AppSidebar.vue) -->
+  <div class="d-flex min-vh-100">
     <AppSidebar :navItems="navItems" @navigate="handleNavigation" />
-
-    <!-- ✅ Main Content -->
-    <div class="flex-grow-1">
-      <!-- Navbar -->
-      <AppNavbar
-        :pageTitle="pageTitle"
-        :notifications="notifications"
-        :showNotification="role === 'Lecturer' || role === 'Student'"
-        @logout="handleLogout"
-        @update-notification="updateNotification"
-      />
-
-      <!-- Page content slot -->
-      <div class="p-4">
+    <div class="flex-grow-1 d-flex flex-column">
+      <AppNavbar :pageTitle="pageTitle" :notifications="notifications" :showNotification="role === 'Lecturer' || role === 'Student'" @logout="handleLogout" @update-notification="updateNotification"/>
+      <div class="container-fluid p-4">
         <slot />
       </div>
     </div>

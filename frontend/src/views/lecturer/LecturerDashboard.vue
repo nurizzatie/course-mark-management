@@ -30,7 +30,7 @@ export default {
       navItems: [
         { name: 'Dashboard', link: '/lecturer/dashboard' },
         { name: 'My Courses', link: '/lecturer/courses' },
-        { name: 'Student List', link: '/lecturer/students' },
+        { name: 'Student Enrollment', link: '/lecturer/students' },
         { name: 'Profile', link: '/lecturer/profile' },
       ],
       pageTitle: 'Dashboard',

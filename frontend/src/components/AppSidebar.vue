@@ -1,9 +1,9 @@
 <template>
   <div>
     <!-- Desktop Sidebar -->
-    <div class="d-none d-md-block app-sidebar">
-      <div class="p-3 text-white">
-        <div class="fs-4 fw-bold mb-2">CourseMark</div>
+    <div class="d-none d-md-flex flex-column app-sidebar text-white">
+      <div class="p-3">
+        <div class="fs-4 fw-bold mb-4">CourseMark</div>
         <hr />
         <ul class="nav nav-pills flex-column">
           <li v-for="item in navItems" :key="item.name" class="nav-item">
@@ -80,7 +80,10 @@ export default {
   width: 250px;
   height: 100vh;
   background-color: #5D001D;
+  position: sticky;
+  top: 0;
 }
+
 
 .nav-link {
   color: white;
