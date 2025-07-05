@@ -1,29 +1,29 @@
 <template>
-   <div class="login-page">
+  <div class="login-page">
     <div class="login-box">
-    <img :src="require('@/assets/utm-logo.png')" alt="UTM Logo" class="logo" />
+      <img :src="require('@/assets/utm-logo.png')" alt="UTM Logo" class="logo" />
 
-    <form @submit.prevent="login">
-      <input
-        v-model="matric_number"
-        placeholder="Matric Number"
-        autocomplete="username"
-        autofocus
-        required
-      />
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Password"
-        autocomplete="current-password"
-        required
-      />
-      <button type="submit" :disabled="loading">
-        {{ loading ? 'Logging in...' : 'Login' }}
-      </button>
-      <p v-if="error" class="error">{{ error }}</p>
-    </form>
-  </div>
+      <form @submit.prevent="login">
+        <input
+          v-model="matric_number"
+          placeholder="Matric Number"
+          autocomplete="username"
+          autofocus
+          required
+        />
+        <input
+          v-model="password"
+          type="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+        />
+        <button type="submit" :disabled="loading">
+          {{ loading ? 'Logging in...' : 'Login' }}
+        </button>
+        <p v-if="error" class="error">{{ error }}</p>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -42,13 +42,11 @@ export default {
   },
   methods: {
     async login() {
-      // Clear error and any old session
       this.error = '';
       this.loading = true;
       localStorage.removeItem('user');
       localStorage.removeItem('token');
 
-      // Optional input validation
       if (!this.matric_number.trim() || !this.password.trim()) {
         this.error = 'Please fill in all fields';
         this.loading = false;
@@ -62,28 +60,19 @@ export default {
         });
 
         const user = res.data.user;
-        const token = res.data.token; // optional JWT
+        const token = res.data.token;
 
         localStorage.setItem('user', JSON.stringify(user));
         if (token) localStorage.setItem('token', token);
 
-        // Redirect based on role
-        switch (user.role) {
-          case 'student':
-            this.$router.push('/student/dashboard');
-            break;
-          case 'lecturer':
-            this.$router.push('/lecturer/dashboard');
-            break;
-          case 'advisor':
-            this.$router.push('/advisor/dashboard');
-            break;
-          case 'admin':
-            this.$router.push('/admin/dashboard');
-            break;
-          default:
-            this.error = 'Unknown role';
+        // ✅ Role-based redirection
+        const role = user.role?.toLowerCase();
+        if (['student', 'lecturer', 'advisor', 'admin'].includes(role)) {
+          this.$router.push(`/${role}/dashboard`);
+        } else {
+          this.error = `Unknown role: ${user.role}`;
         }
+
       } catch (err) {
         this.error =
           err.response?.data?.error || 'Login failed: Invalid credentials';
@@ -108,17 +97,15 @@ export default {
   overflow: hidden;
 }
 
-/* Optional white overlay for better contrast */
 .login-page::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3); /* 50% black */
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(1px);
   z-index: 0;
 }
 
-/* Login box styling */
 .login-box {
   position: relative;
   z-index: 1;
@@ -132,7 +119,6 @@ export default {
   animation: fadeIn 0.6s ease-in-out;
 }
 
-/* Fade-in animation */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -144,14 +130,12 @@ export default {
   }
 }
 
-/* Logo styling */
 .logo {
   max-width: 380px;
   margin: 0 auto 16px;
   display: block;
 }
 
-/* Input fields */
 input {
   width: 100%;
   padding: 12px;
@@ -162,7 +146,6 @@ input {
   font-size: 1rem;
 }
 
-/* Button */
 button {
   width: 100%;
   padding: 12px;
@@ -185,14 +168,12 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Error message */
 .error {
   color: red;
   margin-top: 12px;
   font-size: 0.9em;
 }
 
-/* Mobile responsiveness */
 @media (max-width: 480px) {
   .login-box {
     padding: 24px;
@@ -210,4 +191,3 @@ button:disabled {
   }
 }
 </style>
-

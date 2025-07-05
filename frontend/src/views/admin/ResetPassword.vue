@@ -40,6 +40,7 @@
 
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
+import adminNavItems from '@/constants/adminNavItems';
 
 export default {
   name: 'ResetPassword',
@@ -48,19 +49,13 @@ export default {
     return {
       email: '',
       newPassword: '',
-      navItems: [
-        { name: 'Dashboard', link: '/admin/dashboard' },
-        { name: 'Users', link: '/admin/users' },
-        { name: 'Assign Lecturers', link: '/admin/assign' },
-        { name: 'Logs', link: '/admin/logs' },
-        { name: 'Reset Passwords', link: '/admin/reset' }
-      ],
+      navItems: adminNavItems,
       pageTitle: 'Reset Password'
     };
   },
   methods: {
     handleReset() {
-      // Replace with actual API call (use Axios or fetch)
+      // Replace with real API call
       console.log('Resetting password for:', this.email, 'to:', this.newPassword);
       alert('Password reset successfully (mock)');
       this.email = '';
