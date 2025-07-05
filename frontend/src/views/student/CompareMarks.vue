@@ -1,0 +1,196 @@
+<template>
+<div class="compare-marks">
+  <div class="container mt-4">
+    <h2 class="mb-4">
+      Mark Comparison for – {{ course.name }} {{ course.code }}
+    </h2>
+
+    <!-- Assessment Dropdown -->
+    <div class="mb-3 row align-items-center">
+      <label class="col-sm-1 col-form-label">Assessment:</label>
+      <div class="col-sm-3">
+        <select
+          class="form-select"
+          v-model="selectedAssessmentId"
+          @change="fetchComparisonData"
+        >
+          <option v-for="a in assessments" :key="a.id" :value="a.id">
+            {{ a.title }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="chart-section">
+    <div v-if="chartData" class="mb-4">
+      <div class="d-flex justify-content-center">
+        <div style="max-width: 700px; width: 100%;">
+        <BarChart
+          v-if="chartData.labels && chartData.labels.length"
+          :chart-data="chartData"
+        />
+        <p v-else>No chart data found for this assessment.</p>
+        </div>
+      </div>
+    </div>
+     </div>
+    
+
+    <!-- Toggle Table -->
+    <div class="text-end mb-3">
+      <button @click="toggleTable" class="btn btn-outline-primary">
+        {{ showTable ? "Hide Table" : "Show Table" }}
+      </button>
+    </div>
+   
+
+    <!-- Table Section -->
+    <div v-if="showTable" class="table-responsive">
+      <h4 class="mb-3">Mark Comparison Table</h4>
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Student</th>
+            <th>Mark</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="data in comparisonData"
+            :key="data.student_label"
+            :class="{ 'table-success': data.student_label === 'You' }"
+          >
+            <td>{{ data.student_label }}</td>
+            <td>{{ data.mark }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</template>
+
+<script>
+import BarChart from "@/components/BarChart.vue";
+
+export default {
+  name: "CompareMarks",
+  components: { BarChart },
+  data() {
+    return {
+      course: {
+        name: "",
+        code: "",
+      },
+      assessments: [],
+      selectedAssessmentId: null,
+      comparisonData: [],
+      chartData: null,
+      showTable: false,
+    };
+  },
+  computed: {
+    courseId() {
+      return this.$route.params.id;
+    },
+  },
+  methods: {
+    toggleTable() {
+      this.showTable = !this.showTable;
+    },
+    async fetchCourseInfo() {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/course/${this.courseId}`
+        );
+        const data = await res.json();
+        this.course = data;
+      } catch (err) {
+        console.error("Error fetching course info:", err);
+      }
+    },
+    async fetchAssessments() {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/student/course/${this.courseId}/assessment-list`
+        );
+        const data = await res.json();
+        this.assessments = data;
+
+        if (data.length > 0) {
+          this.selectedAssessmentId = data[0].id;
+          await this.fetchComparisonData();
+        }
+      } catch (err) {
+        console.error("Error fetching assessments:", err);
+      }
+    },
+    async fetchComparisonData() {
+      if (!this.selectedAssessmentId) return;
+
+      try {
+        const student = JSON.parse(localStorage.getItem("user")) || { id: 1 };
+        const res = await fetch(
+          `http://localhost:8080/api/student/course/${this.courseId}/compare/${this.selectedAssessmentId}?student_id=${student.id}`
+        );
+        const data = await res.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          this.chartData = null;
+          return;
+        }
+
+        this.comparisonData = data.map((d) => ({
+          student_label: d.student_label,
+          mark: d.total_contribution,
+        }));
+
+        this.chartData = {
+          labels: data.map((d) => d.student_label),
+          datasets: [
+            {
+              label: "You",
+              backgroundColor: data.map((d) =>
+                d.student_label === "You" ? "#4ade80" : "#93c5fd"
+              ),
+              data: data.map((d) => Number(d.total_contribution)),
+            },
+          ],
+        };
+      } catch (err) {
+        console.error("Error fetching comparison data:", err);
+        this.chartData = null;
+      }
+    },
+  },
+  async mounted() {
+    await this.fetchCourseInfo();
+    await this.fetchAssessments();
+  },
+};
+</script>
+
+<style scoped>
+.table-success td {
+  font-weight: bold;
+}
+
+.compare-marks{
+  max-width: 100%;
+  margin: auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-section{
+  max-width: 700px;
+  margin: auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1 );
+}
+</style>

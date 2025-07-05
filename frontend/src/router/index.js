@@ -58,6 +58,24 @@ const routes = [
     ]
   },
 
+  {
+  path: '/student/course/:id',
+  component: () => import('@/views/student/CourseMarksLayout.vue'),
+  children: [
+    {
+      path: '',
+      name: 'StudentCourseMarks',
+      component: () => import('@/views/student/StudentCourseMarks.vue') // mark breakdown
+    },
+    {
+      path: 'compare',
+      name: 'CompareMarks',
+      component: () => import('@/views/student/CompareMarks.vue') // chart view
+    }
+  ]
+},
+
+
   // Advisor routes
   { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
   { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
