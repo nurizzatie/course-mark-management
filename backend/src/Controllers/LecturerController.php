@@ -336,17 +336,19 @@ class LecturerController
 
         // Grade logic function
         function calculateGrade($total) {
-            if ($total >= 85) return 'A';
-            if ($total >= 80) return 'A-';
-            if ($total >= 75) return 'B+';
-            if ($total >= 70) return 'B';
-            if ($total >= 65) return 'B-';
-            if ($total >= 60) return 'C+';
-            if ($total >= 55) return 'C';
-            if ($total >= 50) return 'C-';
-            if ($total >= 45) return 'D+';
-            if ($total >= 40) return 'D';
-            return 'F';
+            if ($total >= 90) return 'A+';
+            if ($total >= 80) return 'A';
+            if ($total >= 75) return 'A-';
+            if ($total >= 70) return 'B+';
+            if ($total >= 65) return 'B';
+            if ($total >= 60) return 'B-';
+            if ($total >= 55) return 'C+';
+            if ($total >= 50) return 'C';
+            if ($total >= 45) return 'C-';
+            if ($total >= 40) return 'D+';
+            if ($total >= 35) return 'D';
+            if ($total >= 30) return 'D-';
+            return 'E';
         }
 
         // Calculate total and grade
@@ -404,19 +406,34 @@ class LecturerController
             $updateRemarkStmt->execute([$remark, $courseId, $studentId]);
         }
 
-        foreach ($marks as $entry) {
-            if (isset($entry['student_id'], $entry['assessment_id'], $entry['obtained_mark'])) {
-                $insertStmt->execute([
-                    $entry['student_id'],
-                    $entry['assessment_id'],
-                    $entry['obtained_mark']
-                ]);
-            }
-        }
+        // Get course name for message
+        $courseStmt = $this->db->prepare("SELECT course_name FROM courses WHERE id = ?");
+        $courseStmt->execute([$courseId]);
+        $course = $courseStmt->fetch();
+        $courseName = $course ? $course['course_name'] : '';
+
 
         foreach ($data['marks'] as $entry) {
             $studentId = $entry['student_id'];
             $assessmentId = $entry['assessment_id'];
+            $newMark = $entry['obtained_mark'];
+
+            // Check if mark already exists
+            $stmt = $this->db->prepare("SELECT obtained_mark FROM student_assessments WHERE student_id = ? AND assessment_id = ?");
+            $stmt->execute([$studentId, $assessmentId]);
+            $existing = $stmt->fetchColumn();
+
+            if ($existing !== false && floatval($existing) == floatval($newMark)) {
+                continue; // unchanged
+            }
+
+            // Save new mark
+            $stmt = $this->db->prepare("
+                INSERT INTO student_assessments (student_id, assessment_id, obtained_mark)
+                VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE obtained_mark = VALUES(obtained_mark)
+            ");
+            $stmt->execute([$studentId, $assessmentId, $newMark]);
 
             // Get assessment title
             $stmt = $this->db->prepare("SELECT title FROM assessments WHERE id = ?");
@@ -424,13 +441,13 @@ class LecturerController
             $assessment = $stmt->fetch();
 
             if ($assessment) {
-                $message = "Your mark for '{$assessment['title']}' has been updated.";
+                $message = "Your mark for '{$assessment['title']}' in {$courseName} has been updated.";
 
                 $stmt = $this->db->prepare("
-                    INSERT INTO notifications (user_id, message, seen)
-                    VALUES (?, ?, 0)
+                    INSERT INTO notifications (user_id, message, seen, course_id)
+                    VALUES (?, ?, 0, ?)
                 ");
-                $stmt->execute([$studentId, $message]);
+                $stmt->execute([$studentId, $message, $courseId]);
             }
         }
 

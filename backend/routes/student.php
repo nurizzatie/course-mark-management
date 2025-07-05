@@ -8,5 +8,6 @@ return function (App $app) {
     $app->get('/api/student/{id}/dashboard', [StudentController::class, 'dashboard']);
     $app->get('/api/student/{studentId}/course/{courseId}/marks', [StudentController::class, 'viewCourseMarks']);
     $app->post('/api/remark/request', [StudentController::class, 'submitRemarkRequest']);
-
+    $app->get('/api/students/{id}/notifications', StudentController::class . ':getNotifications');
+    $app->post('/api/student/notifications/{id}/seen', StudentController::class . ':markNotificationSeen');
 };
