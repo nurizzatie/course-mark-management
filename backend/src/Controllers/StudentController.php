@@ -272,6 +272,26 @@ class StudentController
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     
 }
+    // Notification
+    public function getNotifications(Request $request, Response $response, $args): Response
+    {
+        $studentId = $args['id'];
 
+        $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$studentId]);
+        $notifications = $stmt->fetchAll();
+
+        $response->getBody()->write(json_encode(['notifications' => $notifications]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function markNotificationSeen(Request $request, Response $response, $args): Response {
+        $id = $args['id'];
+        $stmt = $this->db->prepare("UPDATE notifications SET seen = 1 WHERE id = ?");
+        $stmt->execute([$id]);
+
+        $response->getBody()->write(json_encode(['message' => 'Notification marked as seen']));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
 
 }

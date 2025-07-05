@@ -20,7 +20,5 @@ return function (App $app) {
         $group->get('/courses/{course_id}/marks', LecturerController::class . ':getCourseMarks');
         $group->post('/courses/{course_id}/marks', LecturerController::class . ':saveCourseMarks');
         $group->post('/courses/{course_id}/marks/upload', LecturerController::class . ':uploadMarksCsv');
-        // $app->get('/student/notifications', StudentController::class . ':getNotifications');
-        // $app->post('/student/notifications/{id}/seen', StudentController::class . ':markNotificationSeen');
     });
 };

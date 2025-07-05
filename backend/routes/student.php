@@ -20,5 +20,6 @@ return function (App $app) {
 
     // Remark request route (can be grouped later under /api/remark if needed)
     $app->post('/api/remark/request', [StudentController::class, 'submitRemarkRequest']);
-
+    $app->get('/api/students/{id}/notifications', StudentController::class . ':getNotifications');
+    $app->post('/api/student/notifications/{id}/seen', StudentController::class . ':markNotificationSeen');
 };
