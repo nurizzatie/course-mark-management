@@ -8,7 +8,6 @@ import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
 import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue';
 import AdvisorMarkReview from '@/views/advisor/AdvisorMarkReview.vue'; 
 import AdvisorAnalytics from '@/views/advisor/AdvisorAnalytics.vue';
-
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue';
 import GpaCalculator from '@/views/student/performance/GpaCalculator.vue';
 import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue';
@@ -25,6 +24,9 @@ const routes = [
   { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
   { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
   { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
+  { path: '/student/course/:id',name: 'StudentCourseMarks',component: () => import('@/views/student/StudentCourseMarks.vue')},
+  { path: '/student/request-remark', name: 'RequestRemark', component: () => import('@/views/student/RequestRemark.vue')},
+
 
   {
     path: '/student/performance',

@@ -39,6 +39,8 @@ $container->set('db', function () {
 $app = AppFactory::create();
 $app->addRoutingMiddleware();
 $app->addErrorMiddleware(true, true, true);
+$app->addBodyParsingMiddleware();
+
 
 // CORS
 $app->add(function (Request $request, Handler $handler): Response {
@@ -170,9 +172,6 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
     $studentId = $args['id']; // Get the student ID from the URL
     $db = $this->get('db');
 
-    // **IMPORTANT**: This query assumes a 'student_courses' table
-    // that links students to courses (many-to-many relationship).
-    // Adjust this JOIN and WHERE clause if your schema is different.
     try {
         $stmt = $db->prepare("
             SELECT c.id, c.course_code, c.course_name, c.credit_hours
@@ -195,6 +194,7 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 });
 
 
+
 // --- Load Routes from External Files ---
 // This is where your GradePredictorController route is loaded!
 (require __DIR__ . '/../routes/advisor.php')($app);
@@ -203,6 +203,8 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 (require __DIR__ . '/../routes/grade_predictor.php')($app);
 (require __DIR__ . '/../routes/assessments.php')($app);
 require __DIR__ . '/../dependencies.php';
+(require __DIR__ . '/../routes/student.php')($app);
+
 
 
 
