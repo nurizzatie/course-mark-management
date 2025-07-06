@@ -13,24 +13,24 @@ import LecturerRemarkRequests from '@/views/lecturer/LecturerRemarkRequests.vue'
 // Student performance routes & pages
 import StudentDashboard from '@/views/student/StudentDashboard.vue';
 import LecturerDashboard from '@/views/lecturer/LecturerDashboard.vue';
-import AdvisorDashboard from '@/views/advisor/AdvisorDashboard.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
-import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue';
-import AdvisorMarkReview from '@/views/advisor/AdvisorMarkReview.vue'; 
-import AdvisorAnalytics from '@/views/advisor/AdvisorAnalytics.vue';
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue';
 import GpaCalculator from '@/views/student/performance/GpaCalculator.vue';
 import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue';
 import WhatIf from '@/views/student/performance/WhatIf.vue';
-import AdvisorProfile from '@/views/advisor/AdvisorProfile.vue';
-import HighRiskStudents from '@/views/advisor/HighRiskStudents.vue';
 import ManageUsers from '@/views/admin/ManageUsers.vue';
 import AssignLecturers from '@/views/admin/AssignLecturers.vue';
 import Logs from '@/views/admin/Logs.vue';
 import ResetPassword from '@/views/admin/ResetPassword.vue';
 
 //Advisor Pages
+import AdvisorDashboard from '@/views/advisor/AdvisorDashboard.vue';
+import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue';
+import AdvisorMarkReview from '@/views/advisor/AdvisorMarkReview.vue'; 
+import AdvisorAnalytics from '@/views/advisor/AdvisorAnalytics.vue';
+import AdvisorProfile from '@/views/advisor/AdvisorProfile.vue';
+import HighRiskStudents from '@/views/advisor/HighRiskStudents.vue';
 
 
 const routes = [
