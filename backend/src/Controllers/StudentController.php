@@ -15,33 +15,26 @@ class StudentController
         $this->db = $container->get('db');
     }
 
-    // ===============================
-    // STUDENT DASHBOARD ENDPOINT
-    // ===============================
+    // =========================
+    // 📌 STUDENT DASHBOARD
+    // =========================
     public function dashboard(Request $request, Response $response, array $args): Response
     {
         $studentId = $args['id'];
 
-        // 1. Get student info
+        // Get student info
         $stmt = $this->db->prepare("SELECT name, matric_number FROM users WHERE id = ?");
         $stmt->execute([$studentId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$user) {
-            $response->getBody()->write(json_encode(['error' => 'Student not found']));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
+            return $this->json($response, ['error' => 'Student not found'], 404);
         }
 
-        // 2. Get enrolled courses with progress data
+        // Get enrolled courses with progress
         $stmt = $this->db->prepare("
-            SELECT
-              c.id,
-              c.course_code,
-              c.course_name,
-              c.semester,
-              COUNT(a.id) AS total_assessments,
-              COUNT(CASE WHEN sa.obtained_mark IS NOT NULL THEN 1 END) AS marked_assessments
-
+            SELECT c.id, c.course_code, c.course_name, c.semester,
+                   COUNT(a.id) AS total_assessments,
+                   COUNT(CASE WHEN sa.obtained_mark IS NOT NULL THEN 1 END) AS marked_assessments
             FROM courses c
             JOIN student_courses sc ON sc.course_id = c.id
             JOIN assessments a ON a.course_id = c.id
@@ -52,20 +45,16 @@ class StudentController
         $stmt->execute([$studentId, $studentId]);
         $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 3. Add progress field to each course
+        // Add progress and percentile to each course
         foreach ($courses as &$course) {
-            $total = (int) $course['total_assessments'];
-            $marked = (int) $course['marked_assessments'];
-            $course['progress'] = $total > 0 ? round(($marked / $total) * 100) : 0;
+            $courseId = $course['id'];
+            $course['progress'] = ($course['total_assessments'] > 0)
+                ? round(($course['marked_assessments'] / $course['total_assessments']) * 100)
+                : 0;
+            $course['percentile'] = $this->getCoursePercentile($courseId, $studentId);
         }
 
-        // 4. Derive semester
-        $semester = $courses[0]['semester'] ?? 'Unknown';
-
-        // 5. Fake rank (boleh tukar nanti ikut logic betul)
-        $rank = 'Top 15%';
-
-        // 6. Summary Cards (sample values)
+        // Summary data
         $summaryCards = [
             ['title' => 'Average Mark', 'value' => '78%', 'icon' => '📊'],
             ['title' => 'Courses Enrolled', 'value' => count($courses), 'icon' => '📘'],
@@ -73,151 +62,119 @@ class StudentController
             ['title' => 'Upcoming', 'value' => 'Final Exam – 14 Jul', 'icon' => '⏰'],
         ];
 
-        // 7. Final response
-        $data = [
+        return $this->json($response, [
             'student' => [
                 'name' => $user['name'],
                 'matric_number' => $user['matric_number'],
-                'semester' => $semester,
-                'rank' => $rank
+                'semester' => $courses[0]['semester'] ?? 'Unknown',
+                'rank' => 'Top 15%',
+                'percentile' => 75, // Optional: overall percentile
+                'total_students' => 40
             ],
             'summaryCards' => $summaryCards,
             'courses' => $courses
-        ];
-
-        $response->getBody()->write(json_encode($data));
-        return $response->withHeader('Content-Type', 'application/json');
+        ]);
     }
 
+    private function getCoursePercentile($courseId, $studentId)
+    {
+        $stmt = $this->db->prepare("
+            SELECT sa.student_id,
+                   SUM((sa.obtained_mark / a.max_mark) * a.weight_percentage) AS total_contribution
+            FROM student_assessments sa
+            JOIN assessments a ON sa.assessment_id = a.id
+            WHERE a.course_id = ?
+            GROUP BY sa.student_id
+            ORDER BY total_contribution DESC
+        ");
+        $stmt->execute([$courseId]);
+        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $total = count($students);
+        foreach ($students as $i => $s) {
+            if ($s['student_id'] == $studentId) {
+                return round((($total - ($i + 1)) / $total) * 100, 2);
+            }
+        }
+        return 0;
+    }
+
+    // =========================
+    // 📌 COURSE INFO & MARKS
+    // =========================
     public function getCourseInfo(Request $request, Response $response, array $args): Response
-{
-    $courseId = $args['id'];
-    $stmt = $this->db->prepare("SELECT course_name AS name, course_code AS code FROM courses WHERE id = :id");
-
-    $stmt->execute([':id' => $courseId]);
-    $course = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    $response->getBody()->write(json_encode($course));
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-}
-
+    {
+        $stmt = $this->db->prepare("SELECT course_name AS name, course_code AS code FROM courses WHERE id = :id");
+        $stmt->execute([':id' => $args['id']]);
+        return $this->json($response, $stmt->fetch(PDO::FETCH_ASSOC));
+    }
 
     public function viewCourseMarks(Request $request, Response $response, array $args): Response
-{
-    $studentId = $args['studentId'] ?? null;
-    $courseId = $args['courseId'] ?? null;
+    {
+        $stmt = $this->db->prepare("
+            SELECT a.id AS assessment_id, a.title AS component, a.max_mark, a.weight_percentage,
+                   c.course_name, c.course_code,
+                   sa.obtained_mark, rr.status AS remark_status
+            FROM assessments a
+            JOIN courses c ON a.course_id = c.id
+            JOIN student_assessments sa ON sa.assessment_id = a.id AND sa.student_id = :student_id
+            LEFT JOIN remark_requests rr ON rr.assessment_id = a.id AND rr.student_id = :student_id
+            WHERE a.course_id = :course_id
+        ");
+        $stmt->execute([
+            ':student_id' => $args['studentId'],
+            ':course_id' => $args['courseId']
+        ]);
+        $components = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stmt = $this->db->prepare("
-        SELECT 
-            a.id AS assessment_id,
-            a.title AS component,
-            a.max_mark,
-            a.course_id,
-            a.weight_percentage,
-            c.course_name,
-            c.course_code,
-            sa.obtained_mark,
-            rr.status AS remark_status
-        FROM assessments a
-        JOIN courses c ON a.course_id = c.id
-        JOIN student_assessments sa 
-            ON sa.assessment_id = a.id AND sa.student_id = :student_id
-        LEFT JOIN remark_requests rr 
-            ON rr.assessment_id = a.id AND rr.student_id = :student_id
-        WHERE a.course_id = :course_id
-    ");
+        $summary = ['total_obtained' => 0, 'total_max' => 0];
+        foreach ($components as &$comp) {
+            $obtained = $comp['obtained_mark'] ?? 0;
+            $max = $comp['max_mark'];
+            $weight = $comp['weight_percentage'];
+            $contribution = $max > 0 ? ($obtained / $max) * $weight : 0;
 
-    $stmt->execute([
-        ':student_id' => $studentId,
-        ':course_id' => $courseId
-    ]);
-
-    $components = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $totalObtained = 0;
-    $totalMax = 0;
-
-    foreach ($components as &$comp) {
-        $obtained = isset($comp['obtained_mark']) ? (float) $comp['obtained_mark'] : null;
-        $max = (float) $comp['max_mark'];
-        $weight = (float) $comp['weight_percentage'];
-
-        // Calculate contribution
-        if ($obtained !== null && $max > 0) {
-            $comp['contribution'] = round(($obtained / $max) * $weight, 2);
-        } else {
-            $comp['contribution'] = 0;
+            $summary['total_obtained'] += $obtained;
+            $summary['total_max'] += $max;
+            $comp['contribution'] = round($contribution, 2);
+            $comp['remark_requested'] = $comp['remark_status'] !== null;
         }
+        $summary['percentage'] = $summary['total_max'] > 0
+            ? round(($summary['total_obtained'] / $summary['total_max']) * 100, 2)
+            : 0;
 
-        $totalMax += $max;
-        $totalObtained += $obtained ?? 0;
-
-        // Add flag to disable button in frontend
-        $comp['remark_requested'] = $comp['remark_status'] !== null;
+        return $this->json($response, [
+            'components' => $components,
+            'summary' => $summary
+        ]);
     }
 
-    $summary = [
-        'total_obtained' => $totalObtained,
-        'total_max' => $totalMax,
-        'percentage' => $totalMax > 0 ? round(($totalObtained / $totalMax) * 100, 2) : 0
-    ];
-
-    $response->getBody()->write(json_encode([
-        'components' => $components,
-        'summary' => $summary
-    ]));
-
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-}
-
-
+    // =========================
+    // 📌 REMARK REQUEST
+    // =========================
     public function submitRemarkRequest(Request $request, Response $response, array $args): Response
     {
-        $parsedBody = $request->getParsedBody();
-        $uploadedFiles = $request->getUploadedFiles();
-
-        $studentId = $parsedBody['student_id'] ?? null;
-        $assessmentId = $parsedBody['assessment_id'] ?? null;
-        $justification = $parsedBody['justification'] ?? null;
-
-        if (!$studentId || !$assessmentId || !$justification) {
-            $response->getBody()->write(json_encode(['error' => 'Missing required fields.']));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-
-        }
-
-        // Handle optional file upload
-        $filePath = null;
-        if (isset($uploadedFiles['file'])) {
-            $file = $uploadedFiles['file'];
-            if ($file->getError() === UPLOAD_ERR_OK) {
-                $uploadDir = __DIR__ . '/../../uploads/remarks';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
-                }
-                $filename = uniqid() . '_' . $file->getClientFilename();
-                $filePath = $uploadDir . '/' . $filename;
-                $file->moveTo($filePath);
-            }
+        $body = $request->getParsedBody();
+        if (!$body['student_id'] || !$body['assessment_id'] || !$body['justification']) {
+            return $this->json($response, ['error' => 'Missing required fields.'], 400);
         }
 
         $stmt = $this->db->prepare("
-        INSERT INTO remark_requests (student_id, assessment_id, justification, status, created_at)
-        VALUES (:student_id, :assessment_id, :justification, 'pending', NOW())
-    ");
-
+            INSERT INTO remark_requests (student_id, assessment_id, justification, status, created_at)
+            VALUES (:student_id, :assessment_id, :justification, 'pending', NOW())
+        ");
         $stmt->execute([
-            ':student_id' => $studentId,
-            ':assessment_id' => $assessmentId,
-            ':justification' => $justification
+            ':student_id' => $body['student_id'],
+            ':assessment_id' => $body['assessment_id'],
+            ':justification' => $body['justification']
         ]);
 
-        $response->getBody()->write(json_encode(['message' => 'Remark request submitted successfully.']));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
-
+        return $this->json($response, ['message' => 'Remark request submitted successfully.'], 201);
     }
 
-     // ✅ Fetch list of assessments for a course (for dropdown)
+    // =========================
+    //  ASSESSMENT COMPARISON
+    // =========================
+    //  Fetch list of assessments for a course (for dropdown)
     public function getAssessmentsByCourse(Request $request, Response $response, array $args): Response
     {
         $courseId = $args['id'];
@@ -234,8 +191,7 @@ class StudentController
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-    // ✅ Fetch comparison data for a selected assessment
-    public function compareAssessmentMarks(Request $request, Response $response, array $args): Response
+     public function compareAssessmentMarks(Request $request, Response $response, array $args): Response
     {
         $courseId = $args['courseId'];
         $assessmentId = $args['assessmentId'];
@@ -272,26 +228,179 @@ class StudentController
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     
 }
-    // Notification
+
+
+
+    // =========================
+    // 📌 RANKING & TABLE
+    // =========================
+    public function getStudentRank(Request $request, Response $response, array $args): Response
+    {
+        $courseId = $args['id'];
+        $studentId = $args['studentId'];
+
+        $stmt = $this->db->prepare("
+            SELECT sa.student_id,
+                   SUM((sa.obtained_mark / a.max_mark) * a.weight_percentage) AS total_contribution
+            FROM student_assessments sa
+            JOIN assessments a ON sa.assessment_id = a.id
+            WHERE a.course_id = ?
+            GROUP BY sa.student_id
+            ORDER BY total_contribution DESC
+        ");
+        $stmt->execute([$courseId]);
+        $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $total = count($students);
+        foreach ($students as $i => $s) {
+            if ($s['student_id'] == $studentId) {
+                return $this->json($response, [
+                    'rank' => $i + 1,
+                    'percentile' => round((($total - ($i + 1)) / $total) * 100, 2),
+                    'total_students' => $total
+                ]);
+            }
+        }
+
+        return $this->json($response, ['rank' => null, 'percentile' => null, 'total_students' => $total]);
+    }
+
+    public function getRankTable(Request $request, Response $response, array $args): Response
+    {
+        $courseId = $args['id'];
+
+        $stmt = $this->db->prepare("
+            SELECT sa.student_id, sa.assessment_id, sa.obtained_mark,
+                   a.title, a.max_mark, u.name
+            FROM student_assessments sa
+            JOIN assessments a ON sa.assessment_id = a.id
+            JOIN users u ON sa.student_id = u.id
+            WHERE a.course_id = ?
+        ");
+        $stmt->execute([$courseId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $students = [];
+        foreach ($rows as $r) {
+            $sid = $r['student_id'];
+            if (!isset($students[$sid])) {
+                $students[$sid] = [
+                    'student_id' => $sid,
+                    'name' => $r['name'],
+                    'total' => 0,
+                    'assessments' => []
+                ];
+            }
+            $percentage = $r['obtained_mark'] / $r['max_mark'];
+            $students[$sid]['total'] += $percentage;
+            $students[$sid]['assessments'][] = [
+                'title' => $r['title'],
+                'score' => $r['obtained_mark'],
+                'max' => $r['max_mark']
+            ];
+        }
+
+        usort($students, fn($a, $b) => $b['total'] <=> $a['total']);
+        $total = count($students);
+        foreach ($students as $i => &$s) {
+            $s['rank'] = $i + 1;
+            $s['percentile'] = round((($total - ($i + 1)) / $total) * 100, 2);
+            unset($s['total']);
+        }
+
+        return $this->json($response, array_values($students));
+    }
+
+    public function getPerformanceChart(Request $request, Response $response, array $args): Response
+{
+    $studentId = $args['studentId'];
+
+    // 1. Get list of courses the student enrolled in
+    $stmt = $this->db->prepare("
+    SELECT c.id, c.course_name AS name
+    FROM courses c
+    JOIN student_courses sc ON sc.course_id = c.id
+    WHERE sc.student_id = :studentId
+");
+
+    $stmt->execute([':studentId' => $studentId]);
+    $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $results = [];
+    $assessmentTitles = [];
+
+    foreach ($courses as $course) {
+        // 2. Get assessments for this course
+        $stmtAssessments = $this->db->prepare("
+            SELECT a.id, a.title
+            FROM assessments a
+            WHERE a.course_id = :courseId
+            ORDER BY a.id ASC
+        ");
+        $stmtAssessments->execute([':courseId' => $course['id']]);
+        $assessments = $stmtAssessments->fetchAll(PDO::FETCH_ASSOC);
+
+        // Store titles only once (for the first course)
+        if (empty($assessmentTitles)) {
+            $assessmentTitles = array_column($assessments, 'title');
+        }
+
+        // 3. Get student's marks for each assessment
+        $marks = [];
+        foreach ($assessments as $assessment) {
+            $stmtMark = $this->db->prepare("
+                SELECT obtained_mark 
+                FROM student_assessments 
+                WHERE student_id = :studentId AND assessment_id = :assessmentId
+            ");
+            $stmtMark->execute([
+                ':studentId' => $studentId,
+                ':assessmentId' => $assessment['id']
+            ]);
+            $mark = $stmtMark->fetchColumn();
+            $marks[] = $mark !== false ? floatval($mark) : null;
+        }
+
+        $results[] = [
+            'course' => $course['name'],
+            'marks' => $marks
+        ];
+    }
+
+    // Final output with titles
+    $final = [
+        'assessments' => $assessmentTitles,
+        'courses' => $results
+    ];
+
+    $response->getBody()->write(json_encode($final));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+}
+
+
+    // =========================
+    // 📌 NOTIFICATIONS
+    // =========================
     public function getNotifications(Request $request, Response $response, $args): Response
     {
-        $studentId = $args['id'];
-
         $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC");
-        $stmt->execute([$studentId]);
-        $notifications = $stmt->fetchAll();
-
-        $response->getBody()->write(json_encode(['notifications' => $notifications]));
-        return $response->withHeader('Content-Type', 'application/json');
+        $stmt->execute([$args['id']]);
+        return $this->json($response, ['notifications' => $stmt->fetchAll()]);
     }
 
-    public function markNotificationSeen(Request $request, Response $response, $args): Response {
-        $id = $args['id'];
+    public function markNotificationSeen(Request $request, Response $response, $args): Response
+    {
         $stmt = $this->db->prepare("UPDATE notifications SET seen = 1 WHERE id = ?");
-        $stmt->execute([$id]);
-
-        $response->getBody()->write(json_encode(['message' => 'Notification marked as seen']));
-        return $response->withHeader('Content-Type', 'application/json');
+        $stmt->execute([$args['id']]);
+        return $this->json($response, ['message' => 'Notification marked as seen']);
     }
 
+    // =========================
+    // 📌 Helper
+    // =========================
+    private function json(Response $response, $data, $status = 200): Response
+    {
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+    }
 }
