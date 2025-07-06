@@ -1,10 +1,43 @@
-// ✅ AssignLecturers.vue (Updated)
 <template>
   <AppLayout :role="'Admin'" :navItems="navItems" :pageTitle="pageTitle">
     <div class="container py-4">
-      <h2 class="mb-4 fw-bold">Assign Lecturers to Courses</h2>
+      <!-- Header and Add Course Button -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">Assign Lecturers to Courses</h2>
+        <button @click="showAddModal = true" class="btn btn-primary">+ Add Course</button>
+      </div>
 
-      <form @submit.prevent="assignLecturer" class="mb-4 needs-validation" novalidate>
+      <!-- Add Course Modal -->
+      <div v-if="showAddModal" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex justify-content-center align-items-center" style="z-index: 1050;">
+        <div class="bg-white p-4 rounded shadow w-100" style="max-width: 500px;">
+          <h5 class="mb-3">Add New Course</h5>
+          <form @submit.prevent="submitNewCourse">
+            <div class="mb-3">
+              <label class="form-label">Course Code</label>
+              <input v-model="newCourse.course_code" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Course Name</label>
+              <input v-model="newCourse.course_name" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Semester</label>
+              <input v-model="newCourse.semester" class="form-control" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Year</label>
+              <input v-model="newCourse.year" type="number" class="form-control" required />
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" @click="showAddModal = false" class="btn btn-secondary">Cancel</button>
+              <button type="submit" class="btn btn-success">Add</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Assign Form -->
+      <form @submit.prevent="assignLecturer" class="mb-4">
         <div class="row mb-3">
           <div class="col-md-6">
             <label for="course" class="form-label">Select Course</label>
@@ -27,15 +60,8 @@
           </div>
         </div>
 
-        <button class="btn btn-success" :disabled="loading">
-          {{ loading ? 'Assigning...' : 'Assign Lecturer' }}
-        </button>
+        <button class="btn btn-success">Assign Lecturer</button>
       </form>
-
-      <!-- Optional: Simple Chart -->
-      <div class="mt-5">
-        <canvas id="assignmentChart" height="100"></canvas>
-      </div>
     </div>
   </AppLayout>
 </template>
@@ -43,20 +69,30 @@
 <script>
 import axios from 'axios'
 import AppLayout from '@/layouts/AppLayout.vue'
-import Chart from 'chart.js/auto'
-import adminNavItems from '@/constants/adminNavItems'
 
 export default {
-  name: 'AssignLecturers',
+  name: 'AssignLecturer',
   components: { AppLayout },
   data() {
     return {
+      showAddModal: false,
+      newCourse: {
+        course_code: '',
+        course_name: '',
+        semester: '',
+        year: new Date().getFullYear()
+      },
       courses: [],
       lecturers: [],
       selectedCourse: '',
       selectedLecturer: '',
-      loading: false,
-      navItems: adminNavItems,
+      navItems: [
+        { name: 'Dashboard', link: '/admin/dashboard' },
+        { name: 'Manage Users', link: '/admin/users' },
+        { name: 'Assign Lecturers', link: '/admin/assign' },
+        { name: 'Logs', link: '/admin/logs' },
+        { name: 'Reset Password', link: '/admin/reset' }
+      ],
       pageTitle: 'Assign Lecturers'
     }
   },
@@ -69,19 +105,12 @@ export default {
         const res = await axios.get('http://localhost:8080/api/admin/assign-data')
         this.courses = res.data.courses
         this.lecturers = res.data.lecturers
-        this.renderChart()
       } catch (err) {
         console.error('Error loading data:', err)
         alert('Failed to load courses and lecturers.')
       }
     },
     async assignLecturer() {
-      if (!this.selectedCourse || !this.selectedLecturer) {
-        alert('Please select both course and lecturer.')
-        return
-      }
-
-      this.loading = true
       try {
         await axios.post('http://localhost:8080/api/admin/assign-lecturer', {
           course_id: this.selectedCourse,
@@ -90,42 +119,28 @@ export default {
         alert('Lecturer successfully assigned to course!')
         this.selectedCourse = ''
         this.selectedLecturer = ''
-        this.fetchData() // refresh data
       } catch (err) {
         console.error('Assignment error:', err)
         alert('Failed to assign lecturer.')
-      } finally {
-        this.loading = false
       }
     },
-    renderChart() {
-      const ctx = document.getElementById('assignmentChart')
-      if (ctx) {
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: this.courses.map(c => c.course_code),
-            datasets: [{
-              label: 'Assigned Courses (Static Preview)',
-              data: this.courses.map(() => Math.floor(Math.random() * 2)), // fake 0/1 assigned
-              backgroundColor: '#28a745'
-            }]
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: { display: false }
-            }
-          }
-        })
+    async submitNewCourse() {
+      try {
+        await axios.post('http://localhost:8080/api/admin/courses', this.newCourse)
+        alert('Course added successfully')
+        this.showAddModal = false
+        this.newCourse = {
+          course_code: '',
+          course_name: '',
+          semester: '',
+          year: new Date().getFullYear()
+        }
+        this.fetchData() // Refresh course list
+      } catch (err) {
+        alert('Failed to add course')
+        console.error(err)
       }
     }
   }
 }
 </script>
-
-<style scoped>
-label {
-  font-weight: 600;
-}
-</style>
