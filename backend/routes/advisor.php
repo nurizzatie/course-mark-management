@@ -41,6 +41,18 @@ $app->post('/api/advisor/notes', function ($request, $response, $args) use ($con
     return $controller->addAdvisorNote($request, $response, $args);
 });
 
+// GET advisor profile
+$app->get('/api/advisor/profile/{id}', function ($request, $response, $args) {
+    $controller = new \App\Controllers\AdvisorController($this);
+    return $controller->getProfile($request, $response, $args);
+});
+
+// PUT update advisor profile
+$app->put('/api/advisor/profile/{id}', function ($request, $response, $args) {
+    $controller = new \App\Controllers\AdvisorController($this);
+    return $controller->updateProfile($request, $response, $args);
+});
+
 };
 
 

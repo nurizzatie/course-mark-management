@@ -12,11 +12,11 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="student in students" :key="student.id" class="border-t">
+        <tr v-for="student in students" :key="student.student_id" class="border-t">
           <td class="px-4 py-2">{{ student.name }}</td>
           <td class="px-4 py-2">{{ student.email }}</td>
           <td class="px-4 py-2">{{ student.matric_number }}</td>
-          <td class="px-4 py-2">{{ student.remark || 'No remark yet' }}</td>
+          <td class="px-4 py-2">{{ student.remarks || 'No remark yet' }}</td>
         </tr>
       </tbody>
     </table>
@@ -54,6 +54,7 @@ table {
   border-collapse: collapse;
 }
 </style>
+
 
 
 

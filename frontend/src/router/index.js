@@ -41,6 +41,59 @@ const routes = [
       { path: 'cgpa', component: CumulativeGpa },
       { path: 'what-if', component: WhatIf }
     ]
+<<<<<<< HEAD
+=======
+  },
+
+  {
+  path: '/student/course/:id',
+  component: () => import('@/views/student/CourseMarksLayout.vue'),
+  children: [
+    {
+      path: '',
+      name: 'StudentCourseMarks',
+      component: () => import('@/views/student/StudentCourseMarks.vue') // mark breakdown
+    },
+    {
+      path: 'compare',
+      name: 'CompareMarks',
+      component: () => import('@/views/student/CompareMarks.vue') // chart view
+    }
+  ]
+},
+
+
+  // Advisor routes
+  { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
+  { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
+  { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
+
+  // Flat admin routes using AppLayout inside each page
+  {
+    path: '/admin/dashboard',
+    name: 'AdminDashboard',
+    component: AdminDashboard
+  },
+  {
+    path: '/admin/users',
+    name: 'ManageUsers',
+    component: ManageUsers
+  },
+  {
+    path: '/admin/assign-lecturers',
+    name: 'AssignLecturers',
+    component: AssignLecturers
+  },
+  {
+    path: '/admin/logs',
+    name: 'SystemLogs',
+    component: Logs
+  },
+  {
+    path: '/admin/reset',
+    name: 'ResetPassword',
+    component: ResetPassword
+>>>>>>> 3c062c7bc990c543fbbad0eef06913c33abe026d
   }
 
   

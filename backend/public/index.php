@@ -202,5 +202,6 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 require __DIR__ . '/../dependencies.php';
 (require __DIR__ . '/../routes/student.php')($app);
 
+
 // Final run the application
 $app->run();

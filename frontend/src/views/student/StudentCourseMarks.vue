@@ -1,10 +1,10 @@
 <template>
-  <AppLayout :role="'Student'" :navItems="navItems" :pageTitle="'Course Marks'">
+ <div class="marks-breakdown">
     <div class="container mt-4">
       <div v-if="loading">Loading course marks...</div>
       <div v-else-if="error" class="text-danger">{{ error }}</div>
       <div v-else>
-        <h2>{{ courseName }} ({{ courseCode }})</h2>
+        <h2><strong>{{ courseName }} ({{ courseCode }})</strong></h2>
         <p class="text-muted mb-4">Component-wise Marks</p>
 
         <table class="table table-striped" v-if="marks.length > 0">
@@ -28,19 +28,17 @@
               <td>{{ item.weight_percentage }}</td>
               <td>{{ item.contribution }}</td>
               <td>
-                <button
-                  class="btn btn-sm btn-outline-primary"
-                  @click="requestRemark(item)"
-                  :disabled="item.obtained_mark === null"
-                  :title="
-                    item.obtained_mark === null
-                      ? 'Not yet graded'
-                      : 'Click to request remark'
-                  "
-                >
-                  Request Remark
-                </button>
-              </td>
+  <button
+  :class="['btn btn-sm', item.remark_status ? 'btn-secondary' : 'btn-outline-primary']"
+  :disabled="item.remark_status"
+  @click="!item.remark_status && requestRemark(item)"
+>
+  {{ item.remark_status ? 'Remark Submitted' : 'Request Remark' }}
+</button>
+
+
+</td>
+
             </tr>
           </tbody>
         </table>
@@ -56,15 +54,13 @@
         </div>
       </div>
     </div>
-  </AppLayout>
+ </div>
 </template>
 
 <script>
-import AppLayout from "@/layouts/AppLayout.vue";
 
 export default {
   name: "CourseMarks",
-  components: { AppLayout },
   data() {
     return {
       courseName: "",
@@ -157,3 +153,15 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.marks-breakdown {
+  max-width: 100%;
+  margin: auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+</style>
+

@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-md mx-auto">
-    <h2 class="text-xl font-bold mb-4">Advisor Profile</h2>
+    <h2 class="text-xl font-bold mb-4">My Profile</h2>
     <div class="p-4 border rounded shadow bg-white">
       <p><strong>Name:</strong> {{ profile.name }}</p>
       <p><strong>Email:</strong> {{ profile.email }}</p>
@@ -10,6 +10,7 @@
 </template>
 
 <script>
+
 import axios from 'axios';
 
 export default {

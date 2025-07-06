@@ -56,6 +56,7 @@ class AdvisorController
         u.matric_number,
         a.title AS assessment_name,
         sa.obtained_mark,
+        a.max_mark,
         sa.updated_at
     FROM student_assessments sa
     JOIN users u ON sa.student_id = u.id
@@ -205,7 +206,41 @@ public function addAdvisorNote(Request $request, Response $response, $args): Res
         return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
 }
+//Get Advisor Profile
+public function getProfile(Request $request, Response $response, $args): Response
+{
+    $id = $args['id'];
+    $stmt = $this->db->prepare("SELECT id, name, email FROM users WHERE id = :id AND role = 'advisor'");
+    $stmt->execute(['id' => $id]);
+    $advisor = $stmt->fetch();
 
+    if ($advisor) {
+        $response->getBody()->write(json_encode($advisor));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    return $response->withStatus(404)->withHeader('Content-Type', 'application/json')
+                    ->write(json_encode(['error' => 'Advisor not found']));
+}
+
+//POST Advisor Profile
+public function updateProfile(Request $request, Response $response, $args): Response
+{
+    $id = $args['id'];
+    $data = json_decode($request->getBody()->getContents(), true);
+
+    $sql = "UPDATE users SET name = :name, email = :email WHERE id = :id AND role = 'advisor'";
+    $stmt = $this->db->prepare($sql);
+
+    $stmt->execute([
+        'id' => $id,
+        'name' => $data['name'],
+        'email' => $data['email']
+    ]);
+
+    $response->getBody()->write(json_encode(['message' => 'Profile updated']));
+    return $response->withHeader('Content-Type', 'application/json');
+}
 
 
 }

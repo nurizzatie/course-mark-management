@@ -2,11 +2,23 @@
 
 use Slim\App;
 use App\Controllers\StudentController;
-use App\Controllers\RemarkController;
 
 return function (App $app) {
-    $app->get('/api/student/{id}/dashboard', [StudentController::class, 'dashboard']);
-    $app->get('/api/student/{studentId}/course/{courseId}/marks', [StudentController::class, 'viewCourseMarks']);
+
+    // ❗ Standalone route for course info
+    $app->get('/api/course/{id}', [StudentController::class, 'getCourseInfo']);
+
+    // Group all student-related routes
+    $app->group('/api/student', function ($group) {
+        $group->get('/{id}/dashboard', [StudentController::class, 'dashboard']);
+        $group->get('/{studentId}/course/{courseId}/marks', [StudentController::class, 'viewCourseMarks']);
+        $group->get('/course/{id}/assessment-list', [StudentController::class, 'getAssessmentsByCourse']);
+
+        // ✅ Comparison chart data
+        $group->get('/course/{courseId}/compare/{assessmentId}', [StudentController::class, 'compareAssessmentMarks']);
+    });
+
+    // Remark request route (can be grouped later under /api/remark if needed)
     $app->post('/api/remark/request', [StudentController::class, 'submitRemarkRequest']);
     $app->get('/api/students/{id}/notifications', StudentController::class . ':getNotifications');
     $app->post('/api/student/notifications/{id}/seen', StudentController::class . ':markNotificationSeen');
