@@ -3,7 +3,7 @@
     <div class="container py-4">
       <!-- Add Button -->
       <div class="d-flex justify-content-end mb-3">
-        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#courseModal" @click="openCreateModal">
+        <button class="btn btn-dark" @click="openCreateModal">
           <i class="fas fa-plus me-1"></i> Add Course
         </button>
       </div>
@@ -97,6 +97,7 @@
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Modal } from 'bootstrap';
+import { nextTick } from 'vue';
 import api from '@/api';
 
 export default {
@@ -110,6 +111,7 @@ export default {
         { name: 'Dashboard', link: '/lecturer/dashboard' },
         { name: 'My Courses', link: '/lecturer/courses', active: true },
         { name: 'Student Enrollment', link: '/lecturer/students' },
+        { name: 'Remark Requests', link: '/lecturer/remark-requests' },
         { name: 'Profile', link: '/lecturer/profile' }
       ],
       pageTitle: 'My Courses',
@@ -144,8 +146,14 @@ export default {
       });
     },
     openCreateModal() {
-    this.isEdit = false;
-    this.courseForm = { id: null, course_code: '', course_name: '', semester: '', year: '' };
+      this.isEdit = false;
+      this.courseForm = { id: null, course_code: '', course_name: '', semester: '', year: '' };
+
+      nextTick(() => {
+        const modalEl = document.getElementById('courseModal');
+        const modalInstance = Modal.getInstance(modalEl) || new Modal(modalEl);
+        modalInstance.show();
+      });
     },
     openEditModal(course) {
       this.isEdit = true;
@@ -153,20 +161,34 @@ export default {
       new Modal(document.getElementById('courseModal')).show();
     },
     submitCourse() {
+      const { course_code, course_name, semester, year } = this.courseForm;
+
+      // Validation check
+      if (!course_code || !course_name || !semester || !year) {
+        this.showToast('Please fill in all fields.', 'danger');
+        return;
+      }
+
       const method = this.isEdit ? 'put' : 'post';
-      const url = this.isEdit ? `/lecturer/courses/${this.courseForm.id}` : '/lecturer/courses';
+      const url = this.isEdit
+        ? `/lecturer/courses/${this.courseForm.id}`
+        : '/lecturer/courses';
 
       api[method](url, this.courseForm, {
         headers: {
           'Content-Type': 'application/json',
           'X-User': JSON.stringify(this.user)
         }
-      }).then(() => {
+      })
+        .then(() => {
           this.loadCourses();
           const modalEl = document.getElementById('courseModal');
           const modalInstance = Modal.getInstance(modalEl) || new Modal(modalEl);
           modalInstance.hide();
           this.showToast(this.isEdit ? 'Course updated successfully' : 'Course created successfully');
+        })
+        .catch(() => {
+          this.showToast('Failed to save course.', 'danger');
         });
     },
     confirmDelete(course) {

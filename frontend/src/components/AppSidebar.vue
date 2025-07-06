@@ -3,9 +3,12 @@
     <!-- Desktop Sidebar -->
     <div class="d-none d-md-flex flex-column app-sidebar text-white">
       <div class="p-3">
-        <div class="fs-4 fw-bold mb-4">CourseMark</div>
+       <div class="text-center mb-4">
+          <img src="@/assets/app-logo2.jpg" class="rounded-circle" alt="CourseMark Logo" style="max-width: 100px;" />
+       </div>
+
         <hr />
-        <ul class="nav nav-pills flex-column">
+        <ul class="nav nav-pills flex-column mt-4">
           <li v-for="item in navItems" :key="item.name" class="nav-item">
             <router-link
               :to="item.link"

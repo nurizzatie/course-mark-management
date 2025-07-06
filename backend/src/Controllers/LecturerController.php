@@ -551,4 +551,193 @@ class LecturerController
         return $response->withHeader('Content-Type', 'application/json');
     }
 
+    // Get course analytics
+    public function getCourseAnalytics(Request $request, Response $response, $args): Response
+    {
+        $courseId = $args['course_id'];
+
+        // Get enrolled students
+        $stmt = $this->db->prepare("
+            SELECT u.id, u.name, u.matric_number
+            FROM student_courses sc
+            JOIN users u ON sc.student_id = u.id
+            WHERE sc.course_id = ?
+        ");
+        $stmt->execute([$courseId]);
+        $students = $stmt->fetchAll();
+
+        // Get assessments
+        $stmt = $this->db->prepare("
+            SELECT id, title, type, weight_percentage, max_mark FROM assessments
+            WHERE course_id = ?
+        ");
+        $stmt->execute([$courseId]);
+        $assessments = $stmt->fetchAll();
+
+        // Get all marks
+        $stmt = $this->db->prepare("
+            SELECT * FROM student_assessments
+            WHERE assessment_id IN (SELECT id FROM assessments WHERE course_id = ?)
+        ");
+        $stmt->execute([$courseId]);
+        $marks = $stmt->fetchAll();
+
+        // Group marks by student
+        $studentData = [];
+        foreach ($students as $s) {
+            $sid = $s['id'];
+            $studentData[$sid] = [
+                'name' => $s['name'],
+                'matric_number' => $s['matric_number'],
+                'marks' => [],
+                'total' => 0,
+                'grade' => ''
+            ];
+        }
+
+        foreach ($marks as $m) {
+            $sid = $m['student_id'];
+            $aid = $m['assessment_id'];
+            $assessment = array_filter($assessments, fn($a) => $a['id'] == $aid);
+            $assessment = array_values($assessment)[0] ?? null;
+
+            if ($assessment) {
+                $weight = floatval($assessment['weight_percentage']);
+                $mark = floatval($m['obtained_mark']);
+                $max = floatval($assessment['max_mark']);
+                $percent = ($max > 0) ? ($mark / $max) * $weight : 0;
+
+                $studentData[$sid]['marks'][] = [
+                    'assessment' => $assessment['title'],
+                    'type' => $assessment['type'],
+                    'obtained' => $mark,
+                    'max' => $max,
+                    'weighted' => round($percent, 2)
+                ];
+
+                $studentData[$sid]['total'] = ($studentData[$sid]['total'] ?? 0) + $percent;
+            }
+        }
+
+        // Calculate grade
+        foreach ($studentData as &$s) {
+            $total = $s['total'];
+            $s['grade'] = match (true) {
+                $total >= 90 => 'A+',
+                $total >= 80 => 'A',
+                $total >= 75 => 'A-',
+                $total >= 70 => 'B+',
+                $total >= 65 => 'B',
+                $total >= 60 => 'B-',
+                $total >= 55 => 'C+',
+                $total >= 50 => 'C',
+                $total >= 45 => 'C-',
+                $total >= 40 => 'D+',
+                $total >= 35 => 'D',
+                $total >= 30 => 'D-',
+                default => 'E'
+            };
+        }
+
+        $response->getBody()->write(json_encode([
+            'students' => array_values($studentData),
+            'assessments' => $assessments
+        ]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    // Get lecturer info for profile view
+    public function getProfile(Request $request, Response $response): Response
+    {
+        $user = json_decode($request->getHeaderLine('X-User'), true);
+        $userId = $user['id'];
+
+        // Get user details
+        $stmt = $this->db->prepare("SELECT id, name, email, matric_number FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $profile = $stmt->fetch();
+
+        // Get courses taught by this lecturer
+        $stmt = $this->db->prepare("
+            SELECT c.id, c.course_code, c.course_name, c.semester, c.year
+            FROM lecturer_courses lc
+            JOIN courses c ON lc.course_id = c.id
+            WHERE lc.lecturer_id = ?
+        ");
+        $stmt->execute([$userId]);
+        $courses = $stmt->fetchAll();
+
+        $response->getBody()->write(json_encode([
+            'profile' => $profile,
+            'courses' => $courses
+        ]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function getRemarkRequests(Request $request, Response $response): Response
+    {
+        $user = json_decode($request->getHeaderLine('X-User'), true);
+        $lecturerId = $user['id'];
+
+        // Get all requests related to lecturer's courses
+        $stmt = $this->db->prepare("
+            SELECT rr.id, rr.justification, rr.supporting_link, rr.status, rr.created_at,
+                a.title AS assessment_title,
+                u.name AS student_name, u.matric_number,
+                c.course_code
+            FROM remark_requests rr
+            JOIN assessments a ON rr.assessment_id = a.id
+            JOIN courses c ON a.course_id = c.id
+            JOIN lecturer_courses lc ON c.id = lc.course_id
+            JOIN users u ON rr.student_id = u.id
+            WHERE lc.lecturer_id = ?
+            ORDER BY rr.created_at DESC
+            LIMIT 10
+        ");
+        $stmt->execute([$lecturerId]);
+        $requests = $stmt->fetchAll();
+
+        $response->getBody()->write(json_encode(['requests' => $requests]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function updateRemarkRequest(Request $request, Response $response, array $args): Response
+    {
+        $id = $args['id'];
+        $data = json_decode($request->getBody()->getContents(), true);
+        $status = $data['status'] ?? 'pending';
+
+        // Validate status
+        if (!in_array($status, ['pending', 'reviewed', 'approved', 'rejected'])) {
+            $response->getBody()->write(json_encode(['message' => 'Invalid status']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Check if remark request exists
+        $stmt = $this->db->prepare("SELECT * FROM remark_requests WHERE id = ?");
+        $stmt->execute([$id]);
+        $existingRequest = $stmt->fetch();
+
+        if (!$existingRequest) {
+            $response->getBody()->write(json_encode(['message' => 'Remark request not found']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Perform update
+        $stmt = $this->db->prepare("UPDATE remark_requests SET status = ?, updated_at = NOW() WHERE id = ?");
+        $stmt->execute([$status, $id]);
+
+        // Fetch updated request
+        $stmt = $this->db->prepare("SELECT * FROM remark_requests WHERE id = ?");
+        $stmt->execute([$id]);
+        $updatedRequest = $stmt->fetch();
+
+        // Return JSON
+        $response->getBody()->write(json_encode([
+            'message' => 'Status updated',
+            'remark' => $updatedRequest
+        ]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
 }

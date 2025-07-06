@@ -1,5 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Login from '@/views/Login.vue';
+
+// Lecturer Pages
+import LecturerDashboard from '@/views/lecturer/LecturerDashboard.vue';
+import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
+import LecturerManageStudents from '@/views/lecturer/LecturerManageStudents.vue';
+import LecturerCourses from '@/views/lecturer/LecturerCourses.vue';
+import LecturerAssessments from '@/views/lecturer/LecturerAssessments.vue';
+import LecturerMarks from '@/views/lecturer/LecturerMarks.vue';
+import LecturerRemarkRequests from '@/views/lecturer/LecturerRemarkRequests.vue';
+
+// Student performance routes & pages
 import StudentDashboard from '@/views/student/StudentDashboard.vue';
 import LecturerDashboard from '@/views/lecturer/LecturerDashboard.vue';
 import AdvisorDashboard from '@/views/advisor/AdvisorDashboard.vue';
@@ -19,6 +30,8 @@ import AssignLecturers from '@/views/admin/AssignLecturers.vue';
 import Logs from '@/views/admin/Logs.vue';
 import ResetPassword from '@/views/admin/ResetPassword.vue';
 
+//Advisor Pages
+
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -37,6 +50,15 @@ const routes = [
   { path: '/advisor/notes', name: 'AdvisorNotes', component: () => import('@/views/advisor/AdvisorNotes.vue')},
 
 
+  { path: '/lecturer/students', component: LecturerManageStudents },
+  { path: '/lecturer/courses', component: LecturerCourses },
+  { path: '/lecturer/courses/:id/assessments', component: LecturerAssessments },
+  { path: '/lecturer/courses/:id/marks', component: LecturerMarks },
+  { path: '/lecturer/remark-requests', component: LecturerRemarkRequests },
+  
+  // Student routes
+  { path: '/student/course/:id',name: 'StudentCourseMarks',component: () => import('@/views/student/StudentCourseMarks.vue')},
+  { path: '/student/request-remark', name: 'RequestRemark', component: () => import('@/views/student/RequestRemark.vue')},
   {
     path: '/student/performance',
     component: PerformanceToolsLayout,
