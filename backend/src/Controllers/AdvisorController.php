@@ -223,24 +223,5 @@ public function getProfile(Request $request, Response $response, $args): Respons
                     ->write(json_encode(['error' => 'Advisor not found']));
 }
 
-//POST Advisor Profile
-public function updateProfile(Request $request, Response $response, $args): Response
-{
-    $id = $args['id'];
-    $data = json_decode($request->getBody()->getContents(), true);
-
-    $sql = "UPDATE users SET name = :name, email = :email WHERE id = :id AND role = 'advisor'";
-    $stmt = $this->db->prepare($sql);
-
-    $stmt->execute([
-        'id' => $id,
-        'name' => $data['name'],
-        'email' => $data['email']
-    ]);
-
-    $response->getBody()->write(json_encode(['message' => 'Profile updated']));
-    return $response->withHeader('Content-Type', 'application/json');
-}
-
 
 }

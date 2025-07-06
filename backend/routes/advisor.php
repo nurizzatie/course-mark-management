@@ -47,12 +47,6 @@ $app->get('/api/advisor/profile/{id}', function ($request, $response, $args) {
     return $controller->getProfile($request, $response, $args);
 });
 
-// PUT update advisor profile
-$app->put('/api/advisor/profile/{id}', function ($request, $response, $args) {
-    $controller = new \App\Controllers\AdvisorController($this);
-    return $controller->updateProfile($request, $response, $args);
-});
-
 };
 
 

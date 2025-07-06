@@ -14,6 +14,11 @@ import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue';
 import WhatIf from '@/views/student/performance/WhatIf.vue';
 import AdvisorProfile from '@/views/advisor/AdvisorProfile.vue';
 import HighRiskStudents from '@/views/advisor/HighRiskStudents.vue';
+import ManageUsers from '@/views/admin/ManageUsers.vue';
+import AssignLecturers from '@/views/admin/AssignLecturers.vue';
+import Logs from '@/views/admin/Logs.vue';
+import ResetPassword from '@/views/admin/ResetPassword.vue';
+
 
 const routes = [
   { path: '/', redirect: '/login' },

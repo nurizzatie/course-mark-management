@@ -1,7 +1,7 @@
 <template>
   <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="'Student List'">
     <div class="p-6 max-w-5xl mx-auto">
-      
+
       <!-- Student List Component -->
       <StudentList />
     </div>
@@ -17,11 +17,6 @@ export default {
   components: {
     AppLayout,
     StudentList
-  },
-  methods: {
-    goBackToDashboard() {
-      this.$router.push({ name: 'AdvisorDashboard' });
-    }
   },
   data() {
     return {
