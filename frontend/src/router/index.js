@@ -12,7 +12,6 @@ import LecturerRemarkRequests from '@/views/lecturer/LecturerRemarkRequests.vue'
 
 // Student performance routes & pages
 import StudentDashboard from '@/views/student/StudentDashboard.vue';
-import LecturerDashboard from '@/views/lecturer/LecturerDashboard.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
 import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue';
