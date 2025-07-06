@@ -5,15 +5,20 @@
 
       <div class="card">
         <div class="card-body">
+          <!-- ✅ Alert Message -->
+          <div v-if="alert.show" class="alert" :class="'alert-' + alert.type" role="alert">
+            {{ alert.message }}
+          </div>
+
+          <!-- ✅ Reset Form -->
           <form @submit.prevent="handleReset">
             <div class="mb-3">
-              <label for="email" class="form-label">User Email</label>
+              <label for="matric" class="form-label">Matric Number</label>
               <input
-                type="email"
-                id="email"
-                v-model="email"
+                v-model="form.matric_number"
+                id="matric"
                 class="form-control"
-                placeholder="Enter user's email"
+                placeholder="Enter user's matric number"
                 required
               />
             </div>
@@ -22,8 +27,8 @@
               <label for="newPassword" class="form-label">New Password</label>
               <input
                 type="password"
+                v-model="form.password"
                 id="newPassword"
-                v-model="newPassword"
                 class="form-control"
                 placeholder="Enter new password"
                 required
@@ -39,28 +44,45 @@
 </template>
 
 <script>
-import AppLayout from '@/layouts/AppLayout.vue';
-import adminNavItems from '@/constants/adminNavItems';
+import axios from 'axios'
+import AppLayout from '@/layouts/AppLayout.vue'
+import adminNavItems from '@/constants/adminNavItems'
 
 export default {
   name: 'ResetPassword',
   components: { AppLayout },
   data() {
     return {
-      email: '',
-      newPassword: '',
       navItems: adminNavItems,
-      pageTitle: 'Reset Password'
-    };
+      pageTitle: 'Reset Password',
+      form: {
+        matric_number: '',
+        password: ''
+      },
+      alert: {
+        show: false,
+        type: '',
+        message: ''
+      }
+    }
   },
   methods: {
+    showAlert(type, message) {
+      this.alert = { show: true, type, message }
+      setTimeout(() => (this.alert.show = false), 3000)
+    },
     handleReset() {
-      // Replace with real API call
-      console.log('Resetting password for:', this.email, 'to:', this.newPassword);
-      alert('Password reset successfully (mock)');
-      this.email = '';
-      this.newPassword = '';
+      axios
+        .put('http://localhost:8080/api/admin/reset-password', this.form)
+        .then(() => {
+          this.showAlert('success', '✅ Password reset successfully')
+          this.form.matric_number = ''
+          this.form.password = ''
+        })
+        .catch(() => {
+          this.showAlert('danger', '❌ Failed to reset password')
+        })
     }
   }
-};
+}
 </script>

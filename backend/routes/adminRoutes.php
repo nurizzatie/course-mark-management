@@ -13,15 +13,25 @@ return function (App $app) {
         // 🔐 Manage user accounts
         $group->get('/users', [$controller, 'getUsers']);
         $group->put('/users/{id}/role', [$controller, 'updateUserRole']);
+        $group->post('/create-user', [$controller, 'createUser']);
+        $group->delete('/users/{id}', [$controller, 'deleteUser']);
 
         // 🔄 Password reset
-        $group->post('/reset-password', [$controller, 'resetPassword']);
+        $group->put('/reset-password', [$controller, 'resetPassword']);
 
         // 📚 System logs
         $group->get('/logs', [$controller, 'getLogs']);
 
         // 🎯 Assign lecturers to courses
-        $group->get('/assign-data', [$controller, 'getCoursesAndLecturers']); // get list of lecturers + courses
-        $group->post('/assign-lecturer', [$controller, 'assignLecturerToCourse']); // assign lecturer to a course
+        $group->get('/assign-data', [$controller, 'getCoursesAndLecturers']);
+
+        // Option A: Assign using `courses` table `lecturer_id`
+        $group->post('/assign-lecturer', [$controller, 'assignLecturer']);
+
+        // Option B: Assign using `course_assignments` table (optional alternative)
+        $group->post('/assign-lecturer-direct', [$controller, 'assignLecturerToCourse']);
+
+        // ➕ Add new course
+        $group->post('/courses', [$controller, 'createCourse']);
     });
 };
