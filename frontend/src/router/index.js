@@ -11,7 +11,6 @@ import ResetPassword from '@/views/admin/ResetPassword.vue'
 
 // Student
 import StudentDashboard from '@/views/student/StudentDashboard.vue'
-import StudentProfile from '@/views/student/StudentProfile.vue'
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue'
 import GpaCalculator from '@/views/student/performance/GpaCalculator.vue'
 import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue'
@@ -37,16 +36,16 @@ const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
 
-  // Admin Routes
+  // Admin Routes (using layout)
   {
     path: '/admin',
     component: AdminLayout,
     children: [
       { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
       { path: 'users', name: 'ManageUsers', component: ManageUsers },
-      { path: 'assign-lecturers', name: 'AssignLecturer', component: AssignLecturers },
+      { path: 'assign-lecturers', name: 'AssignLecturers', component: AssignLecturers },
       { path: 'logs', name: 'SystemLogs', component: Logs },
-      { path: 'reset', name: 'ResetPassword', component: ResetPassword }
+      { path: 'reset', name: 'ResetPassword', component: ResetPassword },
     ]
   },
 
@@ -69,7 +68,6 @@ const routes = [
 
   // Student Routes
   { path: '/student/dashboard', component: StudentDashboard },
-  { path: '/student/profile', component: StudentProfile },
   {
     path: '/student/performance',
     component: PerformanceToolsLayout,
@@ -86,16 +84,16 @@ const routes = [
     children: [
       { path: '', name: 'StudentCourseMarks', component: () => import('@/views/student/StudentCourseMarks.vue') },
       { path: 'compare', name: 'CompareMarks', component: () => import('@/views/student/CompareMarks.vue') },
-      { path: 'rank', component: () => import('@/views/student/RankAndPercentile.vue') }
+      { path: 'rank', name: 'RankAndPercentile', component: () => import('@/views/student/RankAndPercentile.vue') }
     ]
   },
   { path: '/student/request-remark', name: 'RequestRemark', component: () => import('@/views/student/RequestRemark.vue') },
   { path: '/student/appeal-remark', name: 'AppealRemark', component: () => import('@/views/student/StudentAppealRemark.vue') }
-]
+];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
+});
 
-export default router
+export default router;
