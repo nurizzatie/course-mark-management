@@ -3,7 +3,7 @@
     <div class="container mt-4">
       <!-- Welcome Message -->
       <div class="mb-4">
-        <h2>Welcome back, {{ studentName }} 👋</h2>
+        <h2>Hello, {{ studentName }}</h2>
         <p class="text-muted">
           Matric Number: {{ studentMatricNumber }} | {{ studentSemester }}
         </p>
@@ -63,51 +63,99 @@
         </div>
       </div>
 
-      <!-- Performance & Predictor Section -->
-      <div class="row">
-        <!-- Class Rank -->
-        <div class="col-md-6 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">Class Rank</h5>
-              <p class="card-text">
-                You're currently in the <strong class="text-success">{{ studentRank }}</strong> percentile.
-              </p>
+     <!-- Percentile Carousel & Grade Predictor Row -->
+<div class="row">
+  <!-- Course Percentile Carousel -->
+  <div class="col-md-6 mb-4">
+    <div class="card h-100">
+      <div class="card-header fw-bold">📈 Your Course Percentiles</div>
+      <div class="card-body">
+        <div class="scrollbar-visible">
+        <Carousel :items-to-show="1.5" :wrap-around="true">
+          <Slide v-for="(course, index) in courses" :key="index">
+            <div class="text-center p-3 border rounded w-75 mx-auto">
+              <h6>{{ course.name }}</h6>
+              <svg width="150" height="150">
+                <circle
+                  cx="75"
+                  cy="75"
+                  r="65"
+                  stroke="#eee"
+                  stroke-width="14"
+                  fill="none"
+                />
+                <circle
+                  cx="75"
+                  cy="75"
+                  r="65"
+                  :stroke="course.percentile === 0 ? '#ccc' : '#0d6efd'"
+                  stroke-width="14"
+                  fill="none"
+                  :stroke-dasharray="2 * Math.PI * 65"
+                  :stroke-dashoffset="2 * Math.PI * 65 * (1 - (course.percentile || 0) / 100)"
+                  transform="rotate(-90 75 75)"
+                />
+                <text
+                  x="50%"
+                  y="52%"
+                  text-anchor="middle"
+                  font-size="20"
+                  fill="#000"
+                  dy=".3em"
+                >
+                  {{ course.percentile > 0 ? course.percentile + '%' : 'No Data' }}
+                </text>
+              </svg>
             </div>
-          </div>
-        </div>
-
-        <!-- Grade Predictor -->
-        <div class="col-md-6 mb-4">
-          <div class="card">
-            <div class="card-body">
-              <h5 class="card-title">🎯 Grade Predictor</h5>
-              <p class="card-text">Simulate your grade based on future marks.</p>
-              <router-link to="/student/predictor" class="btn btn-primary">
-                Open Predictor
-              </router-link>
-            </div>
-          </div>
+          </Slide>
+        </Carousel>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Grade Predictor -->
+  <div class="col-md-6 mb-4">
+    <div class="card h-100 d-flex flex-column justify-content-between">
+      <div class="card-body">
+        <h5 class="card-title">🎯 Grade Predictor</h5>
+        <p class="card-text">Simulate your grade based on future marks.</p>
+      </div>
+      <div class="card-footer text-end bg-transparent border-top-0">
+        <router-link to="/student/predictor" class="btn btn-primary">
+          Open Predictor
+        </router-link>
+      </div>
+    </div>
+  </div>
+</div>
     </div>
   </AppLayout>
 </template>
 
 <script>
 import AppLayout from "@/layouts/AppLayout.vue";
+import { Carousel, Slide } from 'vue3-carousel'
+import 'vue3-carousel/dist/carousel.css'
 
 export default {
   name: "StudentDashboard",
-  components: { AppLayout },
+  components: {
+    AppLayout,
+    Carousel,
+    Slide
+  },
   data() {
     return {
       studentName: '',
       studentMatricNumber: '',
       studentSemester: '',
-      studentRank: 'Top 15%',
+      studentRank: 0,
+      studentPercentile: 0,
+      totalStudents: 1,
       summaryCards: [],
       courses: [],
+      radius: 50,
       navItems: [
         { name: 'Dashboard', link: '/student/dashboard', active: true },
         { name: 'My Courses', link: '/student/courses', active: false },
@@ -116,6 +164,14 @@ export default {
         { name: 'Profile', link: '/student/profile', active: false }
       ]
     };
+  },
+  computed: {
+    circumference() {
+      return 2 * Math.PI * this.radius;
+    },
+    dashOffset() {
+      return this.circumference * (1 - this.studentPercentile / 100);
+    }
   },
   mounted() {
     this.loadStudentData();
@@ -132,25 +188,24 @@ export default {
         const res = await fetch(`http://localhost:8080/api/student/${user.id}/dashboard`);
         const data = await res.json();
 
-        // Student info
         this.studentName = data.student.name;
         this.studentMatricNumber = data.student.matric_number;
         this.studentSemester = data.courses.length > 0 ? data.courses[0].semester : 'N/A';
         this.studentRank = data.student.rank;
+        this.studentPercentile = data.student.percentile;
+        this.totalStudents = data.student.total_students;
 
-        // Courses
         this.courses = data.courses.map(course => ({
           id: course.id,
           name: course.course_name,
           code: course.course_code,
           progress: course.progress,
-          semester: course.semester
+          semester: course.semester,
+          percentile: course.percentile ?? 0
         }));
 
-        // Summary Cards
         this.summaryCards = data.summaryCards;
 
-        console.log("✅ Dashboard loaded:", data);
       } catch (error) {
         console.error("❌ Failed to load dashboard:", error);
         alert("Unable to load student dashboard data.");
@@ -160,3 +215,38 @@ export default {
 };
 </script>
 
+<style scoped>
+.circle-bg {
+  stroke: #eee;
+}
+.circle-fg {
+  stroke: #0d6efd;
+  transition: stroke-dashoffset 0.6s ease;
+}
+.circle-progress-wrapper {
+  display: inline-block;
+  position: relative;
+}
+.circle-bg,
+.circle-fg {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+/* Show scrollbar even when not scrolling (for Chrome/Webkit) */
+.scrollbar-visible {
+  overflow-x: scroll;
+  white-space: nowrap;
+  scrollbar-width: thin; /* for Firefox */
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: #aaa;
+  border-radius: 4px;
+}
+
+</style>

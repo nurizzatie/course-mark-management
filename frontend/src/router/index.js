@@ -47,6 +47,8 @@ const routes = [
   // Student routes
   { path: '/student/course/:id',name: 'StudentCourseMarks',component: () => import('@/views/student/StudentCourseMarks.vue')},
   { path: '/student/request-remark', name: 'RequestRemark', component: () => import('@/views/student/RequestRemark.vue')},
+  
+
   {
     path: '/student/performance',
     component: PerformanceToolsLayout,
@@ -71,7 +73,8 @@ const routes = [
       path: 'compare',
       name: 'CompareMarks',
       component: () => import('@/views/student/CompareMarks.vue') // chart view
-    }
+    },
+    { path: 'rank', component: () => import('@/views/student/RankAndPercentile.vue') },
   ]
 },
 

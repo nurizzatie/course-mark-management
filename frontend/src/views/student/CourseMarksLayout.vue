@@ -20,6 +20,17 @@
           Compare Marks
         </router-link>
       </li>
+
+      <li class="nav-item">
+  <router-link
+    class="nav-link"
+    :class="{ active: isActive('rank') }"
+    :to="`/student/course/${courseId}/rank`"
+  >
+    Rank & Percentile
+  </router-link>
+</li>
+
     </ul>
 
     <!-- Child route content -->
@@ -50,15 +61,19 @@ export default {
     }
   },
   methods: {
-    isActive(tab) {
-      const path = this.$route.path
-      const base = `/student/course/${this.courseId}`
+   isActive(tab) {
+  const path = this.$route.path
+  const base = `/student/course/${this.courseId}`
 
-      if (tab === 'compare') {
-        return path === `${base}/compare`
-      }
-      return path === base
-    }
+  if (tab === 'compare') {
+    return path === `${base}/compare`
+  }
+  if (tab === 'rank') {
+    return path === `${base}/rank`
+  }
+  return path === base
+}
+
   }
 }
 </script>

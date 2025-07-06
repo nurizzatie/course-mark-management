@@ -16,10 +16,15 @@ return function (App $app) {
 
         // ✅ Comparison chart data
         $group->get('/course/{courseId}/compare/{assessmentId}', [StudentController::class, 'compareAssessmentMarks']);
+        $group->get('/course/{id}/rank/{studentId}', [StudentController::class, 'getStudentRank']);
+    $group->get('/course/{id}/rank-table', [StudentController::class, 'getRankTable']);
     });
 
     // Remark request route (can be grouped later under /api/remark if needed)
     $app->post('/api/remark/request', [StudentController::class, 'submitRemarkRequest']);
     $app->get('/api/students/{id}/notifications', StudentController::class . ':getNotifications');
     $app->post('/api/student/notifications/{id}/seen', StudentController::class . ':markNotificationSeen');
+    
+
+
 };
