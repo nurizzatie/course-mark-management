@@ -1,18 +1,39 @@
 <template>
   <AppLayout :role="'Lecturer'" :navItems="navItems" :pageTitle="pageTitle">
-    <h2 class="mb-4">Profile</h2>
-    <div class="row g-3">
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Total Students" value="120" subtitle="Current semester" bgClass="bg-success" />
+    <div class="container py-4">
+      <div class="card mb-4">
+        <div class="card-header bg-dark text-white"><i class="fa-solid fa-address-card"></i> Profile Information</div>
+        <div class="card-body">
+          <p><strong>Name:</strong> {{ profile.name }}</p>
+          <p><strong>Email:</strong> {{ profile.email }}</p>
+          <p><strong>Matric No:</strong> {{ profile.matric_number }}</p>
+        </div>
       </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Courses Taught" value="4" subtitle="Active courses" bgClass="bg-primary" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Pending Marks" value="8" subtitle="Assignments not submitted" bgClass="bg-warning" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Recent Feedbacks" value="12" subtitle="Last 7 days" bgClass="bg-danger" />
+
+      <div class="card">
+        <div class="card-header bg-dark text-white"><i class="fa-solid fa-book"></i> Courses Taught</div>
+        <div class="card-body table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+              <tr class="text-center">
+                <th>#</th>
+                <th>Course Code</th>
+                <th>Course Name</th>
+                <th>Semester</th>
+                <th>Year</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="text-center" v-for="(course, index) in courses" :key="index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ course.course_code }}</td>
+                <td>{{ course.course_name }}</td>
+                <td>{{ course.semester }}</td>
+                <td>{{ course.year }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </AppLayout>
@@ -20,21 +41,41 @@
 
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
-import StatCard from '@/components/StatCard.vue';
+import api from '@/api';
 
 export default {
-  name: 'LecturerDashboard',
-  components: { AppLayout, StatCard },
+  name: 'LecturerProfile',
+  components: { AppLayout },
   data() {
     return {
+      pageTitle: 'My Profile',
       navItems: [
         { name: 'Dashboard', link: '/lecturer/dashboard' },
         { name: 'My Courses', link: '/lecturer/courses' },
         { name: 'Student Enrollment', link: '/lecturer/students' },
-        { name: 'Profile', link: '/lecturer/profile'}
+        { name: 'Remark Requests', link: '/lecturer/remark-requests' },
+        { name: 'Profile', link: '/lecturer/profile' },
       ],
-      pageTitle: 'Profile',
+      profile: {},
+      courses: [],
+    };
+  },
+  mounted() {
+    this.fetchProfile();
+  },
+  methods: {
+    fetchProfile() {
+      api.get('/lecturer/profile', {
+        headers: {
+          'X-User': JSON.stringify(JSON.parse(localStorage.getItem('user')))
+        }
+      }).then(res => {
+        this.profile = res.data.profile;
+        this.courses = res.data.courses;
+      }).catch(() => {
+        alert('Failed to load profile data');
+      });
     }
   }
-}
+};
 </script>
