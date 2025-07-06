@@ -377,6 +377,36 @@ class StudentController
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
 }
 
+public function getStudentProfile(Request $request, Response $response, array $args): Response
+{
+    $id = $args['id'];
+
+    // 1. Get profile
+    $stmt = $this->db->prepare("SELECT id, name, email, matric_number, semester FROM users WHERE id = ?");
+    $stmt->execute([$id]);
+    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$profile) {
+        return $response->withJson(['error' => 'Student not found'], 404);
+    }
+
+    // 2. Get enrolled courses
+    $stmt = $this->db->prepare("
+        SELECT c.course_code, c.course_name, c.semester, c.year
+        FROM courses c
+        JOIN student_courses sc ON sc.course_id = c.id
+        WHERE sc.student_id = ?
+    ");
+    $stmt->execute([$id]);
+    $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    return $response->withJson([
+        'profile' => $profile,
+        'courses' => $courses
+    ]);
+}
+
+
 
     // =========================
     // 📌 NOTIFICATIONS

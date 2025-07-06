@@ -17,6 +17,8 @@ return function (App $app) {
         $group->get('/course/{id}/rank/{studentId}', [StudentController::class, 'getStudentRank']);
         $group->get('/course/{id}/rank-table', [StudentController::class, 'getRankTable']);
         $group->get('/{studentId}/performance-chart', [StudentController::class, 'getPerformanceChart']);
+        $group->get('/api/student/{id}/profile', [StudentController::class, 'getStudentProfile']);
+
 
     });
 
