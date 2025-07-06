@@ -172,9 +172,9 @@ class StudentController
     }
 
     // =========================
-    // 📌 ASSESSMENT COMPARISON
+    //  ASSESSMENT COMPARISON
     // =========================
-         // ✅ Fetch list of assessments for a course (for dropdown)
+    //  Fetch list of assessments for a course (for dropdown)
     public function getAssessmentsByCourse(Request $request, Response $response, array $args): Response
     {
         $courseId = $args['id'];
@@ -310,6 +310,73 @@ class StudentController
 
         return $this->json($response, array_values($students));
     }
+
+    public function getPerformanceChart(Request $request, Response $response, array $args): Response
+{
+    $studentId = $args['studentId'];
+
+    // 1. Get list of courses the student enrolled in
+    $stmt = $this->db->prepare("
+    SELECT c.id, c.course_name AS name
+    FROM courses c
+    JOIN student_courses sc ON sc.course_id = c.id
+    WHERE sc.student_id = :studentId
+");
+
+    $stmt->execute([':studentId' => $studentId]);
+    $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $results = [];
+    $assessmentTitles = [];
+
+    foreach ($courses as $course) {
+        // 2. Get assessments for this course
+        $stmtAssessments = $this->db->prepare("
+            SELECT a.id, a.title
+            FROM assessments a
+            WHERE a.course_id = :courseId
+            ORDER BY a.id ASC
+        ");
+        $stmtAssessments->execute([':courseId' => $course['id']]);
+        $assessments = $stmtAssessments->fetchAll(PDO::FETCH_ASSOC);
+
+        // Store titles only once (for the first course)
+        if (empty($assessmentTitles)) {
+            $assessmentTitles = array_column($assessments, 'title');
+        }
+
+        // 3. Get student's marks for each assessment
+        $marks = [];
+        foreach ($assessments as $assessment) {
+            $stmtMark = $this->db->prepare("
+                SELECT obtained_mark 
+                FROM student_assessments 
+                WHERE student_id = :studentId AND assessment_id = :assessmentId
+            ");
+            $stmtMark->execute([
+                ':studentId' => $studentId,
+                ':assessmentId' => $assessment['id']
+            ]);
+            $mark = $stmtMark->fetchColumn();
+            $marks[] = $mark !== false ? floatval($mark) : null;
+        }
+
+        $results[] = [
+            'course' => $course['name'],
+            'marks' => $marks
+        ];
+    }
+
+    // Final output with titles
+    $final = [
+        'assessments' => $assessmentTitles,
+        'courses' => $results
+    ];
+
+    $response->getBody()->write(json_encode($final));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+}
+
 
     // =========================
     // 📌 NOTIFICATIONS
