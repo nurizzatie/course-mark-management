@@ -102,8 +102,20 @@ export default {
   },
   methods: {
     goToProfile() {
-      this.$router.push('/lecturer/profile')
-    },
+  const role = this.user.role?.toLowerCase();
+  if (role === 'advisor') {
+    this.$router.push('/advisor/profile');
+  } else if (role === 'lecturer') {
+    this.$router.push('/lecturer/profile');
+  } else if (role === 'admin') {
+    this.$router.push('/admin/profile');
+  } else if (role === 'student') {
+    this.$router.push('/student/profile');
+  } else {
+    this.$router.push('/login');
+  }
+},
+
     logout() {
       this.$emit('logout')
     },

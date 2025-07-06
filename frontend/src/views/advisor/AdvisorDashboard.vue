@@ -1,73 +1,141 @@
 <template>
   <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="pageTitle">
-    <h2 class="mb-4 fw-bold">Welcome, Advisor</h2>
-    <div class="row g-3">
-      <div class="col-md-6 col-lg-3">
-  <StatCard title="At-Risk Students" :value="stats.atRiskCount" subtitle="High risk level" bgClass="bg-info" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Total Students" :value="stats.totalStudents" subtitle="Current semester" bgClass="bg-success" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Courses Assigned" :value="stats.coursesTaught" subtitle="Active courses" bgClass="bg-primary" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Pending Reviews" :value="stats.pendingMarks" subtitle="Awaiting advisor review" bgClass="bg-warning" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Recent Feedbacks" :value="stats.recentFeedbacks" subtitle="Last 7 days" bgClass="bg-danger" />
-      </div>
-    </div>
+    <div class="container py-4">
 
+      <!-- Statistic Cards -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <StatCard
+            title="Assigned Students"
+            :value="assignedStudents.toString()"
+            subtitle="Current semester"
+            bgClass="bg-success"
+          />
+        </div>
+        <div class="col-md-3">
+          <StatCard
+            title="Consultation"
+            :value="ConsultGiven.toString()"
+            subtitle="This month session"
+            bgClass="bg-primary"
+          />
+        </div>
+        <div class="col-md-3">
+          <StatCard
+            title="Total Reviews"
+            :value="TotalReviews.toString()"
+            subtitle="Mark reviewed"
+            bgClass="bg-warning"
+          />
+        </div>
+        <div class="col-md-3">
+          <StatCard
+            title="Analytics Reports"
+            :value="analyticsReports.toString()"
+            subtitle="Updated weekly"
+            bgClass="bg-danger"
+          />
+        </div>
+      </div>
+
+      <!-- High Risk Summary -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold">
+          High-Risk Student Summary
+        </div>
+        <div class="card-body table-responsive">
+          <table class="table table-bordered text-center">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Matric No</th>
+                <th>Percentile</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(s, i) in highRiskStudents" :key="s.id">
+                <td>{{ i + 1 }}</td>
+                <td>{{ s.student_name }}</td>
+                <td>{{ s.matric_number }}</td>
+                <td>{{ s.percentile ?? '-' }}</td>
+                <td>
+                  <span class="badge bg-danger">At Risk</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-if="!highRiskStudents.length" class="text-muted text-center py-3">No high-risk students currently.</p>
+        </div>
+      </div>
+
+    </div>
   </AppLayout>
 </template>
 
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
 import StatCard from '@/components/StatCard.vue';
-import axios from 'axios';
+import api from '@/api';
 
 export default {
   name: 'AdvisorDashboard',
   components: { AppLayout, StatCard },
   data() {
     return {
-      stats: {
-        totalStudents: 0,
-        coursesTaught: 0,
-        pendingMarks: 0,
-        recentFeedbacks: 0,
-        atRiskCount: 0,
-      },
+      pageTitle: 'Dashboard',
+      assignedStudents: 15,
+      ConsultGiven: 7,
+      TotalReviews: 17,
+      analyticsReports: 10,
+      highRiskStudents: [],
       navItems: [
         { name: 'Dashboard', link: '/advisor/dashboard' },
-        { name: 'Student List', link: '/advisor/students' },
-        { name: 'Review Marks', link: '/advisor/reviews' },
+        { name: 'Advisees', link: '/advisor/students' },
+        { name: 'Mark Review', link: '/advisor/reviews' },
         { name: 'Performance Analytics', link: '/advisor/analytics' },
-        { name: 'Profile', link: '/advisor/profile' },
-      ],
-      pageTitle: 'Dashboard',
-    }
+        { name: 'Consultation', link: '/advisor/notes' },
+        { name: 'Profile', link: '/advisor/profile' }
+      ]
+    };
   },
   mounted() {
-    // Fetch main dashboard stats
-  axios.get('http://localhost:8080/advisor/1/dashboard')
-    .then(res => {
-      this.stats = { ...this.stats, ...res.data };
-    })
-    .catch(err => {
-      console.error('Failed to load advisor dashboard stats:', err);
-    });
+    this.loadDashboardStats();
+    this.loadHighRiskStudents();
+  },
+  methods: {
+    async loadDashboardStats() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user?.id) return;
 
-    // Example: replace '1' with actual logged-in advisor ID
-    axios.get('http://localhost:8080/advisor/1/dashboard')
-      .then(res => {
-        this.stats = res.data;
-      })
-      .catch(err => {
-        console.error('Failed to load advisor dashboard stats:', err);
-      });
+      try {
+        const res = await api.get(`/advisor/${user.id}/dashboard-stats`);
+        const stats = res.data;
+
+        this.assignedStudents = stats.assigned_students ?? 0;
+        this.ConsultGiven = stats.feedback_given ?? 0;
+        this.TotalReviews = stats.pending_reviews ?? 0;
+        this.analyticsReports = stats.analytics_reports ?? 0;
+      } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+      }
+    },
+
+    async loadHighRiskStudents() {
+      try {
+        const res = await api.get('/advisor/high-risk-students');
+        this.highRiskStudents = res.data || [];
+      } catch (err) {
+        console.error('Failed to load high-risk students:', err);
+        this.highRiskStudents = [];
+      }
+    }
   }
-}
+};
 </script>
+
+
+
+
 
