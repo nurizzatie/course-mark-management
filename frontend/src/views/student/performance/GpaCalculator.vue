@@ -40,7 +40,7 @@
         <button type="button" class="btn btn-secondary" @click="addCourse">
           + Add Course
         </button>
-        <button type="submit" class="btn btn-primary" :disabled="!isFormValid">
+        <button type="submit" class="btn btn-dark" :disabled="!isFormValid">
           Calculate GPA
         </button>
       </div>
@@ -53,11 +53,11 @@
 
     <!-- Grade Table -->
     <hr class="my-4" />
-    <h5>UTM Grade Conversion Table</h5>
+    <h5> Grade Conversion Table</h5>
     <table class="table table-striped">
-      <thead class="table-light">
+      <thead class="table-dark">
         <tr>
-          <th>Letter</th>
+          <th>Grade</th>
           <th>Marks</th>
           <th>Grade Points</th>
         </tr>

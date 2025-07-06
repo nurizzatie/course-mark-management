@@ -65,6 +65,8 @@ export default {
 
         localStorage.setItem('user', JSON.stringify(user));
         if (token) localStorage.setItem('token', token);
+        localStorage.setItem('studentId', user.id);
+
 
         // ✅ Role-based redirection
         const role = user.role?.toLowerCase();

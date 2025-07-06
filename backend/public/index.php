@@ -199,8 +199,9 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 (require __DIR__ . '/../routes/grade_predictor.php')($app);
 (require __DIR__ . '/../routes/assessments.php')($app);
 (require __DIR__ . '/../routes/adminRoutes.php')($app);
-require __DIR__ . '/../dependencies.php';
 (require __DIR__ . '/../routes/student.php')($app);
+require __DIR__ . '/../dependencies.php';
+
 
 
 // Final run the application

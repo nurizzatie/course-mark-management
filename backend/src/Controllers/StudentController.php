@@ -149,7 +149,7 @@ class StudentController
     }
 
     // =========================
-    // 📌 REMARK REQUEST
+    //  REMARK REQUEST
     // =========================
     public function submitRemarkRequest(Request $request, Response $response, array $args): Response
     {
@@ -192,42 +192,54 @@ class StudentController
     }
 
      public function compareAssessmentMarks(Request $request, Response $response, array $args): Response
-    {
-        $courseId = $args['courseId'];
-        $assessmentId = $args['assessmentId'];
-        $studentId = $request->getQueryParams()['student_id'] ?? null;
+{
+    $courseId = $args['courseId'];
+    $assessmentId = $args['assessmentId'];
+    $studentId = $request->getQueryParams()['student_id'] ?? null;
 
-        $stmt = $this->db->prepare("
-            SELECT 
-                sa.student_id,
-                u.name AS student_name,
-                sa.obtained_mark AS total_contribution
-            FROM student_assessments sa
-            JOIN assessments a ON sa.assessment_id = a.id
-            JOIN users u ON sa.student_id = u.id
-            WHERE a.course_id = :courseId AND sa.assessment_id = :assessmentId
-        ");
-        $stmt->execute([
-            ':courseId' => $courseId,
-            ':assessmentId' => $assessmentId
-        ]);
+    $stmt = $this->db->prepare("
+        SELECT 
+            sa.student_id,
+            u.name AS student_name,
+            sa.obtained_mark AS total_contribution
+        FROM student_assessments sa
+        JOIN assessments a ON sa.assessment_id = a.id
+        JOIN users u ON sa.student_id = u.id
+        WHERE a.course_id = :courseId AND sa.assessment_id = :assessmentId
+    ");
+    $stmt->execute([
+        ':courseId' => $courseId,
+        ':assessmentId' => $assessmentId
+    ]);
 
-        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $totalMarks = 0;
+    $studentCount = count($results);
+
+    foreach ($results as &$row) {
+        $totalMarks += $row['total_contribution'];
 
         // Anonymize labels
-        foreach ($results as &$row) {
-            if ($studentId && $row['student_id'] == $studentId) {
-                $row['student_label'] = 'You';
-            } else {
-                $row['student_label'] = 'Student ' . substr(md5($row['student_id']), 0, 5);
-            }
-            unset($row['student_name'], $row['student_id']);
+        if ($studentId && $row['student_id'] == $studentId) {
+            $row['student_label'] = 'You';
+        } else {
+            $row['student_label'] = 'Student ' . substr(md5($row['student_id']), 0, 5);
         }
 
-        $response->getBody()->write(json_encode($results));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-    
+        unset($row['student_name'], $row['student_id']);
+    }
+
+    $average = $studentCount > 0 ? round($totalMarks / $studentCount, 2) : 0;
+
+    $response->getBody()->write(json_encode([
+        'data' => $results,
+        'class_average' => $average
+    ]));
+
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
 }
+
 
 
 
@@ -379,37 +391,96 @@ class StudentController
 
 public function getStudentProfile(Request $request, Response $response, array $args): Response
 {
-    $id = $args['id'];
+    $userHeader = $request->getHeaderLine('X-User');
+    $user = json_decode($userHeader, true);
 
-    // 1. Get profile
-    $stmt = $this->db->prepare("SELECT id, name, email, matric_number, semester FROM users WHERE id = ?");
-    $stmt->execute([$id]);
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$profile) {
-        return $response->withJson(['error' => 'Student not found'], 404);
+    if (!$user || !isset($user['id'])) {
+        $response->getBody()->write(json_encode([
+            'error' => 'Invalid or missing user header.'
+        ]));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
     }
 
-    // 2. Get enrolled courses
-    $stmt = $this->db->prepare("
-        SELECT c.course_code, c.course_name, c.semester, c.year
-        FROM courses c
-        JOIN student_courses sc ON sc.course_id = c.id
-        WHERE sc.student_id = ?
-    ");
-    $stmt->execute([$id]);
-    $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $userId = $user['id'];
 
-    return $response->withJson([
-        'profile' => $profile,
-        'courses' => $courses
-    ]);
+    try {
+        // Get user details
+        $stmt = $this->db->prepare("SELECT id, name, email, matric_number FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $profile = $stmt->fetch(PDO::FETCH_ASSOC); 
+        if (!$profile) {
+            $response->getBody()->write(json_encode(['error' => 'User not found.']));
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Get enrolled courses
+        $stmt = $this->db->prepare("
+            SELECT c.course_code, c.course_name, c.semester, c.year
+            FROM courses c
+            JOIN student_courses sc ON sc.course_id = c.id
+            WHERE sc.student_id = ?
+        ");
+        $stmt->execute([$userId]);
+        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Use latest course semester (if any)
+        $latestSemester = $courses[0]['semester'] ?? 'Unknown';
+
+        // Add semester manually into profile
+        $profile['semester'] = $latestSemester;
+
+        $response->getBody()->write(json_encode([
+            'profile' => $profile,
+            'courses' => $courses
+        ]));
+        return $response->withHeader('Content-Type', 'application/json');
+
+    } catch (\PDOException $e) {
+        $response->getBody()->write(json_encode(['error' => 'Server error while fetching profile.']));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
 }
 
+public function updateStudentProfile(Request $request, Response $response, array $args): Response
+{
+    $userHeader = $request->getHeaderLine('X-User');
+    if (!$userHeader) {
+        $response->getBody()->write(json_encode(['error' => 'Missing X-User header.']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
 
+    $user = json_decode($userHeader, true);
+    $userId = $user['id'] ?? null;
 
-    // =========================
-    // 📌 NOTIFICATIONS
+    if (!$userId) {
+        $response->getBody()->write(json_encode(['error' => 'Invalid user data.']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    $data = $request->getParsedBody();
+
+    $name = $data['name'] ?? null;
+    $email = $data['email'] ?? null;
+    $matric = $data['matric_number'] ?? null;
+
+    if (!$name || !$email || !$matric) {
+        $response->getBody()->write(json_encode(['error' => 'Missing required fields.']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    try {
+        $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, matric_number = ? WHERE id = ?");
+        $stmt->execute([$name, $email, $matric, $userId]);
+
+        $response->getBody()->write(json_encode(['message' => 'Profile updated successfully']));
+        return $response->withHeader('Content-Type', 'application/json');
+    } catch (\PDOException $e) {
+        $response->getBody()->write(json_encode(['error' => 'Failed to update profile']));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+}
+
+ // 📌 NOTIFICATIONS
     // =========================
     public function getNotifications(Request $request, Response $response, $args): Response
     {

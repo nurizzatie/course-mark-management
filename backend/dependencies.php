@@ -1,5 +1,17 @@
 <?php
-use DI\Container;
+use App\Controllers\StudentController;
+use Psr\Container\ContainerInterface;
+use App\Controllers\RemarkController;
+
+$container->set(RemarkController::class, function ($c) {
+    return new RemarkController($c);
+});
+
+
+/** @var \DI\Container $container */
+$container->set(StudentController::class, function (ContainerInterface $c) {
+    return new StudentController($c);
+});
 
 
 $container->set(PDO::class, function () {

@@ -97,7 +97,7 @@
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary" :disabled="!isFormValid">
+      <button type="submit" class="btn btn-dark" :disabled="!isFormValid">
         Calculate
       </button>
     </form>

@@ -55,7 +55,7 @@
     <h5 class="mb-3 mt-5"><strong>🏆 Class Ranking Table</strong></h5>
     <div class="table-responsive">
       <table class="table table-bordered align-middle text-center">
-        <thead class="table-light">
+        <thead class="table-dark">
           <tr>
             <th>Student</th>
             <th>Percentile</th>

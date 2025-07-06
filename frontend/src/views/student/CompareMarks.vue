@@ -1,74 +1,79 @@
 <template>
-<div class="compare-marks">
-  <div class="container mt-4">
-    <h2 class="mb-4">
-      Mark Comparison for – {{ course.name }} {{ course.code }}
-    </h2>
-
-    <!-- Assessment Dropdown -->
-    <div class="mb-3 row align-items-center">
-      <label class="col-sm-1 col-form-label">Assessment:</label>
-      <div class="col-sm-3">
-        <select
-          class="form-select"
-          v-model="selectedAssessmentId"
-          @change="fetchComparisonData"
+  <div class="compare-marks">
+    <div class="container mt-4">
+      <h2 class="mb-4">
+        <strong
+          >Mark Comparison for – {{ course.name }} {{ course.code }}</strong
         >
-          <option v-for="a in assessments" :key="a.id" :value="a.id">
-            {{ a.title }}
-          </option>
-        </select>
-      </div>
-    </div>
+      </h2>
 
-    <!-- Chart Section -->
-    <div class="chart-section">
-    <div v-if="chartData" class="mb-4">
-      <div class="d-flex justify-content-center">
-        <div style="max-width: 700px; width: 100%;">
-        <BarChart
-          v-if="chartData.labels && chartData.labels.length"
-          :chart-data="chartData"
-        />
-        <p v-else>No chart data found for this assessment.</p>
+      <!-- Assessment Dropdown -->
+      <div class="mb-3 row align-items-center">
+        <label class="col-sm-1 col-form-label">Assessment:</label>
+        <div class="col-sm-3">
+          <select
+            class="form-select"
+            v-model="selectedAssessmentId"
+            @change="fetchComparisonData"
+          >
+            <option v-for="a in assessments" :key="a.id" :value="a.id">
+              {{ a.title }}
+            </option>
+          </select>
         </div>
       </div>
-    </div>
-     </div>
-    
 
-    <!-- Toggle Table -->
-    <div class="text-end mb-3">
-      <button @click="toggleTable" class="btn btn-outline-primary">
-        {{ showTable ? "Hide Table" : "Show Table" }}
-      </button>
-    </div>
-   
+      <!-- Chart Section -->
+      <div class="chart-section">
+        <div v-if="chartData" class="mb-4">
+          <div class="d-flex justify-content-center">
+            <div style="max-width: 700px; width: 100%">
+              <BarChart
+                v-if="chartData.labels && chartData.labels.length"
+                :chart-data="chartData"
+              />
+              <p v-else>No chart data found for this assessment.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Table Section -->
-    <div v-if="showTable" class="table-responsive">
-      <h4 class="mb-3">Mark Comparison Table</h4>
-      <table class="table table-bordered table-hover align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Student</th>
-            <th>Mark</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="data in comparisonData"
-            :key="data.student_label"
-            :class="{ 'table-success': data.student_label === 'You' }"
-          >
-            <td>{{ data.student_label }}</td>
-            <td>{{ data.mark }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Toggle Table -->
+      <div class="text-end mb-3">
+        <button @click="toggleTable" class="btn btn-dark">
+          {{ showTable ? "Hide Table" : "Show Table" }}
+        </button>
+      </div>
+
+      <!-- Table Section -->
+      <div v-if="showTable" class="table-responsive">
+        <h4 class="mb-3"><strong>Mark Comparison Table</strong></h4>
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>Student</th>
+              <th>Mark</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="data in comparisonData"
+              :key="data.student_label"
+              :class="{ 'table-success': data.student_label === 'You' }"
+            >
+              <td>{{ data.student_label }}</td>
+              <td>{{ data.mark }}</td>
+            </tr>
+
+            <tr class="table-warning fw-bold text-center">
+              <td class ="text-end">📊 Class Average</td>
+              <td class ="text-start">{{ classAverage }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-</div>
 </template>
 
 <script>
@@ -87,6 +92,7 @@ export default {
       selectedAssessmentId: null,
       comparisonData: [],
       chartData: null,
+      classAverage: null,
       showTable: false,
     };
   },
@@ -134,27 +140,33 @@ export default {
         const res = await fetch(
           `http://localhost:8080/api/student/course/${this.courseId}/compare/${this.selectedAssessmentId}?student_id=${student.id}`
         );
-        const data = await res.json();
+        const resData = await res.json();
 
-        if (!Array.isArray(data) || data.length === 0) {
+        if (
+          !resData ||
+          !Array.isArray(resData.data) ||
+          resData.data.length === 0
+        ) {
           this.chartData = null;
           return;
         }
 
-        this.comparisonData = data.map((d) => ({
+        this.comparisonData = resData.data.map((d) => ({
           student_label: d.student_label,
           mark: d.total_contribution,
         }));
 
+        this.classAverage = resData.class_average;
+
         this.chartData = {
-          labels: data.map((d) => d.student_label),
+          labels: resData.data.map((d) => d.student_label),
           datasets: [
             {
-              label: "You",
-              backgroundColor: data.map((d) =>
+              label: "Student Marks",
+              backgroundColor: resData.data.map((d) =>
                 d.student_label === "You" ? "#4ade80" : "#93c5fd"
               ),
-              data: data.map((d) => Number(d.total_contribution)),
+              data: resData.data.map((d) => Number(d.total_contribution)),
             },
           ],
         };
@@ -176,7 +188,7 @@ export default {
   font-weight: bold;
 }
 
-.compare-marks{
+.compare-marks {
   max-width: 100%;
   margin: auto;
   padding: 2rem;
@@ -185,12 +197,12 @@ export default {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.chart-section{
+.chart-section {
   max-width: 700px;
   margin: auto;
   padding: 2rem;
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1 );
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

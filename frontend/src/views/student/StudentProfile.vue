@@ -1,18 +1,87 @@
 <template>
-  <AppLayout :role="'Lecturer'" :navItems="navItems" :pageTitle="pageTitle">
-    <h2 class="mb-4">Profile</h2>
-    <div class="row g-3">
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Total Students" value="120" subtitle="Current semester" bgClass="bg-success" />
+  <AppLayout :role="'Student'" :navItems="navItems" :pageTitle="pageTitle">
+    <div class="container py-4">
+      <!-- Profile Info -->
+      <div class="card mb-4 position-relative">
+        <div class="card-header bg-dark text-white">
+          <i class="fa-solid fa-address-card"></i> Profile Information
+        </div>
+
+        <div class="card-body">
+          <!-- Display Mode -->
+          <div v-if="!isEditing">
+            <p><strong>Name:</strong> {{ profile.name }}</p>
+            <p><strong>Email:</strong> {{ profile.email }}</p>
+            <p><strong>Matric No:</strong> {{ profile.matric_number }}</p>
+            <p><strong>Semester:</strong> {{ profile.semester }}</p>
+          </div>
+
+          <!-- Edit Mode -->
+          <div v-else>
+            <div class="mb-2">
+              <label><strong>Name:</strong></label>
+              <input v-model="editedProfile.name" class="form-control" />
+            </div>
+            <div class="mb-2">
+              <label><strong>Email:</strong></label>
+              <input v-model="editedProfile.email" class="form-control" />
+            </div>
+            <div class="mb-2">
+              <label><strong>Matric No:</strong></label>
+              <input v-model="editedProfile.matric_number" class="form-control" disabled/>
+            </div>
+            <div class="mb-2">
+              <label><strong>Semester:</strong></label>
+              <input :value="profile.semester" class="form-control" disabled />
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="position-absolute" style="bottom: 10px; right: 10px;">
+            <button v-if="!isEditing" class="btn btn-sm btn-warning" @click="startEditing">
+              <font-awesome-icon :icon="['fas', 'pencil-alt']" class="me-1" />
+              Edit
+            </button>
+            <div v-else>
+              <button class="btn btn-sm btn-success me-1" @click="saveProfile">
+                <font-awesome-icon :icon="['fas', 'save']" class="me-1" />
+                Save
+              </button>
+              <button class="btn btn-sm btn-secondary" @click="cancelEditing">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Courses Taught" value="4" subtitle="Active courses" bgClass="bg-primary" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Pending Marks" value="8" subtitle="Assignments not submitted" bgClass="bg-warning" />
-      </div>
-      <div class="col-md-6 col-lg-3">
-        <StatCard title="Recent Feedbacks" value="12" subtitle="Last 7 days" bgClass="bg-danger" />
+
+      <!-- Enrolled Courses -->
+      <div class="card">
+        <div class="card-header bg-dark text-white">
+          <i class="fa-solid fa-book"></i> Enrolled Courses
+        </div>
+        <div class="card-body table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+              <tr class="text-center">
+                <th>#</th>
+                <th>Course Code</th>
+                <th>Course Name</th>
+                <th>Semester</th>
+                <th>Year</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="text-center" v-for="(course, index) in courses" :key="index">
+                <td>{{ index + 1 }}</td>
+                <td>{{ course.course_code }}</td>
+                <td>{{ course.course_name }}</td>
+                <td>{{ course.semester }}</td>
+                <td>{{ course.year }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </AppLayout>
@@ -20,21 +89,64 @@
 
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
-import StatCard from '@/components/StatCard.vue';
+import api from '@/api';
 
 export default {
-  name: 'StudentDashboard',
-  components: { AppLayout, StatCard },
+  name: 'StudentProfile',
+  components: { AppLayout },
   data() {
     return {
+      pageTitle: 'My Profile',
       navItems: [
-        { name: 'Dashboard', link: '/student/dashboard', active: false },
-        { name: 'My Courses', link: '/student/courses', active: false },
-        // { name: 'Student List', link: '/lecturer/students', active: false },
-        { name: 'Profile', link: '/student/profile', active: true }
+        { name: 'Dashboard', link: '/student/dashboard' },
+        { name: 'Performance Chart', link: '/student/performance' }
       ],
-      pageTitle: 'Profile',
+      profile: {},
+      editedProfile: {},
+      courses: [],
+      isEditing: false
+    };
+  },
+  mounted() {
+    this.fetchProfile();
+  },
+  methods: {
+    fetchProfile() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user?.id) {
+        alert('User not found. Please login again.');
+        return;
+      }
+
+      api.get(`/student/${user.id}/profile`, {
+        headers: { 'X-User': JSON.stringify(user) }
+      }).then(res => {
+        this.profile = res.data.profile;
+        this.courses = res.data.courses;
+      }).catch(() => {
+        alert('Failed to load profile data');
+      });
+    },
+    startEditing() {
+      this.editedProfile = { ...this.profile };
+      this.isEditing = true;
+    },
+    cancelEditing() {
+      this.isEditing = false;
+      this.editedProfile = {};
+    },
+    saveProfile() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      api.put(`/student/${user.id}/profile`, this.editedProfile, {
+        headers: { 'X-User': JSON.stringify(user) }
+      }).then(() => {
+        this.profile = { ...this.editedProfile };
+        this.isEditing = false;
+        alert('Profile updated successfully!');
+      }).catch(() => {
+        alert('Failed to update profile.');
+      });
     }
   }
-}
+};
 </script>

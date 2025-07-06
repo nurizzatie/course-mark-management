@@ -46,10 +46,7 @@ export default {
     return {
       navItems: [
         { name: 'Dashboard', link: '/student/dashboard', active: false },
-        { name: 'My Courses', link: '/student/courses', active: false },
         { name: 'Performance Tools', link: '/student/performance', active: true },
-        { name: 'Notifications', link: '/student/notifications', active: false },
-        { name: 'Profile', link: '/student/profile', active: false }
       ]
     };
   },

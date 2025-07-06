@@ -82,8 +82,8 @@
         </div>
 
         <div class="text-end">
-          <button type="submit" class="btn btn-primary px-4">
-            📨 Submit Request
+          <button type="submit" class="btn btn-dark">
+              Submit Request
           </button>
         </div>
       </form>
@@ -101,18 +101,7 @@ export default {
     return {
       navItems: [
         { name: "Dashboard", link: "/student/dashboard", active: false },
-        { name: "My Courses", link: "/student/courses", active: false },
-        {
-          name: "Performance Tools",
-          link: "/student/performance",
-          active: false,
-        },
-        {
-          name: "Notifications",
-          link: "/student/notifications",
-          active: false,
-        },
-        { name: "Profile", link: "/student/profile", active: false },
+        { name: "Performance Tools", link: "/student/performance", active: false},
       ],
       studentId: null,
       courseId: null,
@@ -125,6 +114,7 @@ export default {
       message: "",
       error: "",
       supportingLink: "",
+      submitAttempted: false,
     };
   },
   mounted() {
@@ -138,9 +128,6 @@ export default {
     this.courseCode = query.course_code;
     this.component = query.component;
 
-    if (!this.studentId || !this.courseId || !this.assessmentId) {
-      this.error = "Missing required information to submit request.";
-    }
   },
   methods: {
    handleFile(event) {
@@ -158,6 +145,14 @@ export default {
   }
 },
     async submitRequest() {
+       this.submitAttempted = true;
+       this.error = "";
+       this.message = "";
+
+      if (!this.studentId || !this.courseId || !this.assessmentId) {
+      this.error = "Missing required information to submit request.";
+      return;
+      }
       if (!this.justification.trim()) {
         this.error = "Justification is required.";
         return;

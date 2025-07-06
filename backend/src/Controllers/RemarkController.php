@@ -19,6 +19,9 @@ class RemarkController
         }
     }
 
+    // ==============================
+    // Submit New Remark Request
+    // ==============================
     public function submitRemarkRequest(Request $request, Response $response): Response
     {
         $parsed = $request->getParsedBody();
@@ -27,26 +30,14 @@ class RemarkController
         $justification = $parsed['justification'] ?? '';
         $supportingLink = $parsed['supporting_link'] ?? null;
 
-        // File handling
         $uploadedFiles = $request->getUploadedFiles();
         $file = $uploadedFiles['file'] ?? null;
-        $filePath = null;
+        $filePath = $file ? $this->handleFileUpload($file) : null;
 
-        if ($file && $file->getError() === UPLOAD_ERR_OK) {
-            $filename = uniqid() . '_' . $file->getClientFilename();
-            $file->moveTo("{$this->uploadDir}/$filename");
-            $filePath = 'uploads/remarks/' . $filename;
+        if (!$studentId || !$assessmentId || !$justification || (!$filePath && !$supportingLink)) {
+            return $this->json($response, ['error' => 'Missing required fields.'], 400);
         }
 
-        // Validate required
-        if (!$studentId || !$assessmentId || !$justification || (!$file && !$supportingLink)) {
-            return $response
-                ->withStatus(400)
-                ->withHeader('Content-Type', 'application/json')
-                ->withBody(stream_for(json_encode(['error' => 'Missing required fields'])));
-        }
-
-        // Save to DB
         $stmt = $this->db->prepare("
             INSERT INTO remark_requests (student_id, assessment_id, justification, supporting_link, created_at, status)
             VALUES (:student_id, :assessment_id, :justification, :supporting_link, NOW(), 'pending')
@@ -55,11 +46,128 @@ class RemarkController
             ':student_id' => $studentId,
             ':assessment_id' => $assessmentId,
             ':justification' => $justification,
-            ':supporting_link' => $supportingLink
+            ':supporting_link' => $filePath ?? $supportingLink
         ]);
 
-        return $response->withHeader('Content-Type', 'application/json')
-            ->withStatus(200)
-            ->write(json_encode(['message' => 'Remark request submitted']));
+        return $this->json($response, ['message' => 'Remark request submitted']);
     }
+
+    // ==============================
+    // Submit Appeal After Rejection
+    // ==============================
+    public function submitAppeal(Request $request, Response $response): Response
+{
+    $parsed = $request->getParsedBody();
+    $uploadedFiles = $request->getUploadedFiles();
+
+    $studentId = $parsed['student_id'] ?? null;
+    $assessmentId = $parsed['assessment_id'] ?? null;
+    $justification = $parsed['justification'] ?? '';
+    $supportingLink = $parsed['supporting_link'] ?? null;
+
+    if (!$studentId || !$assessmentId || !$justification) {
+        return $this->json($response, ['error' => 'Missing fields.'], 400);
+    }
+
+    // Check appeal eligibility
+    $check = $this->db->prepare("
+        SELECT appeal_count FROM remark_requests
+        WHERE student_id = :student_id AND assessment_id = :assessment_id AND status = 'rejected'
+    ");
+    $check->execute([
+        ':student_id' => $studentId,
+        ':assessment_id' => $assessmentId
+    ]);
+
+    $row = $check->fetch(\PDO::FETCH_ASSOC);
+    if (!$row) {
+        return $this->json($response, ['error' => 'No rejected remark found to appeal.'], 404);
+    }
+
+    if ($row['appeal_count'] >= 2) {
+        return $this->json($response, ['error' => 'You have reached the maximum number of appeals (2).'], 403);
+    }
+
+    // Optional file upload
+    $uploadedPath = null;
+    if (isset($uploadedFiles['supporting_file'])) {
+        $uploadedPath = $this->handleFileUpload($uploadedFiles['supporting_file']);
+    }
+
+    // Update remark request
+    $stmt = $this->db->prepare("
+        UPDATE remark_requests
+        SET 
+            justification = :justification,
+            supporting_link = :supporting_link,
+            status = 'pending',
+            is_appeal = 1,
+            appeal_count = appeal_count + 1,
+            updated_at = NOW()
+        WHERE student_id = :student_id 
+          AND assessment_id = :assessment_id 
+          AND status = 'rejected'
+    ");
+    $stmt->execute([
+        ':justification' => $justification,
+        ':supporting_link' => $uploadedPath ?? $supportingLink,
+        ':student_id' => $studentId,
+        ':assessment_id' => $assessmentId   
+    ]);
+
+    return $this->json($response, ['message' => 'Appeal submitted']);
+}
+
+
+    public function getAppealCount(Request $request, Response $response): Response
+    {
+        $queryParams = $request->getQueryParams();
+        $studentId = $queryParams['student_id'] ?? null;
+        $assessmentId = $queryParams['assessment_id'] ?? null;
+
+        if (!$studentId || !$assessmentId) {
+        return $this->json($response, ['error' => 'Missing student_id or assessment_id'], 400);
+    }
+
+        $stmt = $this->db->prepare("
+        SELECT appeal_count FROM remark_requests
+        WHERE student_id = :student_id AND assessment_id = :assessment_id AND is_appeal = 1
+    ");
+        $stmt->execute([
+            ':student_id' => $studentId,
+            ':assessment_id' => $assessmentId
+        ]);
+
+        $row = $stmt->fetch();
+        $count = $row ? $row['appeal_count'] : 0;
+
+        $response->getBody()->write(json_encode(['appeal_count' => (int) $count]));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+
+    // ==============================
+    // Private: File Upload Handler
+    // ==============================
+    private function handleFileUpload(UploadedFile $file): ?string
+    {
+        if ($file->getError() === UPLOAD_ERR_OK) {
+            $filename = uniqid() . '_' . $file->getClientFilename();
+            $path = $this->uploadDir . '/' . $filename;
+            $file->moveTo($path);
+            return 'uploads/remarks/' . $filename;
+        }
+        return null;
+    }
+
+    // ==============================
+    // Private: JSON Response Helper
+    // ==============================
+    private function json(Response $response, array $data, int $status = 200): Response
+    {
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+    }
+
+
 }

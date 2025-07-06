@@ -15,7 +15,7 @@
 
     <!-- 📋 Assessments Table -->
     <table class="table table-bordered">
-      <thead>
+      <thead class =" table-dark">
         <tr>
           <th>Component</th>
           <th>Weight (%)</th>
@@ -57,25 +57,19 @@
    <!-- 🔽 Buttons Row -->
 <div class="d-flex gap-2 mb-3 flex-wrap">
   <!-- How It Works Button -->
-  <button
-    class="btn btn-primary btn-sm"
-    type="button"
-    data-bs-toggle="collapse"
-    data-bs-target="#gradePredictorInstructions"
-    aria-expanded="false"
-    aria-controls="gradePredictorInstructions"
-  >
-    📘 How It Works
-  </button>
+ <button class="btn btn-secondary" @click="showInstructions = !showInstructions">
+  How It Works
+</button>
 
   <!-- Predict Button -->
-  <button class="btn btn-success btn-sm" @click="predictGrade">
-    🎯 Predict
+  <button class="btn btn-dark" @click="predictGrade">
+     Predict
   </button>
 </div>
 
-<!-- 🔽 Collapsible Instructions -->
-<div class="collapse mt-3" id="gradePredictorInstructions">
+<!--  Collapsible Instructions -->
+<transition name="fade-slide">
+<div v-show="showInstructions" class="mt-3">
   <div class="card card-body">
     <h5 class="mb-3">🎯 Grade Predictor Tool</h5>
     <p><strong>Simulate your future academic performance.</strong></p>
@@ -91,6 +85,7 @@
     </p>
   </div>
 </div>
+</transition>
 
 <!-- 📊 Prediction Result -->
 <div v-if="predictionResult" class="alert alert-info mt-3">
@@ -110,7 +105,8 @@ export default {
       courses: [],
       assessments: [],
       predictionResult: null,
-      studentId: null
+      studentId: null,
+      showInstructions: false //
     };
   },
   methods: {
@@ -232,4 +228,15 @@ export default {
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
 </style>
