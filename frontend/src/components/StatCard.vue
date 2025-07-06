@@ -1,9 +1,9 @@
 <template>
-  <div class="card text-white mb-3" :class="bgClass" style="max-width: 18rem;">
-    <div class="card-header">{{ title }}</div>
+  <div class="card text-white mb-3" :class="bgClass" style="max-width: 30rem;">
+    <div class="card-header fw-bold">{{ title }}</div>
     <div class="card-body">
-      <h5 class="card-title">{{ value }}</h5>
-      <p class="card-text">{{ subtitle }}</p>
+      <h5 class="card-title fs-1 fw-bolder mx-3">{{ value }}</h5>
+      <p class="card-text">{{ subtitle }}</p> 
     </div>
   </div>
 </template>
