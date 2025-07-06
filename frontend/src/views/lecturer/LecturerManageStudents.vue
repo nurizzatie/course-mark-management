@@ -103,6 +103,7 @@ export default {
         { name: 'Dashboard', link: '/lecturer/dashboard' },
         { name: 'My Courses', link: '/lecturer/courses' },
         { name: 'Student Enrollment', link: '/lecturer/students'},
+        { name: 'Remark Requests', link: '/lecturer/remark-requests' },
         { name: 'Profile', link: '/lecturer/profile' }
       ],
       pageTitle: 'Student Enrollment',

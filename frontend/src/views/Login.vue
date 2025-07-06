@@ -1,7 +1,7 @@
 <template>
   <div class="login-page">
     <div class="login-box">
-      <img :src="require('@/assets/utm-logo.png')" alt="UTM Logo" class="logo" />
+      <img :src="require('@/assets/app-logo.png')" alt="App Logo" class="logo" />
 
       <form @submit.prevent="login">
         <input
@@ -18,7 +18,7 @@
           autocomplete="current-password"
           required
         />
-        <button type="submit" :disabled="loading">
+        <button class="mt-3" type="submit" :disabled="loading">
           {{ loading ? 'Logging in...' : 'Login' }}
         </button>
         <p v-if="error" class="error">{{ error }}</p>
@@ -92,7 +92,7 @@ export default {
   justify-content: center;
   height: 100vh;
   padding: 20px;
-  background: url('@/assets/utm-bg-login.png') no-repeat center center;
+  background: url('@/assets/app-background.jpg') no-repeat center center;
   background-size: cover;
   overflow: hidden;
 }
@@ -131,7 +131,7 @@ export default {
 }
 
 .logo {
-  max-width: 380px;
+  max-width: 200px;
   margin: 0 auto 16px;
   display: block;
 }

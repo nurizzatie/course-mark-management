@@ -9,6 +9,7 @@ import LecturerManageStudents from '@/views/lecturer/LecturerManageStudents.vue'
 import LecturerCourses from '@/views/lecturer/LecturerCourses.vue';
 import LecturerAssessments from '@/views/lecturer/LecturerAssessments.vue';
 import LecturerMarks from '@/views/lecturer/LecturerMarks.vue';
+import LecturerRemarkRequests from '@/views/lecturer/LecturerRemarkRequests.vue';
 
 // Student performance routes & pages
 import StudentDashboard from '@/views/student/StudentDashboard.vue';
@@ -43,6 +44,7 @@ const routes = [
   { path: '/lecturer/courses', component: LecturerCourses },
   { path: '/lecturer/courses/:id/assessments', component: LecturerAssessments },
   { path: '/lecturer/courses/:id/marks', component: LecturerMarks },
+  { path: '/lecturer/remark-requests', component: LecturerRemarkRequests },
   
   // Student routes
   { path: '/student/course/:id',name: 'StudentCourseMarks',component: () => import('@/views/student/StudentCourseMarks.vue')},
