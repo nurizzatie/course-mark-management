@@ -8,6 +8,7 @@ return function (App $app) {
 
     // Standalone route for course info
     $app->get('/api/course/{id}', [StudentController::class, 'getCourseInfo']);
+    
 
     // Group all student-related routes
     $app->group('/api/student', function ($group) {
