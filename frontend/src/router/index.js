@@ -41,8 +41,6 @@ const routes = [
       { path: 'cgpa', component: CumulativeGpa },
       { path: 'what-if', component: WhatIf }
     ]
-<<<<<<< HEAD
-=======
   },
 
   {
@@ -93,7 +91,6 @@ const routes = [
     path: '/admin/reset',
     name: 'ResetPassword',
     component: ResetPassword
->>>>>>> 3c062c7bc990c543fbbad0eef06913c33abe026d
   }
 
   
