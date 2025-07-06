@@ -1,68 +1,94 @@
 <template>
-  <div class="p-6 max-w-6xl mx-auto">
+  <div class="container py-4">
+    <!-- Title & Search -->
+    <div class="mb-4">
+      <h5 class="fw-bold mb-3">📝 Student Assessment Marks</h5>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="🔍 Search by Matric No or Student Name..."
+        v-model="searchQuery"
+      />
+    </div>
 
-
-    <table class="w-full border border-gray-300 rounded-md">
-      <thead class="bg-purple-100">
-        <tr>
-          <th class="px-4 py-2 text-left">Student Name</th>
-          <th class="px-4 py-2 text-left">Matric No</th>
-          <th class="px-4 py-2 text-left">Assessment</th>
-          <th class="px-4 py-2 text-left">Mark</th>
-          <th class="px-4 py-2 text-left">Max Mark</th>
-          <th class="px-4 py-2 text-left">Last Updated</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="review in reviews" :key="`${review.student_id}-${review.assessment_name}`" class="border-t">
-          <td class="px-4 py-2">{{ review.student_name }}</td>
-          <td class="px-4 py-2">{{ review.matric_number }}</td>
-          <td class="px-4 py-2">{{ review.assessment_name }}</td>
-          <td class="px-4 py-2">{{ review.obtained_mark }}</td>
-          <td class="px-4 py-2">{{ review.max_mark }}</td>
-          <td class="px-4 py-2 text-gray-600">{{ formatDate(review.updated_at) }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p v-if="!reviews.length" class="text-gray-500 mt-4">No assessment marks available yet.</p>
+    <!-- Marks Table -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white fw-bold">Assessment Marks</div>
+      <div class="card-body table-responsive">
+        <table class="table table-bordered table-hover align-middle text-center">
+          <thead class="table-dark">
+            <tr>
+              <th>Student Name</th>
+              <th>Matric No</th>
+              <th>Assessment</th>
+              <th>Mark</th>
+              <th>Max Mark</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="!filteredReviews.length">
+              <td colspan="6" class="text-muted text-center py-3">No matching results.</td>
+            </tr>
+            <tr
+              v-for="review in filteredReviews"
+              :key="`${review.student_id}-${review.assessment_name}`"
+            >
+              <td>{{ review.student_name }}</td>
+              <td>{{ review.matric_number }}</td>
+              <td>{{ review.assessment_name }}</td>
+              <td>{{ review.obtained_mark }}</td>
+              <td>{{ review.max_mark }}</td>
+              <td class="text-muted">{{ formatDate(review.updated_at) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
+
+
 <script>
-import axios from 'axios';
+import api from '@/api';
 
 export default {
   name: 'ReviewMark',
   data() {
     return {
-      reviews: []
+      reviews: [],
+      searchQuery: ''
     };
   },
-  mounted() {
-    axios.get('http://localhost:8080/api/advisor/marks')
-      .then(res => {
-        this.reviews = res.data;
-      })
-      .catch(err => {
-        console.error('Failed to load marks:', err);
-      });
+  computed: {
+    filteredReviews() {
+      const query = this.searchQuery.trim().toLowerCase();
+      return this.reviews.filter(r =>
+        r.matric_number.toLowerCase().includes(query) ||
+        r.student_name.toLowerCase().includes(query)
+      );
+    }
   },
   methods: {
     formatDate(datetime) {
       return new Date(datetime).toLocaleString();
+    },
+    async fetchReviews() {
+      try {
+        const res = await api.get('/advisor/marks');
+        this.reviews = res.data;
+      } catch (err) {
+        console.error('Failed to load marks:', err);
+      }
     }
+  },
+  mounted() {
+    this.fetchReviews();
   }
 };
 </script>
 
-<style scoped>
-table {
-  border-collapse: collapse;
-}
-th {
-  text-align: left;
-}
-</style>
+
 
 

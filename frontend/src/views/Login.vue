@@ -60,7 +60,8 @@ export default {
         });
 
         const user = res.data.user;
-        const token = res.data.token;
+        const token = res.data.token || null;
+        if (token) localStorage.setItem('token', token);
 
         localStorage.setItem('user', JSON.stringify(user));
         if (token) localStorage.setItem('token', token);

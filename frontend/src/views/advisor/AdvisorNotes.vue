@@ -1,72 +1,64 @@
 <template>
-  <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="'Advisor Notes'">
-    <div class="p-6 max-w-5xl mx-auto">
-      <h2 class="text-2xl font-bold mb-4">🗒️ Add Consultation Report Session</h2>
-
-      <!-- Download Button -->
-      <div class="mb-4 text-right">
-        <button
-          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-          @click="downloadNotes"
-        >
+  <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="pageTitle">
+    <div class="container py-4">
+      <!-- Title & Download -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold">🗒️ Consultation Log and Report</h5>
+        <button class="btn btn-primary" @click="downloadNotes">
           ⬇️ Download Report
         </button>
       </div>
 
-      <!-- Add Note Form -->
-      <form @submit.prevent="submitNote" class="bg-gray-50 p-4 rounded mb-6 border">
-        <h3 class="font-semibold mb-2">Remark</h3>
+      <!-- Form Section -->
+      <div class="card p-4 mb-4 shadow-sm">
+        <label class="form-label">Student</label>
+        <select v-model="form.student_id" class="form-select mb-3" required>
+          <option disabled value="">Select student</option>
+          <option v-for="student in students" :key="student.id" :value="student.id">
+            {{ student.name }} ({{ student.matric_number }})
+          </option>
+        </select>
 
-        <label class="block mb-2">
-          Student:
-          <select v-model="form.student_id" class="w-full border rounded p-2 mt-1" required>
-            <option disabled value="">Select student</option>
-            <option v-for="student in students" :key="student.id" :value="student.id">
-              {{ student.name }} ({{ student.matric_number }})
-            </option>
-          </select>
-        </label>
+        <label class="form-label">Consultation Date</label>
+        <input type="date" v-model="form.meeting_date" class="form-control mb-3" required />
 
-        <label class="block mb-2">
-          Consultation Date:
-          <input type="date" v-model="form.meeting_date" class="w-full border rounded p-2 mt-1" required />
-        </label>
+        <label class="form-label">Remark</label>
+        <textarea v-model="form.note" class="form-control mb-3" rows="4" required></textarea>
 
-        <label class="block mb-4">
-          Remark:
-          <textarea v-model="form.note" class="w-full border rounded p-2 mt-1" required></textarea>
-        </label>
-
-        <button
-          type="submit"
-          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          :disabled="loading"
-        >
+        <button class="btn btn-dark" @click="submitNote" :disabled="loading">
           {{ loading ? 'Saving...' : 'Add Note' }}
         </button>
-      </form>
+      </div>
 
       <!-- Notes Table -->
-      <table class="w-full border rounded" v-if="notes.length">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="px-3 py-2">Student</th>
-            <th class="px-3 py-2">Matric No</th>
-            <th class="px-3 py-2">Meeting Date</th>
-            <th class="px-3 py-2">Remark</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="note in notes" :key="note.id" class="border-t">
-            <td class="px-3 py-2">{{ note.student_name }}</td>
-            <td class="px-3 py-2">{{ note.matric_number }}</td>
-            <td class="px-3 py-2">{{ note.meeting_date }}</td>
-            <td class="px-3 py-2">{{ note.note }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p v-else class="text-gray-500 mt-4">No details yet.</p>
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white fw-bold">
+          Consultation Notes
+        </div>
+        <div class="card-body table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead class="table-dark text-center">
+              <tr>
+                <th>#</th>
+                <th>Student</th>
+                <th>Matric No</th>
+                <th>Date</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(note, index) in notes" :key="note.id" class="text-center">
+                <td>{{ index + 1 }}</td>
+                <td>{{ note.student_name }}</td>
+                <td>{{ note.matric_number }}</td>
+                <td>{{ note.meeting_date }}</td>
+                <td class="text-start">{{ note.note }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-if="!notes.length" class="text-muted text-center py-3">No consultation notes found.</p>
+        </div>
+      </div>
     </div>
   </AppLayout>
 </template>
@@ -80,6 +72,7 @@ export default {
   components: { AppLayout },
   data() {
     return {
+      pageTitle: 'Consultation',
       notes: [],
       students: [],
       loading: false,
@@ -90,93 +83,64 @@ export default {
       },
       navItems: [
         { name: 'Dashboard', link: '/advisor/dashboard' },
-        { name: 'Student List', link: '/advisor/students' },
-        { name: 'Review Marks', link: '/advisor/reviews' },
+        { name: 'Advisees', link: '/advisor/students' },
+        { name: 'Mark Review', link: '/advisor/reviews' },
         { name: 'Performance Analytics', link: '/advisor/analytics' },
-        { name: 'High-Risk Students', link: '/advisor/high-risk-students' },
-        { name: 'Advisor Notes', link: '/advisor/notes' },
+        { name: 'Consultation', link: '/advisor/notes' },
         { name: 'Profile', link: '/advisor/profile' }
       ]
     };
   },
   methods: {
     async fetchNotes() {
+      const advisor = JSON.parse(localStorage.getItem('user'));
+      if (!advisor?.id) return;
       try {
-        const advisor = JSON.parse(localStorage.getItem('user'));
-        if (!advisor?.id) throw new Error('Missing advisor info in localStorage');
-
         const res = await api.get(`/advisor/notes?advisor_id=${advisor.id}`);
         this.notes = res.data;
       } catch (err) {
-        console.error('Failed to fetch notes:', err);
-        this.notes = [];
+        console.error('Fetch notes error:', err);
       }
     },
-
     async fetchStudents() {
       try {
         const res = await api.get('/advisor/students');
         this.students = res.data;
       } catch (err) {
-        console.error('Failed to fetch students:', err);
-        this.students = [];
+        console.error('Fetch students error:', err);
       }
     },
-
     async submitNote() {
+      const advisor = JSON.parse(localStorage.getItem('user'));
+      if (!advisor?.id) return;
       try {
         this.loading = true;
-        const advisor = JSON.parse(localStorage.getItem('user'));
-        if (!advisor?.id) throw new Error('Missing advisor info in localStorage');
-
-        const payload = {
+        await api.post('/advisor/notes', {
           advisor_id: advisor.id,
-          student_id: this.form.student_id,
-          meeting_date: this.form.meeting_date,
-          note: this.form.note
-        };
-
-        await api.post('/advisor/notes', payload);
+          ...this.form
+        });
         this.form = { student_id: '', meeting_date: '', note: '' };
-        await this.fetchNotes();
-        alert('Note added successfully!');
+        this.fetchNotes();
       } catch (err) {
-        console.error('Failed to submit note:', err);
-        alert('Something went wrong while adding note.');
+        alert('Failed to add note.');
+        console.error(err);
       } finally {
         this.loading = false;
       }
     },
-
     downloadNotes() {
-      if (!this.notes.length) {
-        alert("No notes to download.");
-        return;
-      }
+      if (!this.notes.length) return alert("No notes to download.");
 
-      const csvHeader = [
-        "Student Name",
-        "Matric Number",
-        "Meeting Date",
-        "Note"
-      ];
+      const header = ["Student Name", "Matric Number", "Meeting Date", "Note"];
+      const rows = this.notes.map(n =>
+        [n.student_name, n.matric_number, n.meeting_date, `"${n.note.replace(/"/g, '""')}"`]
+      );
 
-      const csvRows = this.notes.map(note => [
-        note.student_name,
-        note.matric_number,
-        note.meeting_date,
-        `"${note.note.replace(/"/g, '""')}"`
-      ]);
-
-      const csvContent = [
-        csvHeader.join(","),
-        ...csvRows.map(row => row.join(","))
-      ].join("\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
+      const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", "advisor_notes.csv");
+      link.setAttribute('download', 'advisor_notes.csv');
       link.click();
     }
   },
@@ -187,11 +151,6 @@ export default {
 };
 </script>
 
-<style scoped>
-th {
-  text-align: left;
-}
-</style>
 
 
 

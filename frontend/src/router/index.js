@@ -13,7 +13,6 @@ import LecturerRemarkRequests from '@/views/lecturer/LecturerRemarkRequests.vue'
 // Student performance routes & pages
 import StudentDashboard from '@/views/student/StudentDashboard.vue';
 import AdminDashboard from '@/views/admin/AdminDashboard.vue';
-import LecturerProfile from '@/views/lecturer/LecturerProfile.vue';
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue';
 import GpaCalculator from '@/views/student/performance/GpaCalculator.vue';
 import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue';
@@ -29,7 +28,6 @@ import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue';
 import AdvisorMarkReview from '@/views/advisor/AdvisorMarkReview.vue'; 
 import AdvisorAnalytics from '@/views/advisor/AdvisorAnalytics.vue';
 import AdvisorProfile from '@/views/advisor/AdvisorProfile.vue';
-import HighRiskStudents from '@/views/advisor/HighRiskStudents.vue';
 
 
 const routes = [
@@ -40,12 +38,13 @@ const routes = [
   { path: '/advisor/dashboard', component: AdvisorDashboard },
   { path: '/admin/dashboard', component: AdminDashboard },
   { path: '/lecturer/profile', component: LecturerProfile },
+
+
   { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
   { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
   { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
   { path: '/advisor/dashboard', name: 'AdvisorDashboard', component: AdvisorDashboard },
   { path: '/advisor/profile', name: 'AdvisorProfile', component: AdvisorProfile },
-  { path: '/advisor/high-risk-students', name: 'HighRiskStudents', component: HighRiskStudents},
   { path: '/advisor/notes', name: 'AdvisorNotes', component: () => import('@/views/advisor/AdvisorNotes.vue')},
 
 
@@ -85,12 +84,6 @@ const routes = [
     }
   ]
 },
-
-
-  // Advisor routes
-  { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
-  { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
-  { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
 
   // Flat admin routes using AppLayout inside each page
   {

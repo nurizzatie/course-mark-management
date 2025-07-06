@@ -84,6 +84,7 @@ public function getAnalytics(Request $request, Response $response, $args): Respo
             SELECT 
                 a.student_id,
                 u.name AS student_name,
+                u.matric_number,
                 a.course_id,
                 c.course_name,
                 a.total_mark,
@@ -210,17 +211,81 @@ public function addAdvisorNote(Request $request, Response $response, $args): Res
 public function getProfile(Request $request, Response $response, $args): Response
 {
     $id = $args['id'];
-    $stmt = $this->db->prepare("SELECT id, name, email FROM users WHERE id = :id AND role = 'advisor'");
-    $stmt->execute(['id' => $id]);
-    $advisor = $stmt->fetch();
 
-    if ($advisor) {
-        $response->getBody()->write(json_encode($advisor));
+    try {
+        // Fetch advisor profile
+        $stmt = $this->db->prepare("SELECT id, name, email, matric_number FROM users WHERE id = :id AND role = 'advisor'");
+        $stmt->execute(['id' => $id]);
+        $advisor = $stmt->fetch();
+
+        if (!$advisor) {
+            return $response->withStatus(404)->withHeader('Content-Type', 'application/json')
+                            ->write(json_encode(['error' => 'Advisor not found']));
+        }
+
+        // Fetch students assigned to the advisor, filtered to only students
+        $sqlStudents = "
+            SELECT u.id, u.name, u.email, u.matric_number
+            FROM advisor_students a
+            JOIN users u ON a.student_id = u.id
+            WHERE a.advisor_id = :advisor_id
+              AND u.role = 'student'
+        ";
+
+        $stmt2 = $this->db->prepare($sqlStudents);
+        $stmt2->execute(['advisor_id' => $id]);
+        $students = $stmt2->fetchAll();
+
+        // Return structured response
+        $data = [
+            'profile' => $advisor,
+            'students' => $students
+        ];
+
+        $response->getBody()->write(json_encode($data));
         return $response->withHeader('Content-Type', 'application/json');
+        
+    } catch (\PDOException $e) {
+        error_log('Error fetching advisor profile: ' . $e->getMessage());
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json')
+                        ->write(json_encode(['error' => 'Failed to fetch advisor profile']));
     }
+}
 
-    return $response->withStatus(404)->withHeader('Content-Type', 'application/json')
-                    ->write(json_encode(['error' => 'Advisor not found']));
+public function getDashboardStats($request, $response, $args)
+{
+    $advisor_id = $args['id'];
+    $db = $this->db;
+
+    // Total assigned students
+    $stmt1 = $db->prepare("SELECT COUNT(*) AS count FROM advisor_students WHERE advisor_id = ?");
+    $stmt1->execute([$advisor_id]);
+    $assigned_students = $stmt1->fetch()['count'];
+
+    // Total advisor notes
+    $stmt2 = $db->prepare("SELECT COUNT(*) AS count FROM advisor_notes WHERE advisor_id = ?");
+    $stmt2->execute([$advisor_id]);
+    $feedback_given = $stmt2->fetch()['count'];
+
+    // Total pending reviews
+    $stmt3 = $db->prepare("SELECT COUNT(*) AS count FROM reviews WHERE advisor_id = ? AND status = 'pending'");
+    $stmt3->execute([$advisor_id]);
+    $pending_reviews = $stmt3->fetch()['count'];
+
+    // Total analytics reports (optional, replace with your actual logic or set default)
+    $stmt4 = $db->prepare("SELECT COUNT(*) AS count FROM analytics_reports WHERE advisor_id = ?");
+    $stmt4->execute([$advisor_id]);
+    $analytics_reports = $stmt4->fetch()['count'] ?? 0;
+
+    $data = [
+        'assigned_students' => (int)$assigned_students,
+        'feedback_given' => (int)$feedback_given,
+        'pending_reviews' => (int)$pending_reviews,
+        'analytics_reports' => (int)$analytics_reports,
+    ];
+
+    $response->getBody()->write(json_encode($data));
+    return $response->withHeader('Content-Type', 'application/json');
 }
 
 

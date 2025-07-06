@@ -1,69 +1,101 @@
 <template>
-  <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="'Performance Analytics'">
-    <div class="p-6 max-w-6xl mx-auto">
-      <h2 class="text-2xl font-bold mb-4 text-indigo-700">📈 Student Performance Analytics</h2>
-
-      <div v-if="analytics.length">
-        <table class="w-full table-auto border border-gray-300 rounded-md">
-          <thead class="bg-indigo-100">
-            <tr>
-              <th class="px-4 py-2 text-left">Student</th>
-              <th class="px-4 py-2 text-left">Course</th>
-              <th class="px-4 py-2 text-left">Total Mark</th>
-              <th class="px-4 py-2 text-left">Final Exam</th>
-              <th class="px-4 py-2 text-left">Overall %</th>
-              <th class="px-4 py-2 text-left">Rank</th>
-              <th class="px-4 py-2 text-left">Percentile</th>
-              <th class="px-4 py-2 text-left">Risk</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in analytics" :key="item.student_id + '-' + item.course_id" class="border-t">
-              <td class="px-4 py-2">{{ item.student_name }}</td>
-              <td class="px-4 py-2">{{ item.course_name }}</td>
-              <td class="px-4 py-2">{{ item.total_mark }}</td>
-              <td class="px-4 py-2">{{ item.final_exam_mark }}</td>
-              <td class="px-4 py-2">{{ item.overall_percentage }}%</td>
-              <td class="px-4 py-2">{{ item.rank }}</td>
-              <td class="px-4 py-2">{{ item.percentile }}%</td>
-              <td class="px-4 py-2 font-semibold" :class="getRiskClass(item.risk_level)">
-                {{ item.risk_level }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="pageTitle">
+    <div class="container py-4">
+      <!-- Page Title + Search -->
+      <div class="mb-4">
+        <h5 class="fw-bold mb-3">📊 Student Performance Analytics</h5>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="🔍 Search by Matric No or Student Name..."
+          v-model="searchQuery"
+        />
       </div>
 
-      <p v-else class="text-gray-500">No analytics data available yet.</p>
+      <!-- Analytics Table -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white fw-bold">
+          Performance Summary
+        </div>
+        <div class="card-body table-responsive">
+          <table class="table table-bordered table-hover text-center align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>Student</th>
+                <th>Matric No</th>
+                <th>Course</th>
+                <th>Total Mark</th>
+                <th>Final Exam</th>
+                <th>Overall %</th>
+                <th>Rank</th>
+                <th>Percentile</th>
+                <th>Risk</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="!filteredAnalytics.length">
+                <td colspan="9" class="text-muted text-center py-3">No matching results.</td>
+              </tr>
+              <tr
+                v-for="item in filteredAnalytics"
+                :key="item.student_id + '-' + item.course_id"
+              >
+                <td>{{ item.student_name }}</td>
+                <td>{{ item.matric_number }}</td>
+                <td>{{ item.course_name }}</td>
+                <td>{{ item.total_mark }}</td>
+                <td>{{ item.final_exam_mark }}</td>
+                <td>{{ item.overall_percentage }}%</td>
+                <td>{{ item.rank }}</td>
+                <td>{{ item.percentile }}%</td>
+                <td :class="['fw-bold', getRiskClass(item.risk_level)]">
+                  {{ item.risk_level }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </AppLayout>
 </template>
 
+
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
-import axios from 'axios';
+import api from '@/api';
 
 export default {
   name: 'AdvisorAnalytics',
   components: { AppLayout },
   data() {
     return {
+      pageTitle: 'Performance Analytics',
       analytics: [],
+      searchQuery: '',
       navItems: [
         { name: 'Dashboard', link: '/advisor/dashboard' },
-        { name: 'Student List', link: '/advisor/students' },
-        { name: 'Review Marks', link: '/advisor/reviews' },
+        { name: 'Advisees', link: '/advisor/students' },
+        { name: 'Mark Review', link: '/advisor/reviews' },
         { name: 'Performance Analytics', link: '/advisor/analytics' },
-        { name: 'High-Risk Students', link: '/advisor/high-risk-students' },
-        { name: 'Advisor Notes', link: '/advisor/notes' },
+        { name: 'Consultation', link: '/advisor/notes' },
         { name: 'Profile', link: '/advisor/profile' }
       ]
     };
   },
+  computed: {
+    filteredAnalytics() {
+      const q = this.searchQuery.toLowerCase().trim();
+      return this.analytics.filter(item =>
+        item.matric_number.toLowerCase().includes(q) ||
+        item.student_name.toLowerCase().includes(q)
+      );
+    }
+  },
   methods: {
     async fetchAnalytics() {
       try {
-        const res = await axios.get('http://localhost:8080/api/advisor/analytics');
+        const res = await api.get('/advisor/analytics');
         this.analytics = res.data;
       } catch (err) {
         console.error('Failed to fetch analytics data:', err);
@@ -71,10 +103,12 @@ export default {
       }
     },
     getRiskClass(risk) {
-      if (risk === 'High') return 'text-red-600';
-      if (risk === 'Medium') return 'text-yellow-600';
-      if (risk === 'Low') return 'text-green-600';
-      return '';
+      switch (risk) {
+        case 'High': return 'text-danger';
+        case 'Medium': return 'text-warning';
+        case 'Low': return 'text-success';
+        default: return 'text-secondary';
+      }
     }
   },
   mounted() {
@@ -83,9 +117,8 @@ export default {
 };
 </script>
 
-<style scoped>
-table {
-  border-collapse: collapse;
-}
-</style>
+
+
+
+
 

@@ -47,6 +47,12 @@ $app->get('/api/advisor/profile/{id}', function ($request, $response, $args) {
     return $controller->getProfile($request, $response, $args);
 });
 
+// GET advisor dashboard stats
+$app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $args) use ($container) {
+    $controller = new \App\Controllers\AdvisorController($container);
+    return $controller->getDashboardStats($request, $response, $args);
+});
+
 };
 
 

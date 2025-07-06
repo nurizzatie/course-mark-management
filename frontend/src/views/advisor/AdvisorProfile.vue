@@ -1,7 +1,8 @@
 <template>
   <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="pageTitle">
     <div class="container py-4">
-      <div class="card mb-4">
+      <!-- Profile Info -->
+      <div class="card mb-4" v-if="profile">
         <div class="card-header bg-dark text-white">
           <i class="fa-solid fa-address-card"></i> Profile Information
         </div>
@@ -12,12 +13,13 @@
         </div>
       </div>
 
-      <div class="card">
+      <!-- Students Assigned -->
+      <div class="card" v-if="students && students.length">
         <div class="card-header bg-dark text-white">
           <i class="fa-solid fa-people-group"></i> Students Assigned
         </div>
         <div class="card-body table-responsive">
-          <table class="table table-bordered table-hover" v-if="students.length">
+          <table class="table table-bordered table-hover">
             <thead class="table-dark">
               <tr class="text-center">
                 <th>#</th>
@@ -35,9 +37,10 @@
               </tr>
             </tbody>
           </table>
-          <p v-else class="text-muted">No students assigned yet.</p>
         </div>
       </div>
+      <p v-else-if="students" class="text-muted">No students assigned yet.</p>
+<p v-else class="text-muted">Loading students...</p>
     </div>
   </AppLayout>
 </template>
@@ -52,15 +55,14 @@ export default {
   data() {
     return {
       pageTitle: 'My Profile',
-      profile: {},
+      profile: null, // Start with null to detect loading state
       students: [],
       navItems: [
         { name: 'Dashboard', link: '/advisor/dashboard' },
-        { name: 'Student List', link: '/advisor/students' },
-        { name: 'Review Marks', link: '/advisor/reviews' },
+        { name: 'Advisees', link: '/advisor/students' },
+        { name: 'Mark Review', link: '/advisor/reviews' },
         { name: 'Performance Analytics', link: '/advisor/analytics' },
-        { name: 'High-Risk Students', link: '/advisor/high-risk-students' },
-        { name: 'Advisor Notes', link: '/advisor/notes' },
+        { name: 'Consultation', link: '/advisor/notes' },
         { name: 'Profile', link: '/advisor/profile' }
       ]
     };
@@ -81,6 +83,8 @@ export default {
   }
 };
 </script>
+
+
 
 
 
