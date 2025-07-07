@@ -32,6 +32,7 @@ export default {
         responsive: true,
         plugins: {
           legend: {
+            display: false,
             position: 'top'
           },
           title: {

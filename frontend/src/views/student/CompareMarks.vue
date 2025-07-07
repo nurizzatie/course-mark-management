@@ -162,7 +162,7 @@ export default {
           labels: resData.data.map((d) => d.student_label),
           datasets: [
             {
-              label: "Student Marks",
+              label: "You",
               backgroundColor: resData.data.map((d) =>
                 d.student_label === "You" ? "#4ade80" : "#93c5fd"
               ),

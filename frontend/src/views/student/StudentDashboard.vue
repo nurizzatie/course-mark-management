@@ -85,7 +85,7 @@ import BarChart from "@/components/BarChart.vue";
           <div class="col-md-6 mb-4">
             <div class="card h-100">
               <div class="card-header bg-dark text-white text-center">
-                📊 Your Course Percentiles
+                 Your Course Percentiles
               </div>
               <div class="card-body">
                 <BarChart :chartData="barChartData" />
@@ -160,7 +160,7 @@ export default {
         labels: this.courses.map((c) => c.name),
         datasets: [
           {
-            label: "Your Percentile",
+            label: "",
             data: this.courses.map((c) => c.percentile || 0),
             backgroundColor: [
               "rgba(255, 99, 132, 0.2)",
