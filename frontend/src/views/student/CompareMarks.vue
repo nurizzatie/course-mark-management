@@ -117,21 +117,46 @@ export default {
       }
     },
     async fetchAssessments() {
-      try {
-        const res = await fetch(
-          `http://localhost:8080/api/student/course/${this.courseId}/assessment-list`
-        );
-        const data = await res.json();
-        this.assessments = data;
+  try {
+    const res = await fetch(
+      `http://localhost:8080/api/student/course/${this.courseId}/assessment-list`
+    );
+    const allAssessments = await res.json();
 
-        if (data.length > 0) {
-          this.selectedAssessmentId = data[0].id;
-          await this.fetchComparisonData();
-        }
-      } catch (err) {
-        console.error("Error fetching assessments:", err);
+    const student = JSON.parse(localStorage.getItem("user")) || { id: 1 };
+
+    const gradedAssessments = [];
+
+    for (const a of allAssessments) {
+      const res = await fetch(
+        `http://localhost:8080/api/student/course/${this.courseId}/compare/${a.id}?student_id=${student.id}`
+      );
+      const resData = await res.json();
+
+      const isGraded = resData.data?.some(
+        (d) => d.total_contribution !== null && d.total_contribution > 0
+      );
+
+      if (isGraded) {
+        gradedAssessments.push(a);
       }
-    },
+    }
+
+    this.assessments = gradedAssessments;
+
+    if (this.assessments.length > 0) {
+      this.selectedAssessmentId = this.assessments[0].id;
+      await this.fetchComparisonData();
+    } else {
+      this.selectedAssessmentId = null;
+      this.chartData = null;
+      this.comparisonData = [];
+      this.classAverage = null;
+    }
+  } catch (err) {
+    console.error("Error fetching assessments or grading info:", err);
+  }
+},
     async fetchComparisonData() {
       if (!this.selectedAssessmentId) return;
 
