@@ -61,7 +61,7 @@
 
         <div class="mb-4">
           <label class="form-label fw-bold"
-            >Upload Supporting File (Optional)</label
+            >Upload Supporting File (Required)</label
           >
           <input
             type="file"
@@ -145,55 +145,40 @@ export default {
   }
 },
     async submitRequest() {
-       this.submitAttempted = true;
-       this.error = "";
-       this.message = "";
+  const formData = new FormData();
+  formData.append("student_id", this.studentId);
+  formData.append("assessment_id", this.assessmentId);
+  formData.append("justification", this.justification);
+  formData.append("file", this.file);
 
-      if (!this.studentId || !this.courseId || !this.assessmentId) {
-      this.error = "Missing required information to submit request.";
-      return;
-      }
-      if (!this.justification.trim()) {
-        this.error = "Justification is required.";
-        return;
-      }
+  if (this.supportingLink.trim()) {
+    formData.append("supporting_link", this.supportingLink.trim());
+  }
 
-      if (!this.file) {
-        this.error = "You must upload a supporting file.";
-        return;
-      }
+  console.log("🧪 Sending:", [...formData.entries()]);
 
-      const formData = new FormData();
-      formData.append("student_id", this.studentId);
-      formData.append("assessment_id", this.assessmentId);
-      formData.append("justification", this.justification);
-      if (this.file) {
-        formData.append("file", this.file);
-      }
-      if (this.supportingLink.trim()) {
-        formData.append("supporting_link", this.supportingLink.trim());
-      }
+  try {
+    const res = await fetch("http://localhost:8080/api/remark/request", {
+      method: "POST",
+      body: formData,
+    });
 
-      try {
-        const res = await fetch(`http://localhost:8080/api/remark/request`, {
-          method: "POST",
-          body: formData,
-        });
+    const result = await res.json();
+    console.log("✅ Response:", result);
 
-        if (!res.ok) throw new Error("Failed to submit request.");
+    this.message = "Remark request submitted successfully!";
+    this.error = "";
+    this.justification = "";
+    this.supportingLink = "";
+    this.file = null;
+    this.$refs.fileInput.value = "";
+  } catch (err) {
+    console.error("❌ Error:", err);
+    this.error = "Something went wrong. Please try again.";
+    this.message = "";
+  }
+}
 
-        this.message = "Remark request submitted successfully!";
-        this.error = "";
-        this.justification = "";
-        this.supportingLink = "";
-        this.file = null;
-        if (this.$refs.fileInput) this.$refs.fileInput.value = "";
-      } catch (err) {
-        console.error(err);
-        this.error = "Something went wrong. Please try again.";
-        this.message = "";
-      }
-    },
   },
 };
 </script>
