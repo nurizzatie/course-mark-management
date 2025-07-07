@@ -11,6 +11,7 @@ import ResetPassword from '@/views/admin/ResetPassword.vue'
 
 // Student
 import StudentDashboard from '@/views/student/StudentDashboard.vue'
+import StudentProfile from '@/views/student/StudentProfile.vue'
 import PerformanceToolsLayout from '@/views/student/performance/PerformanceToolsLayout.vue'
 import GpaCalculator from '@/views/student/performance/GpaCalculator.vue'
 import CumulativeGpa from '@/views/student/performance/CumulativeGpa.vue'
@@ -68,6 +69,7 @@ const routes = [
 
   // Student Routes
   { path: '/student/dashboard', component: StudentDashboard },
+  { path: '/student/profile', component: StudentProfile },
   {
     path: '/student/performance',
     component: PerformanceToolsLayout,

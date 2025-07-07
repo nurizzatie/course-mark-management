@@ -35,13 +35,14 @@
               <input :value="profile.semester" class="form-control" disabled />
             </div>
           </div>
-
+<br>
           <!-- Buttons -->
-          <div class="position-absolute" style="bottom: 10px; right: 10px;">
+          <div class="position-absolute" style="bottom:10px; right: 10px;">
             <button v-if="!isEditing" class="btn btn-sm btn-warning" @click="startEditing">
               <font-awesome-icon :icon="['fas', 'pencil-alt']" class="me-1" />
               Edit
             </button>
+             
             <div v-else>
               <button class="btn btn-sm btn-success me-1" @click="saveProfile">
                 <font-awesome-icon :icon="['fas', 'save']" class="me-1" />
