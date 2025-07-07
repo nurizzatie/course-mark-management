@@ -1,15 +1,20 @@
 <template>
   <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="pageTitle">
     <div class="container py-4">
-      <!-- Page Title + Search -->
-      <div class="mb-4">
-        <h5 class="fw-bold mb-3">📊 Student Performance Analytics</h5>
-        <input
-          type="text"
-          class="form-control"
-          placeholder="🔍 Search by Matric No or Student Name..."
-          v-model="searchQuery"
-        />
+      <!-- Page Title + Search + Download -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="w-100 me-3">
+          <h5 class="fw-bold mb-2">📊 Student Performance Analytics</h5>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="🔍 Search by Matric No or Student Name..."
+            v-model="searchQuery"
+          />
+        </div>
+        <button class="btn btn-primary mt-4" @click="downloadAnalytics">
+          ⬇️ Download Report
+        </button>
       </div>
 
       <!-- Analytics Table -->
@@ -60,7 +65,6 @@
   </AppLayout>
 </template>
 
-
 <script>
 import AppLayout from '@/layouts/AppLayout.vue';
 import api from '@/api';
@@ -109,6 +113,42 @@ export default {
         case 'Low': return 'text-success';
         default: return 'text-secondary';
       }
+    },
+    downloadAnalytics() {
+      if (!this.filteredAnalytics.length) {
+        return alert("No data to download.");
+      }
+
+      const header = [
+        'Student Name',
+        'Matric Number',
+        'Course',
+        'Total Mark',
+        'Final Exam',
+        'Overall %',
+        'Rank',
+        'Percentile',
+        'Risk Level'
+      ];
+
+      const rows = this.filteredAnalytics.map(item => [
+        item.student_name,
+        item.matric_number,
+        item.course_name,
+        item.total_mark,
+        item.final_exam_mark,
+        item.overall_percentage,
+        item.rank,
+        item.percentile,
+        item.risk_level
+      ]);
+
+      const csvContent = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', 'performance_analytics.csv');
+      link.click();
     }
   },
   mounted() {
@@ -116,6 +156,7 @@ export default {
   }
 };
 </script>
+
 
 
 
