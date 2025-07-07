@@ -5,6 +5,7 @@
       <div v-else-if="error" class="text-danger">{{ error }}</div>
       <div v-else>
         <h2><strong>{{ courseName }} ({{ courseCode }})</strong></h2>
+        <p class="text-muted mb-4">Lecturer: {{ lecturerName }}</p>
         <p class="text-muted mb-4">Component-wise Marks</p>
 
         <table class="table table-light table-striped" v-if="marks.length > 0">
@@ -31,6 +32,8 @@
                   v-if="!item.remark_status"
                   class="btn btn-outline-dark btn-sm"
                   @click="requestRemark(item)"
+                  :disabled="!item.obtained_mark"
+
                 >
                   Request Remark
                 </button>
@@ -97,6 +100,8 @@ export default {
       percentage: 0,
       loading: true,
       error: null,
+      lecturerName: '',
+
     };
   },
   async mounted() {
@@ -150,6 +155,8 @@ export default {
         this.totalObtained = data.summary.total_obtained;
         this.totalMax = data.summary.total_max;
         this.percentage = data.summary.percentage;
+        this.lecturerName = data.components[0]?.lecturer_name || '';
+
 
         if (data.components.length > 0) {
           this.courseName = data.components[0].course_name || "Unknown Course";

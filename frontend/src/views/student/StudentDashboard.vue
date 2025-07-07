@@ -10,7 +10,8 @@ import BarChart from "@/components/BarChart.vue";
       <div class="mb-4">
         <h2>Hello, {{ studentName }}</h2>
         <p class="text-muted">
-          Matric Number: {{ studentMatricNumber }} | Semester: {{ studentSemester }}
+          Matric Number: {{ studentMatricNumber }} | Semester:
+          {{ studentSemester }}
         </p>
       </div>
 
@@ -37,44 +38,43 @@ import BarChart from "@/components/BarChart.vue";
                 </tr>
               </thead>
               <tbody>
-  <!-- If there are courses, loop and display -->
-  <template v-if="courses.length">
-    <tr v-for="course in courses" :key="course.id">
-      <td>{{ course.name }}</td>
-      <td>{{ course.code }}</td>
-      <td>
-        <div class="progress">
-          <div
-            class="progress-bar"
-            role="progressbar"
-            :style="{ width: course.progress + '%' }"
-            :aria-valuenow="course.progress"
-            aria-valuemin="0"
-            aria-valuemax="100"
-          >
-            {{ course.progress }}%
-          </div>
-        </div>
-      </td>
-      <td class="text-center">
-        <router-link
-          :to="`/student/course/${course.id}`"
-          class="btn btn-dark"
-        >
-          View Details
-        </router-link>
-      </td>
-    </tr>
-  </template>
+                <!-- If there are courses, loop and display -->
+                <template v-if="courses.length">
+                  <tr v-for="course in courses" :key="course.id">
+                    <td>{{ course.name }}</td>
+                    <td>{{ course.code }}</td>
+                    <td>
+                      <div class="progress">
+                        <div
+                          class="progress-bar"
+                          role="progressbar"
+                          :style="{ width: course.progress + '%' }"
+                          :aria-valuenow="course.progress"
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                        >
+                          {{ course.progress }}%
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <router-link
+                        :to="`/student/course/${course.id}`"
+                        class="btn btn-dark"
+                      >
+                        View Details
+                      </router-link>
+                    </td>
+                  </tr>
+                </template>
 
-  <!-- If no courses -->
-  <tr v-else>
-    <td colspan="4" class="text-center text-muted py-4">
-      No courses found.
-    </td>
-  </tr>
-</tbody>
-
+                <!-- If no courses -->
+                <tr v-else>
+                  <td colspan="4" class="text-center text-muted py-4">
+                    No courses found.
+                  </td>
+                </tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default {
         this.studentName = data.student.name;
         this.studentMatricNumber = data.student.matric_number;
         this.studentSemester =
-        data.courses.length > 0 ? data.courses[0].semester : "N/A";
+          data.courses.length > 0 ? data.courses[0].semester : "N/A";
         this.studentRank = data.student.rank;
         this.studentPercentile = data.student.percentile;
         this.totalStudents = data.student.total_students;
@@ -221,7 +221,7 @@ export default {
 
         this.summaryCards = data.summaryCards;
       } catch (error) {
-        console.error("❌ Failed to load dashboard:", error);
+        console.error("Failed to load dashboard:", error);
         alert("Unable to load student dashboard data.");
       }
     },

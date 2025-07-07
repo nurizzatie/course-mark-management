@@ -131,7 +131,7 @@ export default {
     const studentId = JSON.parse(localStorage.getItem("user")).id;
 
     try {
-      // 🎯 Individual performance
+      // Individual performance
       const res = await fetch(
         `http://localhost:8080/api/student/course/${this.courseId}/rank/${studentId}`
       );
@@ -140,7 +140,7 @@ export default {
       this.percentile = data.percentile;
       this.total = data.total_students;
 
-      // 📊 Table data
+      //  Table data
       const tableRes = await fetch(
         `http://localhost:8080/api/student/course/${this.courseId}/rank-table`
       );
@@ -150,7 +150,7 @@ export default {
         is_you: student.student_id === studentId,
       }));
     } catch (err) {
-      console.error("❌ Failed to fetch rank or table:", err);
+      console.error("Failed to fetch rank or table:", err);
     }
   },
 };
