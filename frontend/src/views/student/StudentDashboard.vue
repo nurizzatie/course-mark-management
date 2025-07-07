@@ -1,7 +1,6 @@
 <script setup>
 import StudyLineChart from "@/components/StudyLineChart.vue";
 import BarChart from "@/components/BarChart.vue";
-
 </script>
 
 <template>
@@ -11,7 +10,7 @@ import BarChart from "@/components/BarChart.vue";
       <div class="mb-4">
         <h2>Hello, {{ studentName }}</h2>
         <p class="text-muted">
-          Matric Number: {{ studentMatricNumber }} | {{ studentSemester }}
+          Matric Number: {{ studentMatricNumber }} | Semester: {{ studentSemester }}
         </p>
       </div>
 
@@ -38,54 +37,61 @@ import BarChart from "@/components/BarChart.vue";
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="course in courses" :key="course.id">
-                  <td>{{ course.name }}</td>
-                  <td>{{ course.code }}</td>
-                  <td>
-                    <div class="progress">
-                      <div
-                        class="progress-bar"
-                        role="progressbar"
-                        :style="{ width: course.progress + '%' }"
-                        :aria-valuenow="course.progress"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                      >
-                        {{ course.progress }}%
-                      </div>
-                    </div>
-                  </td>
-                  <td class="text-center">
-                    <router-link
-                      :to="`/student/course/${course.id}`"
-                      class="btn btn-dark"
-                    >
-                      View Details
-                    </router-link>
-                  </td>
-                </tr>
-              </tbody>
+  <!-- If there are courses, loop and display -->
+  <template v-if="courses.length">
+    <tr v-for="course in courses" :key="course.id">
+      <td>{{ course.name }}</td>
+      <td>{{ course.code }}</td>
+      <td>
+        <div class="progress">
+          <div
+            class="progress-bar"
+            role="progressbar"
+            :style="{ width: course.progress + '%' }"
+            :aria-valuenow="course.progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          >
+            {{ course.progress }}%
+          </div>
+        </div>
+      </td>
+      <td class="text-center">
+        <router-link
+          :to="`/student/course/${course.id}`"
+          class="btn btn-dark"
+        >
+          View Details
+        </router-link>
+      </td>
+    </tr>
+  </template>
+
+  <!-- If no courses -->
+  <tr v-else>
+    <td colspan="4" class="text-center text-muted py-4">
+      No courses found.
+    </td>
+  </tr>
+</tbody>
+
             </table>
           </div>
         </div>
 
         <!-- Two-Column Row -->
         <div class="row">
-      
-      <!-- Course Percentile Chart -->
-<div class="col-md-6 mb-4">
-  <div class="card h-100">
-    <div class="card-header bg-dark text-white text-center">
-      📊 Your Course Percentiles
-    </div>
-    <div class="card-body">
-      <BarChart :chartData="barChartData" />
-    </div>
-  </div>
-</div>
-
-
-
+          <!-- Course Percentile Chart -->
+          <div class="col-md-6 mb-4">
+            <div class="card h-100">
+              <div class="card-header bg-dark text-white text-center">
+                📊 Your Course Percentiles
+              </div>
+              <div class="card-body">
+                <BarChart :chartData="barChartData" />
+              </div>
+            </div>
+          </div>
 
           <!-- Calendar -->
           <div class="col-md-6 mb-4">
@@ -150,35 +156,34 @@ export default {
       return this.circumference * (1 - this.studentPercentile / 100);
     },
     barChartData() {
-  return {
-    labels: this.courses.map(c => c.name),
-    datasets: [
-      {
-        label: "Your Percentile",
-        data: this.courses.map(c => c.percentile || 0),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(255, 206, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(153, 102, 255, 0.2)',
-          'rgba(255, 159, 64, 0.2)',
-          // repeat if more courses
+      return {
+        labels: this.courses.map((c) => c.name),
+        datasets: [
+          {
+            label: "Your Percentile",
+            data: this.courses.map((c) => c.percentile || 0),
+            backgroundColor: [
+              "rgba(255, 99, 132, 0.2)",
+              "rgba(54, 162, 235, 0.2)",
+              "rgba(255, 206, 86, 0.2)",
+              "rgba(75, 192, 192, 0.2)",
+              "rgba(153, 102, 255, 0.2)",
+              "rgba(255, 159, 64, 0.2)",
+              // repeat if more courses
+            ],
+            borderColor: [
+              "rgba(255,99,132,1)",
+              "rgba(54, 162, 235, 1)",
+              "rgba(255, 206, 86, 1)",
+              "rgba(75, 192, 192, 1)",
+              "rgba(153, 102, 255, 1)",
+              "rgba(255, 159, 64, 1)",
+            ],
+            borderWidth: 1,
+          },
         ],
-        borderColor: [
-          'rgba(255,99,132,1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-          'rgba(255, 159, 64, 1)',
-        ],
-        borderWidth: 1
-      }
-    ]
-  };
-}
-
+      };
+    },
   },
   mounted() {
     this.loadStudentData();
@@ -200,7 +205,7 @@ export default {
         this.studentName = data.student.name;
         this.studentMatricNumber = data.student.matric_number;
         this.studentSemester =
-          data.courses.length > 0 ? data.courses[0].semester : "N/A";
+        data.courses.length > 0 ? data.courses[0].semester : "N/A";
         this.studentRank = data.student.rank;
         this.studentPercentile = data.student.percentile;
         this.totalStudents = data.student.total_students;
@@ -272,6 +277,4 @@ export default {
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
-
 </style>

@@ -54,14 +54,6 @@ class StudentController
             $course['percentile'] = $this->getCoursePercentile($courseId, $studentId);
         }
 
-        // Summary data
-        $summaryCards = [
-            ['title' => 'Average Mark', 'value' => '78%', 'icon' => '📊'],
-            ['title' => 'Courses Enrolled', 'value' => count($courses), 'icon' => '📘'],
-            ['title' => 'Completed Assessments', 'value' => '7 / 12', 'icon' => '✅'],
-            ['title' => 'Upcoming', 'value' => 'Final Exam – 14 Jul', 'icon' => '⏰'],
-        ];
-
         return $this->json($response, [
             'student' => [
                 'name' => $user['name'],
@@ -71,7 +63,6 @@ class StudentController
                 'percentile' => 75, // Optional: overall percentile
                 'total_students' => 40
             ],
-            'summaryCards' => $summaryCards,
             'courses' => $courses
         ]);
     }
@@ -329,22 +320,21 @@ class StudentController
 
     // 1. Get list of courses the student enrolled in
     $stmt = $this->db->prepare("
-    SELECT c.id, c.course_name AS name
-    FROM courses c
-    JOIN student_courses sc ON sc.course_id = c.id
-    WHERE sc.student_id = :studentId
-");
-
+        SELECT c.id, c.course_name AS name
+        FROM courses c
+        JOIN student_courses sc ON sc.course_id = c.id
+        WHERE sc.student_id = :studentId
+    ");
     $stmt->execute([':studentId' => $studentId]);
     $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $results = [];
-    $assessmentTitles = [];
+    $assessmentTypes = [];
 
     foreach ($courses as $course) {
-        // 2. Get assessments for this course
+        // 2. Get assessments for this course (using type now)
         $stmtAssessments = $this->db->prepare("
-            SELECT a.id, a.title
+            SELECT a.id, a.type
             FROM assessments a
             WHERE a.course_id = :courseId
             ORDER BY a.id ASC
@@ -352,9 +342,9 @@ class StudentController
         $stmtAssessments->execute([':courseId' => $course['id']]);
         $assessments = $stmtAssessments->fetchAll(PDO::FETCH_ASSOC);
 
-        // Store titles only once (for the first course)
-        if (empty($assessmentTitles)) {
-            $assessmentTitles = array_column($assessments, 'title');
+        // Store types only once
+        if (empty($assessmentTypes)) {
+            $assessmentTypes = array_column($assessments, 'type');
         }
 
         // 3. Get student's marks for each assessment
@@ -379,9 +369,9 @@ class StudentController
         ];
     }
 
-    // Final output with titles
+    // Final output with types instead of titles
     $final = [
-        'assessments' => $assessmentTitles,
+        'assessments' => $assessmentTypes,
         'courses' => $results
     ];
 
