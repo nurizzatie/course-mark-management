@@ -26,7 +26,7 @@
 <script>
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppNavbar from '@/components/AppNavbar.vue';
-import AdminNavbar from '@/components/AdminNavbar.vue'; // ✅ Import here
+import AdminNavbar from '@/components/AdminNavbar.vue';
 import api from '@/api';
 
 export default {
@@ -34,7 +34,7 @@ export default {
   components: {
     AppSidebar,
     AppNavbar,
-    AdminNavbar // ✅ Register here
+    AdminNavbar
   },
   props: {
     navItems: {
@@ -68,7 +68,7 @@ export default {
               time: new Date(n.created_at).toLocaleString()
             }));
           })
-          .catch(err => console.error('❌ Notification fetch failed:', err));
+          .catch(err => console.error('Notification fetch failed:', err));
       }
     },
     updateNotification(index) {
