@@ -265,92 +265,48 @@ class AdvisorController
                             ->write(json_encode(['error' => 'Failed to fetch advisor profile']));
         }
     }
-
-    public function getDashboardStats($request, $response, $args)
-    {
-        $advisor_id = $args['id'];
-        $db = $this->db;
-
-        // Total assigned students
-        $stmt1 = $db->prepare("SELECT COUNT(*) AS count FROM advisor_students WHERE advisor_id = ?");
-        $stmt1->execute([$advisor_id]);
-        $assigned_students = $stmt1->fetch()['count'];
-
-        // Total advisor notes
-        $stmt2 = $db->prepare("SELECT COUNT(*) AS count FROM advisor_notes WHERE advisor_id = ?");
-        $stmt2->execute([$advisor_id]);
-        $feedback_given = $stmt2->fetch()['count'];
-
-        // Total pending reviews
-        $stmt3 = $db->prepare("SELECT COUNT(*) AS count FROM reviews WHERE advisor_id = ? AND status = 'pending'");
-        $stmt3->execute([$advisor_id]);
-        $pending_reviews = $stmt3->fetch()['count'];
-
-        // Total analytics reports (optional, replace with your actual logic or set default)
-        $stmt4 = $db->prepare("SELECT COUNT(*) AS count FROM analytics_reports WHERE advisor_id = ?");
-        $stmt4->execute([$advisor_id]);
-        $analytics_reports = $stmt4->fetch()['count'] ?? 0;
-
-        $data = [
-            'assigned_students' => (int)$assigned_students,
-            'feedback_given' => (int)$feedback_given,
-            'pending_reviews' => (int)$pending_reviews,
-            'analytics_reports' => (int)$analytics_reports,
-        ];
-
-        $response->getBody()->write(json_encode($data));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
-
-public function getDashboardStats(Request $request, Response $response, array $args)
-{
-    $advisorId = $args['id'];
-    error_log("Getting dashboard stats for advisor ID: $advisorId");
-
+public function getDashboardStats(Request $request, Response $response, array $args): Response {
     try {
-        // Example using PDO
+        $advisorId = $args['id'];
         $db = $this->db;
 
-        // assignedStudents
+        // Count assigned students
         $stmt1 = $db->prepare("SELECT COUNT(*) as total FROM advisor_students WHERE advisor_id = ?");
         $stmt1->execute([$advisorId]);
-        $assignedStudents = $stmt1->fetch()['total'] ?? 0;
+        $assignedStudents = $stmt1->fetch()['total'];
 
-        // ConsultGiven
-        $stmt2 = $db->prepare("SELECT COUNT(*) as total FROM advisor_notes WHERE advisor_id = ?");
+        // Count consultations given
+        $stmt2 = $db->prepare("SELECT COUNT(*) as total FROM advisor_consult_notes WHERE advisor_id = ?");
         $stmt2->execute([$advisorId]);
-        $consultGiven = $stmt2->fetch()['total'] ?? 0;
+        $consultGiven = $stmt2->fetch()['total'];
 
-        // TotalReviews
-        $stmt3 = $db->prepare("
-            SELECT COUNT(sa.student_id) as total 
-            FROM student_assessments sa 
-            JOIN advisor_students ast ON sa.student_id = ast.student_id 
-            WHERE ast.advisor_id = ?
-        ");
+        // Count mark reviews (based on feedback)
+        $stmt3 = $db->prepare("SELECT COUNT(*) as total FROM marks_feedback WHERE advisor_id = ?");
         $stmt3->execute([$advisorId]);
-        $totalReviews = $stmt3->fetch()['total'] ?? 0;
+        $totalReviews = $stmt3->fetch()['total'];
 
-        // Analytics Reports
-        $stmt4 = $db->prepare("SELECT COUNT(*) as total FROM analytics_data WHERE advisor_id = ?");
+        // Count analytics reports generated
+        $stmt4 = $db->prepare("SELECT COUNT(*) as total FROM analytics_reports WHERE advisor_id = ?");
         $stmt4->execute([$advisorId]);
-        $analyticsReports = $stmt4->fetch()['total'] ?? 0;
+        $analyticsReports = $stmt4->fetch()['total'];
 
+        // Return data
         $data = [
             "assigned_students" => $assignedStudents,
             "feedback_given" => $consultGiven,
             "pending_reviews" => $totalReviews,
-            "analytics_reports" => $analyticsReports,
+            "analytics_reports" => $analyticsReports
         ];
 
-        $response->getBody()->write(json_encode($data));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $response->withJson($data);
+
     } catch (\Exception $e) {
-        error_log("Dashboard stats error: " . $e->getMessage());
-        $response->getBody()->write(json_encode(['error' => 'Internal server error']));
-        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        return $response->withStatus(500)->withJson([
+            "error" => $e->getMessage()
+        ]);
     }
 }
+
     public function getAdviseeProgress(Request $request, Response $response, $args): Response
     {
         $studentId = $args['id'];

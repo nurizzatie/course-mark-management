@@ -47,12 +47,6 @@ return function ($app) {
         return $controller->getProfile($request, $response, $args);
     });
 
-    // GET advisor dashboard stats
-    $app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $args) use ($container) {
-        $controller = new \App\Controllers\AdvisorController($container);
-        return $controller->getDashboardStats($request, $response, $args);
-    });
-
     // Get advisee progress (full mark breakdown for each course and overall course performance)
     $app->get('/api/advisor/advisee/{id}/progress', function ($request, $response, $args) use ($container) {
         $controller = new \App\Controllers\AdvisorController($container);

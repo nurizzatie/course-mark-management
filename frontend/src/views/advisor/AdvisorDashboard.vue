@@ -106,25 +106,25 @@ export default {
   },
   methods: {
   async loadDashboardStats() {
-    const user = JSON.parse(localStorage.getItem('user'));
+  const user = JSON.parse(localStorage.getItem('user'));
 
-    console.log("User from localStorage:", user);
-    
+  console.log("User from localStorage:", user);
 
-    if (!user?.id) return;
+  if (!user?.id) return;
 
-    try {
-      const res = await api.get(`/advisor/${user.id}/dashboard-stats`);
-      const stats = res.data;
+  try {
+    const res = await api.get(`/advisor/${user.id}/dashboard-stats`);
+    const stats = res.data;
 
-      this.assignedStudents = stats.assignedStudents ?? 0;
-      this.ConsultGiven = stats.feedbackGiven ?? 0;
-      this.TotalReviews = stats.pendingReviews ?? 0;
-      this.analyticsReports = stats.analyticsReports ?? 0;
-    } catch (err) {
-      console.error('Error loading dashboard stats:', err);
-    }
-  },
+    this.assignedStudents = stats.assigned_students ?? 0;
+    this.ConsultGiven = stats.feedback_given ?? 0;
+    this.TotalReviews = stats.pending_reviews ?? 0;
+    this.analyticsReports = stats.analytics_reports ?? 0;
+  } catch (err) {
+    console.error('Error loading dashboard stats:', err);
+  }
+},
+
 
       async loadHighRiskStudents() {
       try {
