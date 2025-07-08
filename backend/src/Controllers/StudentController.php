@@ -433,44 +433,50 @@ public function getStudentProfile(Request $request, Response $response, array $a
     }
 }
 
-public function updateStudentProfile(Request $request, Response $response, array $args): Response
+public function updateProfile(Request $request, Response $response, array $args): Response
 {
-    $userHeader = $request->getHeaderLine('X-User');
-    if (!$userHeader) {
-        $response->getBody()->write(json_encode(['error' => 'Missing X-User header.']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-    }
+    $user = $request->getHeaderLine('X-User');
+    $student = json_decode($user, true);
+    $studentId = $student['id'] ?? null;
 
-    $user = json_decode($userHeader, true);
-    $userId = $user['id'] ?? null;
-
-    if (!$userId) {
-        $response->getBody()->write(json_encode(['error' => 'Invalid user data.']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    if (!$studentId || $studentId != $args['id']) {
+        return $this->json($response, ['error' => 'Unauthorized'], 401);
     }
 
     $data = $request->getParsedBody();
 
-    $name = $data['name'] ?? null;
-    $email = $data['email'] ?? null;
-    $matric = $data['matric_number'] ?? null;
+    $fields = [
+        'name' => $data['name'] ?? null,
+        'email' => $data['email'] ?? null
+    ];
 
-    if (!$name || !$email || !$matric) {
-        $response->getBody()->write(json_encode(['error' => 'Missing required fields.']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    // Optional password update
+    if (!empty($data['password'])) {
+        $fields['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
     }
 
-    try {
-        $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, matric_number = ? WHERE id = ?");
-        $stmt->execute([$name, $email, $matric, $userId]);
+    // Build dynamic SQL SET clause
+    $setClause = implode(', ', array_map(fn($k) => "$k = :$k", array_keys($fields)));
+    $stmt = $this->db->prepare("UPDATE users SET $setClause WHERE id = :id");
+    $fields['id'] = $studentId;
+    $stmt->execute($fields);
 
-        $response->getBody()->write(json_encode(['message' => 'Profile updated successfully']));
-        return $response->withHeader('Content-Type', 'application/json');
-    } catch (\PDOException $e) {
-        $response->getBody()->write(json_encode(['error' => 'Failed to update profile']));
-        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-    }
+    // Return fixed structure
+    return $this->json($response, [
+        'message' => 'Profile updated successfully',
+        'profile' => [
+            'id' => $studentId,
+            'name' => $fields['name'],
+            'email' => $fields['email'],
+            'matric_number' => $student['matric_number'],
+            'semester' => $student['semester'] ?? null,
+            'role' => 'student'
+        ]
+    ]);
 }
+
+
+
 
  // 
  // 📌 NOTIFICATIONS
