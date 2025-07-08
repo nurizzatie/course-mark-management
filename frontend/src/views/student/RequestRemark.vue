@@ -82,9 +82,10 @@
         </div>
 
         <div class="text-end">
-          <button type="submit" class="btn btn-dark">
-              Submit Request
-          </button>
+         <button type="submit" class="btn btn-dark" :disabled="submitAttempted">
+  {{ submitAttempted ? "Submitting..." : "Submit Request" }}
+</button>
+
         </div>
       </form>
     </div>
@@ -145,17 +146,26 @@ export default {
   }
 },
     async submitRequest() {
-  const formData = new FormData();
-  formData.append("student_id", this.studentId);
-  formData.append("assessment_id", this.assessmentId);
-  formData.append("justification", this.justification);
-  formData.append("file", this.file);
+       this.submitAttempted = true;
 
-  if (this.supportingLink.trim()) {
-    formData.append("supporting_link", this.supportingLink.trim());
-  }
+      const formData = new FormData();
+      formData.append("student_id", this.studentId);
+      formData.append("assessment_id", this.assessmentId);
+      formData.append("justification", this.justification);
 
-  console.log("🧪 Sending:", [...formData.entries()]);
+      if (!this.file) {
+      this.error = "Please upload a supporting file.";
+      this.submitAttempted = false;
+      return;
+    }
+
+      formData.append("file", this.file);
+
+    if (this.supportingLink.trim()) {
+      formData.append("supporting_link", this.supportingLink.trim());
+    }
+
+    console.log("🧪 Sending:", [...formData.entries()]);
 
   try {
     const res = await fetch("http://localhost:8080/api/remark/request", {
