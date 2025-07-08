@@ -7,6 +7,7 @@ use App\Controllers\ResetController;
 return function (App $app) {
     $db = $app->getContainer()->get('db');
 
+
     // ========== ADMIN CONTROLLER ROUTES ==========
     $adminController = new AdminController($db);
 
@@ -30,6 +31,11 @@ return function (App $app) {
 
         // ➕ Add new course
         $group->post('/courses', [$adminController, 'createCourse']);
+
+        $group->get('/dashboard-stats', [$adminController, 'getDashboardStats']);
+
+
+
     });
 
 };

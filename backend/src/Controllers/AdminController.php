@@ -12,6 +12,34 @@ class AdminController {
         $this->db = $db;
     }
 
+    public function getDashboardStats(Request $request, Response $response): Response {
+    // Count total users
+    $users = $this->db->query("SELECT COUNT(*) FROM users")->fetchColumn();
+
+    // Count total courses
+    $courses = $this->db->query("SELECT COUNT(*) FROM courses")->fetchColumn();
+
+    // Count total logs (logins, resets, etc.)
+    $logs = $this->db->query("SELECT COUNT(*) FROM system_logs")->fetchColumn();
+
+    // Count total password resets (optional filter)
+    $resets = $this->db->query("
+        SELECT COUNT(*) 
+        FROM system_logs 
+        WHERE action_type = 'Reset Password'
+    ")->fetchColumn();
+
+    $data = [
+        'users' => (int)$users,
+        'courses' => (int)$courses,
+        'logins' => (int)$logs,
+        'resets' => (int)$resets
+    ];
+
+    return $this->json($response, $data);
+}
+
+
     // Get all users
     public function getUsers(Request $request, Response $response): Response {
     $stmt = $this->db->query("SELECT id, name, email, role, matric_number FROM users");
