@@ -1,0 +1,75 @@
+[33mfe47f34[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev[m[33m, [m[1;31morigin/dev[m[33m)[m add download feature on the Performance Analytics page
+[33m7a0d418[m update
+[33meedac19[m Update BarChart
+[33me87cb21[m update condition request remark
+[33mae0a7d3[m Update student dashboard
+[33mbc6b2d4[m update student dashboard
+[33m022ccdd[m handle empty course
+[33m3a378ed[m update StudentProfile
+[33m0cddc69[m organize Vue router routes for all roles
+[33m781fe04[m Resolve merge conflict in router/index.js
+[33ma14f5bc[m update student dashbard summary
+[33m042c612[m  Resolved merge conflict and pushed latest features
+[33m8d32000[m  Implemented log system, reset password fix, and course creation modal
+[33md03edce[m updated student views
+[33m89ef21f[m minor modification
+[33mbbe6589[m updated
+[33m7091943[m UI  Rendering and modification
+[33mdf55079[m add performance trend graph
+[33mf04614e[m Merge remote-tracking branch 'origin/dev' into dev
+[33me34f30c[m Update Student Dashboard
+[33m6097ac8[m delete duplicate
+[33m8fa501a[m updated
+[33m947764f[m delete unused file
+[33mfa28e00[m minor modification
+[33mc64f1eb[m Change logo and background
+[33m839625a[m Add dashboard page
+[33m4795da4[m Add lecturer profile page
+[33me504bbb[m Add remark request frontend and backend logic
+[33mb399b04[m Update some of table to add cascade on foreign key
+[33m1b24334[m updated
+[33m05f3a4f[m new update
+[33m3c062c7[m compare marks & marks breakdown
+[33m4f1ec90[m compare marks & marks breakdown
+[33m2789f48[m updated
+[33m3cc5dda[m Add new features
+[33mc8030bd[m Add notification features to students on mark updates
+[33mc892f60[m updated
+[33m697ae60[m minor update
+[33m03ad6b4[m update
+[33mabf1c83[m update
+[33md86610e[m Solve conflict of nested folder :(
+[33ma355966[m Update student_assessments and student_courses table
+[33m53ac060[m Merge conflict routes issue
+[33m920b1c7[m Add marks, assessments, student enrollment, courses backend and frontend logic
+[33m6997752[m update
+[33m17460d2[m Merge origin/dev into dev
+[33md9ac4ec[m Delete misplaced files from root directory
+[33m1517e8a[m minor change
+[33m1916194[m Initial dev commit: Add course mark management system
+[33me1c27a5[m amended
+[33m5eec5f1[m modified
+[33m178d71e[m Updated Student List, mark Review, and create new Performance Analytics
+[33m20ccd1d[m amended
+[33m3055581[m amended
+[33m50727f6[m amended
+[33m407991d[m create student table list
+[33m0432e4e[m update uiux what-if-tools
+[33me3d0627[m update what-if-tools
+[33me83e390[m Fix: Added DB binding and updated backend configuration
+[33m4319a94[m Resolve conflicts and finalize rebase
+[33m55c5fe6[m Add Manage Student logic for Lecturer modules
+[33m411d1bf[m Setup controller file in correct folder and dump autoload cache
+[33m3af21c4[m Add Performance Tools
+[33mf40f43b[m Advisor Login
+[33m174a69f[m Change CROS to allow all origin
+[33m46dd8e4[m[33m ([m[1;32mmain[m[33m)[m Add lecturer dashboard and profile page
+[33ma3dc7a0[m Update assessment table
+[33m4b7ebea[m Add layout component and dashboard page for each role
+[33m5ec0342[m Edit redirect routes path
+[33mc59439b[m Import Bootstrap and FontAwesome icon
+[33mb6c4a8f[m loginpage UI
+[33m384a252[m Install Vue router and login implementation
+[33ma7314de[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m student dashboard backend
+[33m447fc0d[m create database table
+[33maa713ee[m Initial commit
