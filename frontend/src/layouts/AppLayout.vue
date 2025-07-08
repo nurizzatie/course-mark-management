@@ -1,8 +1,21 @@
 <template>
   <div class="d-flex min-vh-100">
     <AppSidebar :navItems="navItems" @navigate="handleNavigation" />
+
     <div class="flex-grow-1 d-flex flex-column">
-      <AppNavbar :pageTitle="pageTitle" :notifications="notifications" :showNotification="role === 'Student'" @logout="handleLogout" @update-notification="updateNotification"/>
+      <!-- ✅ Admin Navbar for Admin Role -->
+      <AdminNavbar v-if="role === 'Admin'" />
+
+      <!-- ✅ Main Navbar -->
+      <AppNavbar
+        :pageTitle="pageTitle"
+        :notifications="notifications"
+        :showNotification="role === 'Student'"
+        @logout="handleLogout"
+        @update-notification="updateNotification"
+      />
+
+      <!-- ✅ Main Content Slot -->
       <div class="container-fluid p-4">
         <slot />
       </div>
@@ -11,13 +24,18 @@
 </template>
 
 <script>
-import AppSidebar from '@/components/AppSidebar.vue'
-import AppNavbar from '@/components/AppNavbar.vue'
+import AppSidebar from '@/components/AppSidebar.vue';
+import AppNavbar from '@/components/AppNavbar.vue';
+import AdminNavbar from '@/components/AdminNavbar.vue'; // ✅ Import here
 import api from '@/api';
 
 export default {
   name: 'AppLayout',
-  components: { AppSidebar, AppNavbar },
+  components: {
+    AppSidebar,
+    AppNavbar,
+    AdminNavbar // ✅ Register here
+  },
   props: {
     navItems: {
       type: Array,
@@ -41,12 +59,9 @@ export default {
     handleNavigation() {},
     fetchNotifications() {
       const user = JSON.parse(localStorage.getItem('user'));
-      console.log('Fetching notifications for user:', user); // ✅ Add this
-
       if (user && user.role.toLowerCase() === 'student') {
         api.get(`/students/${user.id}/notifications`)
           .then(res => {
-            console.log('✅ Notifications:', res.data);
             this.notifications = res.data.notifications.map(n => ({
               ...n,
               read: !!n.seen,
@@ -54,8 +69,6 @@ export default {
             }));
           })
           .catch(err => console.error('❌ Notification fetch failed:', err));
-      } else {
-        console.warn('🛑 Not a student or no user');
       }
     },
     updateNotification(index) {
@@ -74,7 +87,6 @@ export default {
   },
   mounted() {
     this.fetchNotifications();
-  },
-
+  }
 };
 </script>

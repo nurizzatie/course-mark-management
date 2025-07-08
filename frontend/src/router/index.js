@@ -37,7 +37,7 @@ const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
 
-  // Admin Routes (using layout)
+  // Admin Routes (layout)
   {
     path: '/admin',
     component: AdminLayout,

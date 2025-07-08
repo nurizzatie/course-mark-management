@@ -16,24 +16,24 @@
           <div class="col-md-3" v-for="(field, key) in fieldList" :key="key">
             <input
               v-if="key !== 'role' && key !== 'password'"
-              v-model="newUser[key]"
+              v-model.trim="newUser[key]"
               @blur="touched[key] = true"
-              :class="{ 'form-control': true, 'is-invalid': touched[key] && newUser[key].trim() === '' }"
+              :class="{ 'form-control': true, 'is-invalid': touched[key] && !newUser[key] }"
               :placeholder="field"
             />
             <input
               v-if="key === 'password'"
-              v-model="newUser.password"
               type="password"
+              v-model.trim="newUser.password"
               @blur="touched.password = true"
-              :class="{ 'form-control': true, 'is-invalid': touched.password && newUser.password.trim() === '' }"
+              :class="{ 'form-control': true, 'is-invalid': touched.password && !newUser.password }"
               placeholder="Password"
             />
             <select
               v-if="key === 'role'"
               v-model="newUser.role"
               @blur="touched.role = true"
-              :class="{ 'form-select': true, 'is-invalid': touched.role && newUser.role === '' }"
+              :class="{ 'form-select': true, 'is-invalid': touched.role && !newUser.role }"
             >
               <option disabled value="">Select Role</option>
               <option>Admin</option>
@@ -41,7 +41,7 @@
               <option>Advisor</option>
               <option>Student</option>
             </select>
-            <div v-if="touched[key] && newUser[key].trim() === '' && key !== 'role'" class="invalid-feedback">
+            <div v-if="touched[key] && !newUser[key] && key !== 'role'" class="invalid-feedback">
               {{ field }} is required.
             </div>
           </div>
@@ -112,7 +112,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </AppLayout>
 </template>
@@ -121,7 +120,6 @@
 import axios from 'axios'
 import AppLayout from '@/layouts/AppLayout.vue'
 import adminNavItems from '@/constants/adminNavItems'
-
 
 export default {
   name: 'ManageUsers',
@@ -171,10 +169,18 @@ export default {
     },
     isValidForm() {
       const u = this.newUser
-      return u.name && u.matric_number && this.isValidEmail(u.email) && u.password && u.role
+      return (
+        u.name.trim() &&
+        u.matric_number.trim() &&
+        this.isValidEmail(u.email.trim()) &&
+        u.password.trim() &&
+        u.role
+      )
     },
     markAllTouched() {
-      for (const key in this.touched) this.touched[key] = true
+      for (const key in this.touched) {
+        this.touched[key] = true
+      }
     },
     fetchUsers() {
       axios.get('http://localhost:8080/api/admin/users')
@@ -200,10 +206,13 @@ export default {
           for (const key in this.touched) this.touched[key] = false
           this.showAlert('success', '✅ User created successfully')
         })
-        .catch(() => this.showAlert('danger', '❌ Failed to create user'))
+        .catch((err) => {
+          const msg = err.response?.data?.message || '❌ Failed to create user'
+          this.showAlert('danger', msg)
+        })
     },
     openEditModal(user) {
-      this.selectedUser = JSON.parse(JSON.stringify(user))
+      this.selectedUser = { ...user }
     },
     saveRoleUpdate() {
       axios.put(`http://localhost:8080/api/admin/users/${this.selectedUser.id}/role`, {
@@ -219,14 +228,18 @@ export default {
     },
     deleteUser(id) {
       if (confirm('Are you sure you want to delete this user?')) {
-        axios.delete(`http://localhost:8080/api/admin/users/${id}`)
-          .then(() => {
-            this.showAlert('success', '✅ User deleted successfully')
-            this.fetchUsers()
-          })
-          .catch(() => {
-            this.showAlert('danger', '❌ Failed to delete user')
-          })
+        axios.delete(`http://localhost:8080/api/admin/users/${id}`, {
+          data: {
+            action_by: localStorage.getItem('user_id')
+          }
+        })
+        .then(() => {
+          this.showAlert('success', '✅ User deleted successfully')
+          this.fetchUsers()
+        })
+        .catch(() => {
+          this.showAlert('danger', '❌ Failed to delete user')
+        })
       }
     }
   },

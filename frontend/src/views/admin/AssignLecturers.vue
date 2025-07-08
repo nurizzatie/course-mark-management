@@ -43,9 +43,9 @@
             <label for="course" class="form-label">Select Course</label>
             <select id="course" v-model="selectedCourse" class="form-select" required>
               <option disabled value="">-- Select Course --</option>
-              <option v-for="course in courses" :key="course.id" :value="course.id">
-                {{ course.course_code }} - {{ course.course_name }}
-              </option>
+              <option v-for="course in courses" :key="course.course_id" :value="course.course_id">
+  {{ course.course_code }} - {{ course.course_name }}
+</option>
             </select>
           </div>
 
@@ -53,9 +53,9 @@
             <label for="lecturer" class="form-label">Select Lecturer</label>
             <select id="lecturer" v-model="selectedLecturer" class="form-select" required>
               <option disabled value="">-- Select Lecturer --</option>
-              <option v-for="lecturer in lecturers" :key="lecturer.id" :value="lecturer.id">
-                {{ lecturer.name }}
-              </option>
+              <option v-for="lecturer in lecturers" :key="lecturer.lecturer_id" :value="lecturer.lecturer_id">
+  {{ lecturer.name }}
+</option>
             </select>
           </div>
         </div>
@@ -110,19 +110,27 @@ export default {
         alert('Failed to load courses and lecturers.')
       }
     },
-    async assignLecturer() {
-      try {
-        await axios.post('http://localhost:8080/api/admin/assign-lecturer', {
-          course_id: this.selectedCourse,
-          lecturer_id: this.selectedLecturer
-        })
-        alert('Lecturer successfully assigned to course!')
-        this.selectedCourse = ''
-        this.selectedLecturer = ''
-      } catch (err) {
-        console.error('Assignment error:', err)
-        alert('Failed to assign lecturer.')
+    assignLecturer() {
+      if (this.selectedCourse === '' || this.selectedLecturer === '') {
+        alert("Please select both a course and a lecturer.");
+        return;
       }
+
+      axios.post('http://localhost:8080/api/admin/assign-lecturer-direct', {
+  lecturer_id: this.selectedLecturer,
+  course_id: this.selectedCourse
+})
+      .then((res) => {
+        console.log("Response:", res.data); // ✅ use 'res' so ESLint is happy
+        alert("Lecturer assigned successfully.");
+        this.selectedCourse = '';
+        this.selectedLecturer = '';
+        this.fetchData();
+      })
+      .catch((err) => {
+        console.error("Error assigning lecturer:", err);
+        alert("Failed to assign lecturer.");
+      });
     },
     async submitNewCourse() {
       try {
