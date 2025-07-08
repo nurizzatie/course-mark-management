@@ -8,26 +8,47 @@
       <div v-else-if="logs.length === 0" class="text-muted">No logs found.</div>
 
       <!-- Log Table -->
-      <div v-else class="table-responsive">
-        <table class="table table-bordered table-striped">
-          <thead class="table-light">
-            <tr>
-              <th>Date</th>
-              <th>User</th>
-              <th>Action</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in logs" :key="log.id">
-              <td>{{ formatDate(log.timestamp) }}</td>
-              <td>{{ log.user_name || 'System' }}</td>
-              <td>{{ log.action }}</td>
-              <td>{{ log.details || '-' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+<div v-else class="table-responsive">
+  <table class="table table-bordered table-striped">
+    <thead class="table-light">
+      <tr>
+        <th>Date</th>
+        <th>User</th>
+        <th>Action</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="log in paginatedLogs" :key="log.id">
+        <td>{{ formatDate(log.timestamp) }}</td>
+        <td>{{ log.user_name || 'System' }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.details || '-' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Pagination Controls -->
+  <nav v-if="totalPages > 1" class="mt-3">
+    <ul class="pagination justify-content-center">
+      <li class="page-item" :class="{ disabled: currentPage === 1 }">
+        <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">Previous</button>
+      </li>
+      <li
+        v-for="page in totalPages"
+        :key="page"
+        class="page-item"
+        :class="{ active: currentPage === page }"
+      >
+        <button class="page-link" @click="currentPage = page">{{ page }}</button>
+      </li>
+      <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+        <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">Next</button>
+      </li>
+    </ul>
+  </nav>
+</div>
+
 
       <!-- Chart Section -->
       <div class="mt-5" v-if="logs.length > 0">
@@ -53,9 +74,22 @@ export default {
       chart: null,
       loading: true,
       navItems: adminNavItems,
-      pageTitle: 'Logs'
+      pageTitle: 'Logs',
+      currentPage: 1,
+      logsPerPage: 10
     }
   },
+  computed: {
+  paginatedLogs() {
+    const start = (this.currentPage - 1) * this.logsPerPage
+    const end = start + this.logsPerPage
+    return this.logs.slice(start, end)
+  },
+  totalPages() {
+    return Math.ceil(this.logs.length / this.logsPerPage)
+  }
+},
+
   methods: {
     fetchLogs() {
       this.loading = true
