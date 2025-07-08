@@ -292,4 +292,28 @@ private function getLoggedInUserId(Request $request) {
     return $request->getAttribute('user_id');
 }
 
+
+public function getNotifications(Request $request, Response $response, $args): Response
+{
+    $stmt = $this->db->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC");
+    $stmt->execute([$args['id']]);
+    return $this->json($response, ['notifications' => $stmt->fetchAll()]);
+}
+
+
+public function markNotificationSeen(Request $request, Response $response, $args): Response
+{
+    $stmt = $this->db->prepare("UPDATE notifications SET seen = 1 WHERE id = ?");
+    $stmt->execute([$args['id']]);
+    return $this->json($response, ['message' => 'Notification marked as seen']);
+}
+
+
+private function json(Response $response, $data, $status = 200): Response
+{
+    $response->getBody()->write(json_encode($data));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus($status);
+}
+
+
 }

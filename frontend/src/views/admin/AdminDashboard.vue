@@ -59,9 +59,10 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import Chart from 'chart.js/auto'
 import navItems from '@/constants/adminNavItems'
 
+
 export default {
   name: 'AdminDashboard',
-  components: { AppLayout },
+  components: { AppLayout  },
   data() {
     return {
       navItems,

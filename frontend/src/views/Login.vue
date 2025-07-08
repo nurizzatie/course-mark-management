@@ -144,14 +144,14 @@ export default {
       }
     },
 
-    // ✅ This triggers the modal (not prompt)
+    
     requestReset() {
       this.resetForm.email = "";
       this.resetForm.matric_number = "";
       this.showResetModal = true;
     },
 
-    // ✅ This handles the form inside modal
+   
     async submitResetRequest() {
       const { email, matric_number } = this.resetForm;
 

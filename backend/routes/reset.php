@@ -1,6 +1,6 @@
 <?php
-use Slim\App;
 use App\Controllers\ResetController;
+use Slim\App;
 
 return function (App $app) {
     $container = $app->getContainer();
@@ -8,4 +8,7 @@ return function (App $app) {
 
     $app->post('/api/reset-request', [$controller, 'requestReset']);
     $app->get('/api/reset-requests', [$controller, 'getRequests']);
+    $app->put('/api/reset-done', [$controller, 'markResetDone']); // ✅ MAKE SURE THIS IS REGISTERED
+    $app->get('/api/admin/notifications/{id}', [$controller, 'getNotifications']);
+
 };

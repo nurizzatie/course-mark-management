@@ -6,7 +6,12 @@
       <div class="card">
         <div class="card-body">
           <!-- ✅ Alert Message -->
-          <div v-if="alert.show" class="alert" :class="'alert-' + alert.type" role="alert">
+          <div
+            v-if="alert.show"
+            class="alert"
+            :class="'alert-' + alert.type"
+            role="alert"
+          >
             {{ alert.message }}
           </div>
 
@@ -37,6 +42,33 @@
 
             <button type="submit" class="btn btn-danger">Reset Password</button>
           </form>
+
+          <!-- ✅ Divider -->
+          <hr class="my-4" />
+
+          <!-- ✅ Pending Reset Requests -->
+          <h5>Pending Reset Requests</h5>
+          <div v-if="pendingRequests.length === 0" class="text-muted">
+            No pending requests.
+          </div>
+
+          <ul class="list-group mt-2" v-else>
+            <li
+              class="list-group-item d-flex justify-content-between align-items-center"
+              v-for="req in pendingRequests"
+              :key="req.id"
+            >
+              <div>
+                <strong>{{ req.matric_number }}</strong> — {{ req.email }}
+              </div>
+              <button
+                class="btn btn-sm btn-outline-primary"
+                @click="form.matric_number = req.matric_number"
+              >
+                Autofill
+              </button>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -63,7 +95,8 @@ export default {
         show: false,
         type: '',
         message: ''
-      }
+      },
+      pendingRequests: [] // 🔥 Add this
     }
   },
   methods: {
@@ -71,18 +104,47 @@ export default {
       this.alert = { show: true, type, message }
       setTimeout(() => (this.alert.show = false), 3000)
     },
-    handleReset() {
+   handleReset() {
+  axios
+    .put('http://localhost:8080/api/admin/reset-password', this.form)
+    .then(() => {
+      // ✅ Now mark the reset request as done
+      return axios.put('http://localhost:8080/api/reset-done',
+        { matric_number: this.form.matric_number },
+        { headers: { 'Content-Type': 'application/json' } } // make sure it's JSON
+      );
+    })
+    .then(() => {
+      this.showAlert('success', 'Password reset successfully');
+      this.form.matric_number = '';
+      this.form.password = '';
+      this.fetchPendingRequests(); // refresh the list
+    })
+    .catch((error) => {
+      if (error.response?.data?.error === 'Matric number required') {
+        this.showAlert('danger', 'Matric number missing');
+      } else {
+        this.showAlert('danger', 'Something went wrong during password reset');
+      }
+      console.error('Reset error:', error);
+    });
+   },  
+
+    
+    fetchPendingRequests() {
       axios
-        .put('http://localhost:8080/api/admin/reset-password', this.form)
-        .then(() => {
-          this.showAlert('success', '✅ Password reset successfully')
-          this.form.matric_number = ''
-          this.form.password = ''
+        .get('http://localhost:8080/api/reset-requests')
+        .then(res => {
+          this.pendingRequests = res.data
         })
-        .catch(() => {
-          this.showAlert('danger', '❌ Failed to reset password')
+        .catch(err => {
+          console.error('❌ Failed to fetch reset requests:', err)
         })
     }
+  },
+  mounted() {
+    this.fetchPendingRequests()
   }
 }
 </script>
+ 
