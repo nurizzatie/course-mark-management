@@ -24,34 +24,42 @@ class AdminController {
     public function createUser(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
 
-    $stmt = $this->db->prepare("INSERT INTO users (name, email, password, role, matric_number) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([
-        $data['name'],
-        $data['email'],
-        password_hash($data['password'], PASSWORD_DEFAULT),
-        $data['role'],
-        $data['matric_number'] ?? null
-    ]);
+    try {
+        $stmt = $this->db->prepare("INSERT INTO users (name, email, password, role, matric_number) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([
+            $data['name'],
+            $data['email'],
+            password_hash($data['password'], PASSWORD_DEFAULT),
+            $data['role'],
+            $data['matric_number'] ?? null
+        ]);
 
-    // ✅ Log the user creation
-    $this->logAction('Admin', 'Create User', "Created user with email: {$data['email']}");
+        // ✅ No echo/print here
+        $response->getBody()->write(json_encode(['message' => 'User created']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
 
-    $response->getBody()->write(json_encode(['message' => 'User created']));
-    return $response->withHeader('Content-Type', 'application/json');
+    } catch (\PDOException $e) {
+        $error = $e->getCode() == '23000' ? 'Matric number or email already exists' : 'Database error';
+        $response->getBody()->write(json_encode(['error' => $error]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+    }
 }
 
     // ✅ Delete user
     public function deleteUser(Request $request, Response $response, $args): Response {
-        $id = $args['id'];
+    $userId = $args['id'];
+    $adminId = 1; // Replace this with the logged-in admin's user ID
 
-        $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
-        $stmt->execute([$id]);
+    // ✅ Log before deleting
+    $this->logAction($adminId, 'Delete User', "Deleted user with ID: $userId");
 
-        $this->logAction('Admin', 'Delete User', "Deleted user with ID: $id");
+    // ✅ Then delete
+    $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
 
-        $response->getBody()->write(json_encode(['message' => 'User deleted']));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
+    $response->getBody()->write(json_encode(['message' => 'User deleted']));
+    return $response->withHeader('Content-Type', 'application/json');
+}
 
     // ✅ Get all courses
     public function getAllCourses(Request $request, Response $response): Response {
@@ -71,17 +79,61 @@ class AdminController {
 
     // ✅ Assign lecturer directly to course (using lecturer_id in courses table)
     public function assignLecturer(Request $request, Response $response): Response {
-        $data = $request->getParsedBody();
+    $data = $request->getParsedBody();
 
-        $stmt = $this->db->prepare("UPDATE courses SET lecturer_id = :lecturer_id WHERE id = :course_id");
-        $stmt->execute([
-            ':lecturer_id' => $data['lecturer_id'],
-            ':course_id' => $data['course_id']
-        ]);
+    $lecturerId = $data['lecturer_id'] ?? null;
+    $courseId = $data['course_id'] ?? null;
 
-        $response->getBody()->write(json_encode(['message' => 'Lecturer assigned']));
-        return $response->withHeader('Content-Type', 'application/json');
+    if (!$lecturerId || !$courseId) {
+        $response->getBody()->write(json_encode(['error' => 'Missing required fields']));
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(400); // <-- this is what's causing 400 in frontend
     }
+
+    $stmt = $this->db->prepare("INSERT INTO course_lecturers (lecturer_id, course_id) VALUES (:lecturer_id, :course_id)");
+    $stmt->bindParam(':lecturer_id', $lecturerId);
+    $stmt->bindParam(':course_id', $courseId);
+
+    try {
+        $stmt->execute();
+        $response->getBody()->write(json_encode(['success' => true]));
+        return $response->withHeader('Content-Type', 'application/json');
+    } catch (PDOException $e) {
+        $response->getBody()->write(json_encode(['error' => 'Database error: ' . $e->getMessage()]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+    }
+}
+
+// ✅ Assign lecturer using lecturer_course table (direct)
+public function assignLecturerDirect(Request $request, Response $response): Response {
+    $data = $request->getParsedBody();
+
+    $lecturer_id = $data['lecturer_id'] ?? null;
+    $course_id = $data['course_id'] ?? null;
+
+    if (!$lecturer_id || !$course_id) {
+        $response->getBody()->write(json_encode(['error' => 'Missing lecturer_id or course_id']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    try {
+        $stmt = $this->db->prepare("INSERT INTO lecturer_courses (lecturer_id, course_id) VALUES (:lecturer_id, :course_id)");
+        $stmt->bindParam(':lecturer_id', $lecturer_id);
+        $stmt->bindParam(':course_id', $course_id);
+        $stmt->execute();
+
+        $response->getBody()->write(json_encode(['success' => true]));
+        return $response->withHeader('Content-Type', 'application/json');
+    } catch (\PDOException $e) {
+        $response->getBody()->write(json_encode([
+            'error' => 'Database error',
+            'details' => $e->getMessage()
+        ]));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+}
+
 
     // ✅ Get both courses and lecturers for frontend use (dropdown/table)
     public function getCoursesAndLecturers(Request $request, Response $response): Response {
@@ -99,43 +151,45 @@ class AdminController {
 
     // ✅ Assign lecturer to course using separate assignment table (course_assignments)
     public function assignLecturerToCourse(Request $request, Response $response): Response {
-        $data = $request->getParsedBody();
-        $courseId = $data['course_id'] ?? null;
-        $lecturerId = $data['lecturer_id'] ?? null;
+    $data = $request->getParsedBody();
+    $lecturerId = $data['lecturer_id'] ?? null;
+    $courseId = $data['course_id'] ?? null;
 
-        if (!$courseId || !$lecturerId) {
-            $response->getBody()->write(json_encode(['error' => 'Missing course_id or lecturer_id']));
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-        }
-
-        $stmt = $this->db->prepare("REPLACE INTO course_assignments (course_id, lecturer_id) VALUES (:course_id, :lecturer_id)");
-        $stmt->execute(['course_id' => $courseId, 'lecturer_id' => $lecturerId]);
-
-        // ✅ Log the assignment action
-        $this->logAction('Admin', 'Assign Lecturer', "Assigned lecturer_id $lecturerId to course_id $courseId");
-
-        $response->getBody()->write(json_encode(['message' => 'Lecturer assigned to course']));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    if (!$lecturerId || !$courseId) {
+        $response->getBody()->write(json_encode(['error' => 'Missing lecturer_id or course_id']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
+
+    $stmt = $this->db->prepare("INSERT INTO lecturer_course (lecturer_id, course_id) VALUES (:lecturer_id, :course_id)");
+    $stmt->bindParam(':lecturer_id', $lecturerId);
+    $stmt->bindParam(':course_id', $courseId);
+
+    try {
+        $stmt->execute();
+        $response->getBody()->write(json_encode(['message' => 'Lecturer assigned successfully']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    } catch (\PDOException $e) {
+        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+    }
+}
+
 
     // ✅ Dummy logs for activity
 public function getLogs(Request $request, Response $response): Response {
-    $logs = [
-        [
-            'id' => 1,
-            'action' => 'Login',
-            'user_name' => 'Admin',
-            'details' => 'User logged in',
-            'timestamp' => '2025-07-06 20:40'
-        ],
-        [
-            'id' => 2,
-            'action' => 'Assigned lecturer',
-            'user_name' => 'Admin',
-            'details' => 'Assigned to BIT2043',
-            'timestamp' => '2025-07-06 20:45'
-        ]
-    ];
+    $stmt = $this->db->query("
+        SELECT 
+            l.id,
+            u.name AS user_name,
+            l.action_type AS action,
+            l.description AS details,
+            l.created_at AS timestamp
+        FROM system_logs l
+        LEFT JOIN users u ON u.id = l.action_by
+        ORDER BY l.created_at DESC
+    ");
+
+    $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $response->getBody()->write(json_encode(['logs' => $logs]));
     return $response->withHeader('Content-Type', 'application/json');
@@ -158,7 +212,8 @@ public function getLogs(Request $request, Response $response): Response {
             ':id' => $id
         ]);
 
-        $this->logAction('Admin', 'Update Role', "Updated role for user ID: $id to $newRole");
+        $adminId = 1; // ✅ Replace with real logged-in user ID later
+$this->logAction($adminId, 'Update Role', "Updated role for user ID: $id to $newRole");
 
         $response->getBody()->write(json_encode(['message' => 'User role updated']));
         return $response->withHeader('Content-Type', 'application/json');
@@ -198,7 +253,8 @@ public function createCourse(Request $request, Response $response): Response {
     $stmt->execute([$hashedPassword, $matric]);
 
     // ✅ Log password reset
-    $this->logAction('Admin', 'Reset Password', "Reset password for user: $email");
+    $adminId = $this->getLoggedInUserId($request);
+$this->logAction($adminId, 'Reset Password', "Reset password for user: $matric");
 
     $response->getBody()->write(json_encode(['message' => 'Password reset successful']));
     return $response->withHeader('Content-Type', 'application/json');
@@ -213,6 +269,8 @@ private function logAction($actionBy, $actionType, $description) {
         ':desc' => $description
     ]);
 }
-
+private function getLoggedInUserId(Request $request) {
+    return $request->getAttribute('user_id');
+}
 
 }

@@ -21,6 +21,14 @@
         <button class="mt-3" type="submit" :disabled="loading">
           {{ loading ? 'Logging in...' : 'Login' }}
         </button>
+
+        <!-- 🔒 Forgot Password Link -->
+        <p class="mt-2">
+          <a @click.prevent="requestReset" style="cursor: pointer; color: #5d001d; text-decoration: underline;">
+            Forgot password?
+          </a>
+        </p>
+
         <p v-if="error" class="error">{{ error }}</p>
       </form>
     </div>
@@ -64,23 +72,31 @@ export default {
         if (token) localStorage.setItem('token', token);
 
         localStorage.setItem('user', JSON.stringify(user));
-        if (token) localStorage.setItem('token', token);
         localStorage.setItem('studentId', user.id);
 
-
-        // ✅ Role-based redirection
         const role = user.role?.toLowerCase();
         if (['student', 'lecturer', 'advisor', 'admin'].includes(role)) {
           this.$router.push(`/${role}/dashboard`);
         } else {
           this.error = `Unknown role: ${user.role}`;
         }
-
       } catch (err) {
         this.error =
           err.response?.data?.error || 'Login failed: Invalid credentials';
       } finally {
         this.loading = false;
+      }
+    },
+
+    async requestReset() {
+      const email = prompt("Enter your email to request a password reset:");
+      if (!email) return;
+
+      try {
+        await api.post('/reset-request', { email });
+        alert("Password reset request has been sent to admin.");
+      } catch (err) {
+        alert("Failed to request password reset.");
       }
     }
   }

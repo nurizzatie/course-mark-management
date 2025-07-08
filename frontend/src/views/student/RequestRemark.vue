@@ -183,9 +183,12 @@ export default {
     this.file = null;
     this.$refs.fileInput.value = "";
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error("Error:", err);
     this.error = "Something went wrong. Please try again.";
     this.message = "";
+  } finally {
+    this.submitAttempted = false; 
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 }
 

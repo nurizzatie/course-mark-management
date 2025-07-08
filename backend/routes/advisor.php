@@ -30,22 +30,34 @@ return function ($app) {
     });
 
     // GET advisor notes
-$app->get('/api/advisor/notes', function ($request, $response, $args) use ($container) {
-    $controller = new AdvisorController($container);
-    return $controller->getAdvisorNotes($request, $response, $args);
-});
+    $app->get('/api/advisor/notes', function ($request, $response, $args) use ($container) {
+        $controller = new AdvisorController($container);
+        return $controller->getAdvisorNotes($request, $response, $args);
+    });
 
-// POST new advisor note
-$app->post('/api/advisor/notes', function ($request, $response, $args) use ($container) {
-    $controller = new AdvisorController($container);
-    return $controller->addAdvisorNote($request, $response, $args);
-});
+    // POST new advisor note
+    $app->post('/api/advisor/notes', function ($request, $response, $args) use ($container) {
+        $controller = new AdvisorController($container);
+        return $controller->addAdvisorNote($request, $response, $args);
+    });
 
-// GET advisor profile
-$app->get('/api/advisor/profile/{id}', function ($request, $response, $args) {
-    $controller = new \App\Controllers\AdvisorController($this);
-    return $controller->getProfile($request, $response, $args);
-});
+    // GET advisor profile
+    $app->get('/api/advisor/profile/{id}', function ($request, $response, $args) {
+        $controller = new \App\Controllers\AdvisorController($this);
+        return $controller->getProfile($request, $response, $args);
+    });
+
+    // GET advisor dashboard stats
+    $app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container);
+        return $controller->getDashboardStats($request, $response, $args);
+    });
+
+    // Get advisee progress (full mark breakdown for each course and overall course performance)
+    $app->get('/api/advisor/advisee/{id}/progress', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container);
+        return $controller->getAdviseeProgress($request, $response, $args);
+    });
 
 // GET advisor dashboard stats
 $app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $args) use ($app) {

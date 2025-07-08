@@ -200,6 +200,7 @@ $app->get('/api/student/{id}/courses', function ($request, $response, $args) {
 (require __DIR__ . '/../routes/assessments.php')($app);
 (require __DIR__ . '/../routes/adminRoutes.php')($app);
 (require __DIR__ . '/../routes/student.php')($app);
+(require __DIR__ . '/../routes/reset.php')($app);
 require __DIR__ . '/../dependencies.php';
 
 

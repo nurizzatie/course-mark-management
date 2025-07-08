@@ -29,7 +29,7 @@ return function (App $app) {
         $group->post('/assign-lecturer', [$controller, 'assignLecturer']);
 
         // Option B: Assign using `course_assignments` table (optional alternative)
-        $group->post('/assign-lecturer-direct', [$controller, 'assignLecturerToCourse']);
+        $group->post('/assign-lecturer-direct', [$controller, 'assignLecturerDirect']);
 
         // ➕ Add new course
         $group->post('/courses', [$controller, 'createCourse']);

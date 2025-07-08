@@ -1,5 +1,6 @@
 <template>
   <div class="dropdown me-3">
+    <!-- 🔔 Notification Button -->
     <button
       class="btn position-relative"
       id="notificationDropdown"
@@ -7,7 +8,6 @@
       type="button"
       @click="toggleDropdown"
     >
-
       <i class="fas fa-bell text-dark"></i>
       <span
         v-if="unreadCount > 0"
@@ -17,14 +17,18 @@
       </span>
     </button>
 
+    <!-- 📩 Dropdown Menu -->
     <ul
       class="dropdown-menu dropdown-menu-end shadow-sm"
       ref="notifDropdownMenu"
-      style="min-width: 280px; max-width: 320px; max-height: 300px; overflow-y: auto;"
+      style="min-width: 280px; max-width: 320px; max-height: 300px; overflow-y: auto; padding: 0;"
     >
+      <!-- No Notifications -->
       <li v-if="notifications.length === 0">
-        <span class="dropdown-item-text text-muted">No notifications</span>
+        <span class="dropdown-item-text text-muted px-3 py-2">No notifications</span>
       </li>
+
+      <!-- Notification Items -->
       <li
         v-for="(notification, index) in notifications"
         :key="index"
@@ -107,3 +111,28 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: #bbb;
+  border-radius: 5px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #888;
+}
+
+.dropdown-item {
+  white-space: normal;
+  padding: 10px 15px;
+}
+</style>

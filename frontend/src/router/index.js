@@ -32,12 +32,13 @@ import AdvisorAnalytics from '@/views/advisor/AdvisorAnalytics.vue'
 import AdvisorMarkReview from '@/views/advisor/AdvisorMarkReview.vue'
 import AdvisorStudentList from '@/views/advisor/AdvisorStudentList.vue'
 import AdvisorProfile from '@/views/advisor/AdvisorProfile.vue'
+import AdviseeProgress from '@/views/advisor/AdviseeProgress.vue'
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
 
-  // Admin Routes (using layout)
+  // Admin Routes (layout)
   {
     path: '/admin',
     component: AdminLayout,
@@ -63,6 +64,7 @@ const routes = [
   { path: '/advisor/dashboard', name: 'AdvisorDashboard', component: AdvisorDashboard },
   { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
   { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
+  { path: '/advisor/advisee/:id/progress', name: 'AdviseeProgress', component: AdviseeProgress },
   { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
   { path: '/advisor/profile', name: 'AdvisorProfile', component: AdvisorProfile },
   { path: '/advisor/notes', name: 'AdvisorNotes', component: () => import('@/views/advisor/AdvisorNotes.vue') },

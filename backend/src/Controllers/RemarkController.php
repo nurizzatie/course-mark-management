@@ -23,34 +23,54 @@ class RemarkController
     // Submit New Remark Request
     // ==============================
     public function submitRemarkRequest(Request $request, Response $response): Response
-    {
-        $parsed = $request->getParsedBody();
-        $studentId = $parsed['student_id'] ?? null;
-        $assessmentId = $parsed['assessment_id'] ?? null;
-        $justification = $parsed['justification'] ?? '';
-        $supportingLink = $parsed['supporting_link'] ?? null;
+{
+    $parsed = $request->getParsedBody();
+    $studentId = $parsed['student_id'] ?? null;
+    $assessmentId = $parsed['assessment_id'] ?? null;
+    $justification = $parsed['justification'] ?? '';
+    $supportingLink = $parsed['supporting_link'] ?? null;
 
-        $uploadedFiles = $request->getUploadedFiles();
-        $file = $uploadedFiles['file'] ?? null;
-        $filePath = $file ? $this->handleFileUpload($file) : null;
+    $uploadedFiles = $request->getUploadedFiles();
+    $file = $uploadedFiles['file'] ?? null;
+    $filePath = $file ? $this->handleFileUpload($file) : null;
 
-        if (!$studentId || !$assessmentId || !$justification || (!$filePath && !$supportingLink)) {
-            return $this->json($response, ['error' => 'Missing required fields.'], 400);
-        }
-
-        $stmt = $this->db->prepare("
-            INSERT INTO remark_requests (student_id, assessment_id, justification, supporting_link, created_at, status)
-            VALUES (:student_id, :assessment_id, :justification, :supporting_link, NOW(), 'pending')
-        ");
-        $stmt->execute([
-            ':student_id' => $studentId,
-            ':assessment_id' => $assessmentId,
-            ':justification' => $justification,
-            ':supporting_link' => $filePath ?? $supportingLink
-        ]);
-
-        return $this->json($response, ['message' => 'Remark request submitted']);
+    if (!$studentId || !$assessmentId || !$justification || (!$filePath && !$supportingLink)) {
+        return $this->json($response, ['error' => 'Missing required fields.'], 400);
     }
+
+    $stmt = $this->db->prepare("
+        INSERT INTO remark_requests (student_id, assessment_id, justification, supporting_link, created_at, status)
+        VALUES (:student_id, :assessment_id, :justification, :supporting_link, NOW(), 'pending')
+    ");
+    $stmt->execute([
+        ':student_id' => $studentId,
+        ':assessment_id' => $assessmentId,
+        ':justification' => $justification,
+        ':supporting_link' => $filePath ?? $supportingLink
+    ]);
+
+    $newId = $this->db->lastInsertId();
+
+    $stmt = $this->db->prepare("
+        SELECT rr.id, rr.justification, rr.status, rr.created_at,
+               rr.supporting_link,
+               a.title AS assessment_title,
+               c.course_code,
+               u.name AS student_name,
+               u.matric_number
+        FROM remark_requests rr
+        JOIN assessments a ON rr.assessment_id = a.id
+        JOIN courses c ON a.course_id = c.id
+        JOIN users u ON rr.student_id = u.id
+        WHERE rr.id = :id
+    ");
+    $stmt->execute([':id' => $newId]);
+    $detail = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+    // ✅ Return the full inserted remark detail
+    return $this->json($response, $detail, 201);
+}
+
 
     // ==============================
     // Submit Appeal After Rejection
