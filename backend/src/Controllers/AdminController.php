@@ -14,11 +14,12 @@ class AdminController {
 
     // Get all users
     public function getUsers(Request $request, Response $response): Response {
-        $stmt = $this->db->query("SELECT id, name, email, role FROM users");
-        $users = $stmt->fetchAll();
-        $response->getBody()->write(json_encode($users));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
+    $stmt = $this->db->query("SELECT id, name, email, role, matric_number FROM users");
+    $users = $stmt->fetchAll();
+    $response->getBody()->write(json_encode($users));
+    return $response->withHeader('Content-Type', 'application/json');
+}
+
 
     // Create new user
     public function createUser(Request $request, Response $response): Response {
@@ -155,42 +156,38 @@ public function assignLecturerDirect(Request $request, Response $response): Resp
 
     // Get both courses and lecturers for frontend use (dropdown/table)
     public function getCoursesAndLecturers(Request $request, Response $response): Response {
-        $lecturers = $this->db->query("SELECT id AS lecturer_id, name FROM users WHERE role = 'Lecturer'")->fetchAll(PDO::FETCH_ASSOC);
-        $courses = $this->db->query("SELECT id AS course_id, course_code, course_name FROM courses")->fetchAll(PDO::FETCH_ASSOC);
+    // Lecturers dropdown
+    $lecturers = $this->db
+        ->query("SELECT id AS lecturer_id, name FROM users WHERE role = 'Lecturer'")
+        ->fetchAll(PDO::FETCH_ASSOC);
 
-        $data = [
-            'lecturers' => $lecturers,
-            'courses' => $courses
-        ];
+    // Courses dropdown
+    $courses = $this->db
+        ->query("SELECT id AS course_id, course_code, course_name FROM courses")
+        ->fetchAll(PDO::FETCH_ASSOC);
 
-        $response->getBody()->write(json_encode($data));
-        return $response->withHeader('Content-Type', 'application/json');
-    }
+    // Assigned lecturers for table display
+    $assignments = $this->db->query("
+        SELECT 
+            lc.course_id,
+            c.course_code,
+            c.course_name,
+            u.name AS lecturer_name
+        FROM lecturer_courses lc
+        INNER JOIN courses c ON c.id = lc.course_id
+        INNER JOIN users u ON u.id = lc.lecturer_id
+        ORDER BY c.course_code
+    ")->fetchAll(PDO::FETCH_ASSOC);
 
-    // Assign lecturer to course using separate assignment table (course_assignments)
-    public function assignLecturerToCourse(Request $request, Response $response): Response {
-    $data = $request->getParsedBody();
-    $lecturerId = $data['lecturer_id'] ?? null;
-    $courseId = $data['course_id'] ?? null;
+    $data = [
+        'lecturers' => $lecturers,
+        'courses' => $courses,
+        'assignments' => $assignments
+    ];
 
-    if (!$lecturerId || !$courseId) {
-        $response->getBody()->write(json_encode(['error' => 'Missing lecturer_id or course_id']));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-    }
-
-    $stmt = $this->db->prepare("INSERT INTO lecturer_course (lecturer_id, course_id) VALUES (:lecturer_id, :course_id)");
-    $stmt->bindParam(':lecturer_id', $lecturerId);
-    $stmt->bindParam(':course_id', $courseId);
-
-    try {
-        $stmt->execute();
-        $response->getBody()->write(json_encode(['message' => 'Lecturer assigned successfully']));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-    } catch (\PDOException $e) {
-        $response->getBody()->write(json_encode(['error' => $e->getMessage()]));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
-    }
+    return $this->json($response, $data);
 }
+
 
 
     // ✅ Dummy logs for activity

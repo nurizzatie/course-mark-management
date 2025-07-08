@@ -69,7 +69,7 @@
               <tbody>
                 <tr v-for="user in filteredUsers(role)" :key="user.id">
                   <td>{{ user.name }}</td>
-                  <td>{{ user.matric_number || '-' }}</td>
+                  <td>{{ user.matric_number }}</td>
                   <td>{{ user.email }}</td>
                   <td>{{ user.role }}</td>
                   <td class="text-center">
