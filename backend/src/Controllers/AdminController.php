@@ -117,11 +117,29 @@ public function assignLecturerDirect(Request $request, Response $response): Resp
         return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
     }
 
+    //Check if already assigned
+    $stmt = $this->db->prepare("
+        SELECT COUNT(*) 
+        FROM lecturer_courses 
+        WHERE lecturer_id = ? AND course_id = ?
+    ");
+    $stmt->execute([$lecturer_id, $course_id]);
+
+    if ($stmt->fetchColumn() > 0) {
+        $response->getBody()->write(json_encode(['error' => 'Lecturer already assigned to this course']));
+        return $response->withStatus(409)->withHeader('Content-Type', 'application/json');
+    }
+
+     //Insert if not duplicate
     try {
         $stmt = $this->db->prepare("INSERT INTO lecturer_courses (lecturer_id, course_id) VALUES (:lecturer_id, :course_id)");
         $stmt->bindParam(':lecturer_id', $lecturer_id);
         $stmt->bindParam(':course_id', $course_id);
         $stmt->execute();
+
+        // Optional: log action
+        $adminId = $this->getLoggedInUserId($request);
+        $this->logAction($adminId, 'Assign Lecturer', "Assigned lecturer $lecturer_id to course $course_id");
 
         $response->getBody()->write(json_encode(['success' => true]));
         return $response->withHeader('Content-Type', 'application/json');
@@ -135,7 +153,7 @@ public function assignLecturerDirect(Request $request, Response $response): Resp
 }
 
 
-    // ✅ Get both courses and lecturers for frontend use (dropdown/table)
+    // Get both courses and lecturers for frontend use (dropdown/table)
     public function getCoursesAndLecturers(Request $request, Response $response): Response {
         $lecturers = $this->db->query("SELECT id AS lecturer_id, name FROM users WHERE role = 'Lecturer'")->fetchAll(PDO::FETCH_ASSOC);
         $courses = $this->db->query("SELECT id AS course_id, course_code, course_name FROM courses")->fetchAll(PDO::FETCH_ASSOC);
@@ -202,8 +220,9 @@ public function getLogs(Request $request, Response $response): Response {
         $newRole = $data['role'] ?? null;
 
         if (!$newRole) {
-            return $response->withStatus(400)->withHeader('Content-Type', 'application/json')
-                            ->write(json_encode(['error' => 'Missing role']));
+            $response->getBody()->write(json_encode(['error' => 'Missing role']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+
         }
 
         $stmt = $this->db->prepare("UPDATE users SET role = :role WHERE id = :id");
@@ -212,7 +231,7 @@ public function getLogs(Request $request, Response $response): Response {
             ':id' => $id
         ]);
 
-        $adminId = 1; // ✅ Replace with real logged-in user ID later
+        $adminId = $this->getLoggedInUserId($request);
 $this->logAction($adminId, 'Update Role', "Updated role for user ID: $id to $newRole");
 
         $response->getBody()->write(json_encode(['message' => 'User role updated']));
