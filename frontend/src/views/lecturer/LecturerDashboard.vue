@@ -89,6 +89,7 @@
               </tr>
             </tbody>
           </table>
+          <p v-if="!students.length" class="text-muted text-center py-3">No student record.</p>
         </div>
       </div>
 

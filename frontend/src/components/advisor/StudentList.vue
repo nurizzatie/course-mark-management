@@ -18,19 +18,17 @@
               <th>Name</th>
               <th>Email</th>
               <th>Matric Number</th>
-              <th>Remark</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="!students.length">
               <td colspan="4" class="text-muted text-center py-3">No students found.</td>
             </tr>
-            <tr v-for="(student, index) in students" :key="student.id" class="text-center">
+            <tr v-for="(student, index) in students" :key="student.id">
               <td>{{ index + 1 }}</td>
               <td>{{ student.name }}</td>
               <td>{{ student.email }}</td>
               <td>{{ student.matric_number }}</td>
-              <td>{{ student.remarks || 'No remark yet' }}</td>
             </tr>
           </tbody>
         </table>
@@ -46,16 +44,22 @@ export default {
   name: 'StudentList',
   data() {
     return {
+      user: JSON.parse(localStorage.getItem('user')),
       students: []
     };
   },
   methods: {
     async fetchStudents() {
       try {
-        const res = await api.get('/advisor/students');
+        const res = await api.get('/advisor/students', {
+          headers: {
+            'X-User': JSON.stringify(this.user)
+          }
+        });
         this.students = res.data;
       } catch (err) {
         console.error('Error fetching students:', err);
+        alert('Failed to load assigned students.');
       }
     }
   },
@@ -64,11 +68,3 @@ export default {
   }
 };
 </script>
-
-
-
-
-
-
-
-
