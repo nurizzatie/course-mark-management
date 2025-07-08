@@ -14,36 +14,50 @@ class AdvisorController
         $this->db = $container->get('db');
     }
 
-    // Get all students with role = 'student'
+    // Get all students under supervision
     public function getStudents(Request $request, Response $response, $args): Response
-{
-    $sql = "
-        SELECT 
-            u.id AS id,
-            u.name AS name,
-            u.email,
-            u.matric_number,
-            sc.remarks
-        FROM users u
-        LEFT JOIN student_courses sc ON u.id = sc.student_id
-        WHERE u.role = 'student'
-        ORDER BY u.name
-    ";
+    {
+        // Parse X-User header
+        $userHeader = $request->getHeaderLine('X-User');
+        if (!$userHeader) {
+            $response->getBody()->write(json_encode(['error' => 'Missing X-User header']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
 
-    try {
-        $stmt = $this->db->query($sql);
-        $students = $stmt->fetchAll();
+        $user = json_decode($userHeader);
+        $advisorId = $user->id ?? null;
 
-        $response->getBody()->write(json_encode($students));
-        return $response->withHeader('Content-Type', 'application/json');
-    } catch (\PDOException $e) {
-        error_log('Error fetching students with remarks: ' . $e->getMessage());
-        $response->getBody()->write(json_encode(['error' => 'Failed to fetch student data']));
-        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        if (!$advisorId) {
+            $response->getBody()->write(json_encode(['error' => 'Invalid advisor ID']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Query assigned students
+        $sql = "
+            SELECT 
+                u.id,
+                u.name,
+                u.email,
+                u.matric_number
+            FROM advisor_students a
+            JOIN users u ON a.student_id = u.id
+            WHERE a.advisor_id = :advisor_id
+            ORDER BY u.name
+        ";
+
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['advisor_id' => $advisorId]);
+            $students = $stmt->fetchAll();
+
+            $response->getBody()->write(json_encode($students));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\PDOException $e) {
+            error_log('Error fetching advisor students: ' . $e->getMessage());
+            $response->getBody()->write(json_encode(['error' => 'Failed to fetch students']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
     }
-}
-
-
 
 // Get student marks
     public function getStudentMarks(Request $request, Response $response, $args): Response
