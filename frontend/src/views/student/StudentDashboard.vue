@@ -6,6 +6,7 @@ import BarChart from "@/components/BarChart.vue";
 <template>
   <AppLayout :role="'Student'" :navItems="navItems" :pageTitle="'Dashboard'">
     <div class="studentDashboard">
+
       <!-- Welcome Message -->
       <div class="mb-4">
         <h2>Hello, {{ studentName }}</h2>
@@ -138,13 +139,10 @@ export default {
       courses: [],
       radius: 50,
       date: new Date(),
-      navItems: [
+      navItems: 
+      [
         { name: "Dashboard", link: "/student/dashboard", active: true },
-        {
-          name: "Performance Tools",
-          link: "/student/performance",
-          active: false,
-        },
+        { name: "Performance Tools",link: "/student/performance", active: false },
       ],
     };
   },
@@ -169,7 +167,7 @@ export default {
               "rgba(75, 192, 192, 0.2)",
               "rgba(153, 102, 255, 0.2)",
               "rgba(255, 159, 64, 0.2)",
-              // repeat if more courses
+
             ],
             borderColor: [
               "rgba(255,99,132,1)",
@@ -204,8 +202,7 @@ export default {
 
         this.studentName = data.student.name;
         this.studentMatricNumber = data.student.matric_number;
-        this.studentSemester =
-          data.courses.length > 0 ? data.courses[0].semester : "N/A";
+        this.studentSemester = data.courses.length > 0 ? data.courses[0].semester : "N/A";
         this.studentRank = data.student.rank;
         this.studentPercentile = data.student.percentile;
         this.totalStudents = data.student.total_students;
@@ -231,43 +228,6 @@ export default {
 
 
 <style scoped>
-.circle-bg {
-  stroke: #eee;
-}
-.circle-fg {
-  stroke: #0d6efd;
-  transition: stroke-dashoffset 0.6s ease;
-}
-.circle-progress-wrapper {
-  display: inline-block;
-  position: relative;
-}
-.circle-bg,
-.circle-fg {
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-}
-
-.carousel__slide {
-  margin-right: 6px !important;
-  padding: 0 !important;
-}
-
-.scrollbar-visible {
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: thin;
-  padding-bottom: 6px;
-}
-
-.scrollbar-visible::-webkit-scrollbar {
-  height: 6px;
-}
-
-.scrollbar-visible::-webkit-scrollbar-thumb {
-  background-color: #aaa;
-  border-radius: 4px;
-}
 
 .studentDashboard {
   max-width: 100%;

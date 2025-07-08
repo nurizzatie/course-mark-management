@@ -33,16 +33,13 @@
                   class="btn btn-outline-dark btn-sm"
                   @click="requestRemark(item)"
                   :disabled="!item.obtained_mark"
-
-                >
-                  Request Remark
+                >Request Remark
                 </button>
 
                 <!-- Pending status -->
                 <span
                   v-else-if="item.remark_status === 'pending'"
-                  class="badge badge-pill bg-warning text-dark"
-                >
+                  class="badge badge-pill bg-warning text-dark">
                   Pending
                 </span>
 
@@ -109,7 +106,7 @@ export default {
   },
   watch: {
     '$route'() {
-      this.fetchMarks(); // Refresh if route changes
+      this.fetchMarks(); 
     }
   },
   methods: {
