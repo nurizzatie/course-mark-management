@@ -3,11 +3,11 @@
     <div class="container py-4">
       <h2 class="mb-4 fw-bold">System Logs & Mark Updates</h2>
 
-      <!-- Log Table -->
-      <div v-if="logs && logs.length === 0" class="text-muted">
-        No logs found.
-      </div>
+      <!-- Loading & Empty States -->
+      <div v-if="loading" class="text-muted">Loading logs...</div>
+      <div v-else-if="logs.length === 0" class="text-muted">No logs found.</div>
 
+      <!-- Log Table -->
       <div v-else class="table-responsive">
         <table class="table table-bordered table-striped">
           <thead class="table-light">
@@ -21,16 +21,16 @@
           <tbody>
             <tr v-for="log in logs" :key="log.id">
               <td>{{ formatDate(log.timestamp) }}</td>
-              <td>{{ log.user_name }}</td>
+              <td>{{ log.user_name || 'System' }}</td>
               <td>{{ log.action }}</td>
-              <td>{{ log.details }}</td>
+              <td>{{ log.details || '-' }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <!-- Chart Section -->
-      <div class="mt-5">
+      <div class="mt-5" v-if="logs.length > 0">
         <h5 class="fw-bold mb-3">Log Action Distribution</h5>
         <canvas id="logChart" ref="logChart" height="100"></canvas>
       </div>
@@ -51,20 +51,24 @@ export default {
     return {
       logs: [],
       chart: null,
+      loading: true,
       navItems: adminNavItems,
       pageTitle: 'Logs'
     }
   },
   methods: {
     fetchLogs() {
+      this.loading = true
       axios.get('http://localhost:8080/api/admin/logs')
         .then(res => {
-          this.logs = res.data.logs || [] // fallback if logs undefined
-          this.renderChart()
+          this.logs = res.data.logs || []
         })
         .catch(err => {
           console.error('Error fetching logs:', err)
           this.logs = []
+        })
+        .finally(() => {
+          this.loading = false
         })
     },
     formatDate(timestamp) {
@@ -83,6 +87,7 @@ export default {
 
       const labels = Object.keys(actionCounts)
       const values = Object.values(actionCounts)
+      const colors = labels.map(() => this.getRandomColor())
 
       const ctx = this.$refs.logChart
       if (ctx) {
@@ -93,7 +98,7 @@ export default {
             datasets: [{
               label: 'Log Count by Action',
               data: values,
-              backgroundColor: '#007bff'
+              backgroundColor: colors
             }]
           },
           options: {
@@ -110,6 +115,19 @@ export default {
               }
             }
           }
+        })
+      }
+    },
+    getRandomColor() {
+      const colors = ['#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#20c997']
+      return colors[Math.floor(Math.random() * colors.length)]
+    }
+  },
+  watch: {
+    logs() {
+      if (this.logs.length > 0) {
+        this.$nextTick(() => {
+          this.renderChart()
         })
       }
     }

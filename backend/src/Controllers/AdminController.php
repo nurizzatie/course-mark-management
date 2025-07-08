@@ -12,7 +12,7 @@ class AdminController {
         $this->db = $db;
     }
 
-    // ✅ Get all users
+    // Get all users
     public function getUsers(Request $request, Response $response): Response {
         $stmt = $this->db->query("SELECT id, name, email, role FROM users");
         $users = $stmt->fetchAll();
@@ -20,7 +20,7 @@ class AdminController {
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    // ✅ Create new user
+    // Create new user
     public function createUser(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
 
@@ -34,7 +34,7 @@ class AdminController {
             $data['matric_number'] ?? null
         ]);
 
-        // ✅ No echo/print here
+        // No echo/print here
         $response->getBody()->write(json_encode(['message' => 'User created']));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
 
@@ -45,15 +45,15 @@ class AdminController {
     }
 }
 
-    // ✅ Delete user
+    // Delete user
     public function deleteUser(Request $request, Response $response, $args): Response {
     $userId = $args['id'];
     $adminId = 1; // Replace this with the logged-in admin's user ID
 
-    // ✅ Log before deleting
+    // Log before deleting
     $this->logAction($adminId, 'Delete User', "Deleted user with ID: $userId");
 
-    // ✅ Then delete
+    // Then delete
     $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
     $stmt->execute([$userId]);
 
@@ -61,7 +61,7 @@ class AdminController {
     return $response->withHeader('Content-Type', 'application/json');
 }
 
-    // ✅ Get all courses
+    // Get all courses
     public function getAllCourses(Request $request, Response $response): Response {
         $stmt = $this->db->query("SELECT id, course_code, course_name, lecturer_id FROM courses");
         $courses = $stmt->fetchAll();
@@ -69,7 +69,7 @@ class AdminController {
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    // ✅ Get all lecturers
+    // Get all lecturers
     public function getAllLecturers(Request $request, Response $response): Response {
         $stmt = $this->db->query("SELECT id, name FROM users WHERE role = 'Lecturer'");
         $lecturers = $stmt->fetchAll();
@@ -77,7 +77,7 @@ class AdminController {
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    // ✅ Assign lecturer directly to course (using lecturer_id in courses table)
+    // Assign lecturer directly to course (using lecturer_id in courses table)
     public function assignLecturer(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
 
@@ -105,7 +105,7 @@ class AdminController {
     }
 }
 
-// ✅ Assign lecturer using lecturer_course table (direct)
+// Assign lecturer using lecturer_course table (direct)
 public function assignLecturerDirect(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
 
@@ -167,7 +167,7 @@ public function assignLecturerDirect(Request $request, Response $response): Resp
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    // ✅ Assign lecturer to course using separate assignment table (course_assignments)
+    // Assign lecturer to course using separate assignment table (course_assignments)
     public function assignLecturerToCourse(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
     $lecturerId = $data['lecturer_id'] ?? null;
@@ -198,10 +198,10 @@ public function getLogs(Request $request, Response $response): Response {
     $stmt = $this->db->query("
         SELECT 
             l.id,
-            u.name AS user_name,
             l.action_type AS action,
             l.description AS details,
-            l.created_at AS timestamp
+            l.created_at AS timestamp,
+            COALESCE(u.name, 'System') AS user_name
         FROM system_logs l
         LEFT JOIN users u ON u.id = l.action_by
         ORDER BY l.created_at DESC
