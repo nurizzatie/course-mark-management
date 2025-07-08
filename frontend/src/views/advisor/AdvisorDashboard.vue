@@ -85,10 +85,10 @@ export default {
   data() {
     return {
       pageTitle: 'Dashboard',
-      assignedStudents: 15,
-      ConsultGiven: 7,
-      TotalReviews: 17,
-      analyticsReports: 10,
+      assignedStudents: 0,
+      ConsultGiven: 0,
+      TotalReviews: 0,
+      analyticsReports: 0,
       highRiskStudents: [],
       navItems: [
         { name: 'Dashboard', link: '/advisor/dashboard' },
@@ -105,24 +105,28 @@ export default {
     this.loadHighRiskStudents();
   },
   methods: {
-    async loadDashboardStats() {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (!user?.id) return;
+  async loadDashboardStats() {
+    const user = JSON.parse(localStorage.getItem('user'));
 
-      try {
-        const res = await api.get(`/advisor/${user.id}/dashboard-stats`);
-        const stats = res.data;
+    console.log("User from localStorage:", user);
+    
 
-        this.assignedStudents = stats.assigned_students ?? 0;
-        this.ConsultGiven = stats.feedback_given ?? 0;
-        this.TotalReviews = stats.pending_reviews ?? 0;
-        this.analyticsReports = stats.analytics_reports ?? 0;
-      } catch (err) {
-        console.error('Error loading dashboard stats:', err);
-      }
-    },
+    if (!user?.id) return;
 
-    async loadHighRiskStudents() {
+    try {
+      const res = await api.get(`/advisor/${user.id}/dashboard-stats`);
+      const stats = res.data;
+
+      this.assignedStudents = stats.assignedStudents ?? 0;
+      this.ConsultGiven = stats.feedbackGiven ?? 0;
+      this.TotalReviews = stats.pendingReviews ?? 0;
+      this.analyticsReports = stats.analyticsReports ?? 0;
+    } catch (err) {
+      console.error('Error loading dashboard stats:', err);
+    }
+  },
+
+      async loadHighRiskStudents() {
       try {
         const res = await api.get('/advisor/high-risk-students');
         this.highRiskStudents = res.data || [];
@@ -133,6 +137,8 @@ export default {
     }
   }
 };
+
+
 </script>
 
 

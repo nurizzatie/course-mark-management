@@ -11,34 +11,13 @@
 
       <!-- Form Section -->
       <div class="card p-4 mb-4 shadow-sm">
-       <label class="form-label">Student Matric Number</label>
-<div class="position-relative mb-3">
-  <input
-    type="text"
-    class="form-control"
-    v-model="searchMatric"
-    placeholder="Type matric number..."
-    @input="filterSuggestions"
-    @blur="hideSuggestionsDelayed"
-    @focus="showSuggestions = true"
-  />
-  <!-- Suggestions dropdown -->
-  <ul v-if="showSuggestions && filteredSuggestions.length" class="list-group position-absolute w-100 z-index-dropdown">
-    <li
-      class="list-group-item list-group-item-action"
-      v-for="student in filteredSuggestions"
-      :key="student.id"
-      @mousedown.prevent="selectStudent(student)"
-    >
-      {{ student.name }} ({{ student.matric_number }})
-    </li>
-  </ul>
-</div>
-
-<!-- Show match below -->
-<div v-if="matchedStudent" class="mb-3 text-success">
-  ✅ Matched: {{ matchedStudent.name }} ({{ matchedStudent.matric_number }})
-</div>
+        <label class="form-label">Student</label>
+        <select v-model="form.student_id" class="form-select mb-3" required>
+          <option disabled value="">Select student</option>
+          <option v-for="student in students" :key="student.id" :value="student.id">
+            {{ student.name }} ({{ student.matric_number }})
+          </option>
+        </select>
 
         <label class="form-label">Consultation Date</label>
         <input type="date" v-model="form.meeting_date" class="form-control mb-3" required />
@@ -94,10 +73,6 @@ export default {
   data() {
     return {
       pageTitle: 'Consultation',
-      searchMatric: '',
-      matchedStudent: null,
-      filteredSuggestions: [],
-      showSuggestions: false,   
       notes: [],
       students: [],
       loading: false,
@@ -106,7 +81,6 @@ export default {
         meeting_date: '',
         note: ''
       },
-
       navItems: [
         { name: 'Dashboard', link: '/advisor/dashboard' },
         { name: 'Advisees', link: '/advisor/students' },
@@ -118,13 +92,11 @@ export default {
     };
   },
   methods: {
-
-    
     async fetchNotes() {
-      const advisor = JSON.parse(localStorage.getItem('user')); 
+      const advisor = JSON.parse(localStorage.getItem('user'));
       if (!advisor?.id) return;
       try {
-        const res = await api.get(`/api/advisor/notes?advisor_id=${advisor.id}`);
+        const res = await api.get(`/advisor/notes?advisor_id=${advisor.id}`);
         this.notes = res.data;
       } catch (err) {
         console.error('Fetch notes error:', err);
@@ -143,15 +115,11 @@ export default {
       if (!advisor?.id) return;
       try {
         this.loading = true;
-        await api.post('/api/advisor/notes', {
+        await api.post('/advisor/notes', {
           advisor_id: advisor.id,
           ...this.form
         });
         this.form = { student_id: '', meeting_date: '', note: '' };
-        this.searchMatric = '';
-        this.matchedStudent = null;
-        this.filteredSuggestions = [];
-  
         this.fetchNotes();
       } catch (err) {
         alert('Failed to add note.');
@@ -174,66 +142,14 @@ export default {
       link.href = URL.createObjectURL(blob);
       link.setAttribute('download', 'advisor_notes.csv');
       link.click();
-    },
-
-    matchMatric() {
-  const input = this.searchMatric.trim().toLowerCase();
-
-  const match = this.students.find(student =>
-    student.matric_number.trim().toLowerCase() === input
-  );
-
-  if (match) {
-    this.form.student_id = match.id;
-    this.matchedStudent = match;
-  } else {
-    this.form.student_id = '';
-    this.matchedStudent = null;
-  }
-}
-
+    }
   },
   mounted() {
     this.fetchNotes();
     this.fetchStudents();
-  },
- 
-  filterSuggestions() {
-  const input = this.searchMatric.trim().toLowerCase();
-  if (!input) {
-    this.filteredSuggestions = [];
-    return;
   }
-  this.filteredSuggestions = this.students.filter(student =>
-    student.matric_number.toLowerCase().includes(input)
-  );
-},
-
-selectStudent(student) {
-  this.searchMatric = student.matric_number;
-  this.form.student_id = student.id;
-  this.matchedStudent = student;
-  this.filteredSuggestions = [];
-  this.showSuggestions = false;
-},
-
-hideSuggestionsDelayed() {
-  // Delay hiding to allow click event to register
-  setTimeout(() => {
-    this.showSuggestions = false;
-  }, 200);
-}
-
 };
 </script>
-
-<style scoped>
-.z-index-dropdown {
-  z-index: 1000;
-  max-height: 200px;
-  overflow-y: auto;
-}
-</style>
 
 
 

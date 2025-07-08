@@ -48,8 +48,8 @@ $app->get('/api/advisor/profile/{id}', function ($request, $response, $args) {
 });
 
 // GET advisor dashboard stats
-$app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $args) use ($container) {
-    $controller = new \App\Controllers\AdvisorController($container);
+$app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $args) use ($app) {
+    $controller = new \App\Controllers\AdvisorController($app->getContainer());
     return $controller->getDashboardStats($request, $response, $args);
 });
 

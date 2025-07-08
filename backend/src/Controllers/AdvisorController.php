@@ -266,41 +266,56 @@ public function getProfile(Request $request, Response $response, $args): Respons
     }
 }
 
-public function getDashboardStats($request, $response, $args)
+public function getDashboardStats(Request $request, Response $response, array $args)
 {
-    $advisor_id = $args['id'];
-    $db = $this->db;
+    $advisorId = $args['id'];
+    error_log("Getting dashboard stats for advisor ID: $advisorId");
 
-    // Total assigned students
-    $stmt1 = $db->prepare("SELECT COUNT(*) AS count FROM advisor_students WHERE advisor_id = ?");
-    $stmt1->execute([$advisor_id]);
-    $assigned_students = $stmt1->fetch()['count'];
+    try {
+        // Example using PDO
+        $db = $this->db;
 
-    // Total advisor notes
-    $stmt2 = $db->prepare("SELECT COUNT(*) AS count FROM advisor_notes WHERE advisor_id = ?");
-    $stmt2->execute([$advisor_id]);
-    $feedback_given = $stmt2->fetch()['count'];
+        // assignedStudents
+        $stmt1 = $db->prepare("SELECT COUNT(*) as total FROM advisor_students WHERE advisor_id = ?");
+        $stmt1->execute([$advisorId]);
+        $assignedStudents = $stmt1->fetch()['total'] ?? 0;
 
-    // Total pending reviews
-    $stmt3 = $db->prepare("SELECT COUNT(*) AS count FROM reviews WHERE advisor_id = ? AND status = 'pending'");
-    $stmt3->execute([$advisor_id]);
-    $pending_reviews = $stmt3->fetch()['count'];
+        // ConsultGiven
+        $stmt2 = $db->prepare("SELECT COUNT(*) as total FROM advisor_notes WHERE advisor_id = ?");
+        $stmt2->execute([$advisorId]);
+        $consultGiven = $stmt2->fetch()['total'] ?? 0;
 
-    // Total analytics reports (optional, replace with your actual logic or set default)
-    $stmt4 = $db->prepare("SELECT COUNT(*) AS count FROM analytics_reports WHERE advisor_id = ?");
-    $stmt4->execute([$advisor_id]);
-    $analytics_reports = $stmt4->fetch()['count'] ?? 0;
+        // TotalReviews
+        $stmt3 = $db->prepare("
+            SELECT COUNT(sa.student_id) as total 
+            FROM student_assessments sa 
+            JOIN advisor_students ast ON sa.student_id = ast.student_id 
+            WHERE ast.advisor_id = ?
+        ");
+        $stmt3->execute([$advisorId]);
+        $totalReviews = $stmt3->fetch()['total'] ?? 0;
 
-    $data = [
-        'assigned_students' => (int)$assigned_students,
-        'feedback_given' => (int)$feedback_given,
-        'pending_reviews' => (int)$pending_reviews,
-        'analytics_reports' => (int)$analytics_reports,
-    ];
+        // Analytics Reports
+        $stmt4 = $db->prepare("SELECT COUNT(*) as total FROM analytics_data WHERE advisor_id = ?");
+        $stmt4->execute([$advisorId]);
+        $analyticsReports = $stmt4->fetch()['total'] ?? 0;
 
-    $response->getBody()->write(json_encode($data));
-    return $response->withHeader('Content-Type', 'application/json');
+        $data = [
+            "assigned_students" => $assignedStudents,
+            "feedback_given" => $consultGiven,
+            "pending_reviews" => $totalReviews,
+            "analytics_reports" => $analyticsReports,
+        ];
+
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
+    } catch (\Exception $e) {
+        error_log("Dashboard stats error: " . $e->getMessage());
+        $response->getBody()->write(json_encode(['error' => 'Internal server error']));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
 }
+
 
 
 }
