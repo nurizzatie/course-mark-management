@@ -12,6 +12,7 @@ class AdminController {
         $this->db = $db;
     }
 
+
     public function getDashboardStats(Request $request, Response $response): Response {
     // Count total users
     $users = $this->db->query("SELECT COUNT(*) FROM users")->fetchColumn();
@@ -218,7 +219,7 @@ public function assignLecturerDirect(Request $request, Response $response): Resp
 
 
 
-    // ✅ Dummy logs for activity
+    // logs activity
 public function getLogs(Request $request, Response $response): Response {
     $stmt = $this->db->query("
         SELECT 
@@ -238,7 +239,7 @@ public function getLogs(Request $request, Response $response): Response {
     return $response->withHeader('Content-Type', 'application/json');
 }
 
-    // ✅ Update user's role
+    // Update user's role
     public function updateUserRole(Request $request, Response $response, array $args): Response {
         $id = $args['id'];
         $data = $request->getParsedBody();
@@ -263,7 +264,7 @@ $this->logAction($adminId, 'Update Role', "Updated role for user ID: $id to $new
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    // ✅ Add new course
+    // Add new course
 public function createCourse(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
 
@@ -279,7 +280,7 @@ public function createCourse(Request $request, Response $response): Response {
     return $response->withHeader('Content-Type', 'application/json');
 }
 
-// ✅ Reset user password
+// Reset user password
     public function resetPassword(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
 
@@ -304,7 +305,7 @@ $this->logAction($adminId, 'Reset Password', "Reset password for user: $matric")
     return $response->withHeader('Content-Type', 'application/json');
 }
 
-// ✅ Add logAction helper method here
+// Add logAction helper method 
 private function logAction($actionBy, $actionType, $description) {
     $stmt = $this->db->prepare("INSERT INTO system_logs (action_by, action_type, description, created_at) VALUES (:by, :type, :desc, NOW())");
     $stmt->execute([
@@ -331,6 +332,65 @@ public function markNotificationSeen(Request $request, Response $response, $args
     $stmt = $this->db->prepare("UPDATE notifications SET seen = 1 WHERE id = ?");
     $stmt->execute([$args['id']]);
     return $this->json($response, ['message' => 'Notification marked as seen']);
+}
+
+ public function getProfile(Request $request, Response $response): Response
+{
+    $user = $request->getHeaderLine('X-User');
+    $admin = json_decode($user, true);
+    $adminId = $admin['id'] ?? null;
+
+    if (!$adminId) {
+        return $this->json($response, ['error' => 'Unauthorized'], 401);
+    }
+
+    $stmt = $this->db->prepare("SELECT id, name, email, matric_number, role FROM users WHERE id = :id AND role = 'admin'");
+    $stmt->execute(['id' => $adminId]);
+    $profile = $stmt->fetch();
+
+    if (!$profile) {
+        return $this->json($response, ['error' => 'Admin not found'], 404);
+    }
+
+    return $this->json($response, ['profile' => $profile]);
+}
+
+
+public function updateProfile(Request $request, Response $response): Response
+{
+    $user = $request->getHeaderLine('X-User');
+    $admin = json_decode($user, true);
+    $adminId = $admin['id'] ?? null;
+
+    if (!$adminId) {
+        return $this->json($response, ['error' => 'Unauthorized'], 401);
+    }
+
+    $data = $request->getParsedBody();
+
+    // Always update name and email
+    $stmt = $this->db->prepare("
+        UPDATE users 
+        SET name = :name, email = :email 
+        WHERE id = :id AND role = 'admin'
+    ");
+    $stmt->execute([
+        'name' => $data['name'],
+        'email' => $data['email'],
+        'id' => $adminId
+    ]);
+
+    // If password provided, update that too
+    if (!empty($data['password'])) {
+        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+        $stmtPwd = $this->db->prepare("UPDATE users SET password = :password WHERE id = :id");
+        $stmtPwd->execute([
+            'password' => $hashedPassword,
+            'id' => $adminId
+        ]);
+    }
+
+    return $this->json($response, ['message' => 'Profile updated successfully']);
 }
 
 

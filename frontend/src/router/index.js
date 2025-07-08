@@ -8,6 +8,7 @@ import ManageUsers from '@/views/admin/ManageUsers.vue'
 import AssignLecturers from '@/views/admin/AssignLecturers.vue'
 import Logs from '@/views/admin/Logs.vue'
 import ResetPassword from '@/views/admin/ResetPassword.vue'
+import AdminProfile from '@/views/admin/AdminProfile.vue'
 
 // Student
 import StudentDashboard from '@/views/student/StudentDashboard.vue'
@@ -48,6 +49,7 @@ const routes = [
       { path: 'assign-lecturers', name: 'AssignLecturers', component: AssignLecturers },
       { path: 'logs', name: 'SystemLogs', component: Logs },
       { path: 'reset', name: 'ResetPassword', component: ResetPassword },
+      { path: 'profile', name: 'AdminProfile', component: AdminProfile }
     ]
   },
 
