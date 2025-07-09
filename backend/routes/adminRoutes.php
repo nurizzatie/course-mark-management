@@ -1,37 +1,31 @@
 <?php
 
-use App\Controllers\AdminController;
 use Slim\App;
+use App\Controllers\AdminController;
+use App\Controllers\ResetController;
 
 return function (App $app) {
-    // Get the DB connection from the container
     $db = $app->getContainer()->get('db');
-    $controller = new AdminController($db);
 
-    // Group all admin-related routes under /api/admin
-    $app->group('/api/admin', function ($group) use ($controller) {
-        // 🔐 Manage user accounts
-        $group->get('/users', [$controller, 'getUsers']);
-        $group->put('/users/{id}/role', [$controller, 'updateUserRole']);
-        $group->post('/create-user', [$controller, 'createUser']);
-        $group->delete('/users/{id}', [$controller, 'deleteUser']);
 
-        // 🔄 Password reset
-        $group->put('/reset-password', [$controller, 'resetPassword']);
+    // ========== ADMIN CONTROLLER ROUTES ==========
+    $adminController = new AdminController($db);
 
-        // 📚 System logs
-        $group->get('/logs', [$controller, 'getLogs']);
+    $app->group('/api/admin', function ($group) use ($adminController) {
+        $group->get('/users', [$adminController, 'getUsers']);
+        $group->put('/users/{id}/role', [$adminController, 'updateUserRole']);
+        $group->post('/create-user', [$adminController, 'createUser']);
+        $group->delete('/users/{id}', [$adminController, 'deleteUser']);
+        $group->put('/reset-password', [$adminController, 'resetPassword']);
+        $group->get('/logs', [$adminController, 'getLogs']);
+        $group->get('/assign-data', [$adminController, 'getCoursesAndLecturers']);
+        $group->post('/assign-lecturer', [$adminController, 'assignLecturer']);
+        $group->post('/assign-lecturer-direct', [$adminController, 'assignLecturerDirect']);
+        $group->post('/courses', [$adminController, 'createCourse']);
+        $group->get('/dashboard-stats', [$adminController, 'getDashboardStats']);
+        $group->get('/profile', [$adminController, 'getProfile']);
+        $group->put('/profile', [$adminController, 'updateProfile']);
 
-        // 🎯 Assign lecturers to courses
-        $group->get('/assign-data', [$controller, 'getCoursesAndLecturers']);
-
-        // Option A: Assign using `courses` table `lecturer_id`
-        $group->post('/assign-lecturer', [$controller, 'assignLecturer']);
-
-        // Option B: Assign using `course_assignments` table (optional alternative)
-        $group->post('/assign-lecturer-direct', [$controller, 'assignLecturerDirect']);
-
-        // ➕ Add new course
-        $group->post('/courses', [$controller, 'createCourse']);
     });
+
 };

@@ -9,47 +9,95 @@
         <button type="button" class="btn-close" @click="alert.show = false"></button>
       </div>
 
-      <!-- ✅ Create New User Form -->
-      <div class="card p-4 mb-5">
-        <h5 class="fw-bold mb-3">Create New User</h5>
-        <div class="row g-2">
-          <div class="col-md-3" v-for="(field, key) in fieldList" :key="key">
-            <input
-              v-if="key !== 'role' && key !== 'password'"
-              v-model.trim="newUser[key]"
-              @blur="touched[key] = true"
-              :class="{ 'form-control': true, 'is-invalid': touched[key] && !newUser[key] }"
-              :placeholder="field"
-            />
-            <input
-              v-if="key === 'password'"
-              type="password"
-              v-model.trim="newUser.password"
-              @blur="touched.password = true"
-              :class="{ 'form-control': true, 'is-invalid': touched.password && !newUser.password }"
-              placeholder="Password"
-            />
-            <select
-              v-if="key === 'role'"
-              v-model="newUser.role"
-              @blur="touched.role = true"
-              :class="{ 'form-select': true, 'is-invalid': touched.role && !newUser.role }"
-            >
-              <option disabled value="">Select Role</option>
-              <option>Admin</option>
-              <option>Lecturer</option>
-              <option>Advisor</option>
-              <option>Student</option>
-            </select>
-            <div v-if="touched[key] && !newUser[key] && key !== 'role'" class="invalid-feedback">
-              {{ field }} is required.
-            </div>
-          </div>
-          <div class="col-md-3">
-            <button class="btn btn-success w-100" @click="createUser">Create User</button>
-          </div>
+     <!-- ✅ Create New User Form -->
+<div class="card p-4 mb-5">
+  <h5 class="fw-bold mb-3">Create New User</h5>
+  <form @submit.prevent="createUser">
+    <div class="row g-3">
+      <!-- Name -->
+      <div class="col-md-3">
+        <label class="form-label">Name</label>
+        <input
+          v-model.trim="newUser.name"
+          @blur="touched.name = true"
+          :class="['form-control', touched.name && !newUser.name ? 'is-invalid' : '']"
+          placeholder="Full Name"
+        />
+        <div v-if="touched.name && !newUser.name" class="invalid-feedback">
+          Name is required.
         </div>
       </div>
+
+      <!-- Matric Number -->
+      <div class="col-md-3">
+        <label class="form-label">Matric Number</label>
+        <input
+          v-model.trim="newUser.matric_number"
+          @blur="touched.matric_number = true"
+          :class="['form-control', touched.matric_number && !newUser.matric_number ? 'is-invalid' : '']"
+          placeholder="A123456"
+        />
+        <div v-if="touched.matric_number && !newUser.matric_number" class="invalid-feedback">
+          Matric Number is required.
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="col-md-3">
+        <label class="form-label">Email</label>
+        <input
+          v-model.trim="newUser.email"
+          @blur="touched.email = true"
+          :class="['form-control', touched.email && !isValidEmail(newUser.email) ? 'is-invalid' : '']"
+          placeholder="example@email.com"
+        />
+        <div v-if="touched.email && !isValidEmail(newUser.email)" class="invalid-feedback">
+          Valid email is required.
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="col-md-3">
+        <label class="form-label">Password</label>
+        <input
+          type="password"
+          v-model.trim="newUser.password"
+          @blur="touched.password = true"
+          :class="['form-control', touched.password && !newUser.password ? 'is-invalid' : '']"
+          placeholder="********"
+        />
+        <div v-if="touched.password && !newUser.password" class="invalid-feedback">
+          Password is required.
+        </div>
+      </div>
+
+      <!-- Role -->
+      <div class="col-md-3">
+        <label class="form-label">Role</label>
+        <select
+          v-model="newUser.role"
+          @blur="touched.role = true"
+          :class="['form-select', touched.role && !newUser.role ? 'is-invalid' : '']"
+        >
+          <option disabled value="">Select Role</option>
+          <option>Admin</option>
+          <option>Lecturer</option>
+          <option>Advisor</option>
+          <option>Student</option>
+        </select>
+        <div v-if="touched.role && !newUser.role" class="invalid-feedback">
+          Role is required.
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-success w-100">Create User</button>
+      </div>
+    </div>
+  </form>
+</div>
+
 
       <!-- ✅ Grouped User Tables by Role -->
       <div v-for="role in ['Admin', 'Lecturer', 'Advisor', 'Student']" :key="role" class="mb-5">
@@ -69,7 +117,7 @@
               <tbody>
                 <tr v-for="user in filteredUsers(role)" :key="user.id">
                   <td>{{ user.name }}</td>
-                  <td>{{ user.matric_number || '-' }}</td>
+                  <td>{{ user.matric_number }}</td>
                   <td>{{ user.email }}</td>
                   <td>{{ user.role }}</td>
                   <td class="text-center">

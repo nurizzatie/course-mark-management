@@ -3,14 +3,11 @@
     <AppSidebar :navItems="navItems" @navigate="handleNavigation" />
 
     <div class="flex-grow-1 d-flex flex-column">
-      <!-- ✅ Admin Navbar for Admin Role -->
-      <AdminNavbar v-if="role === 'Admin'" />
-
       <!-- ✅ Main Navbar -->
       <AppNavbar
         :pageTitle="pageTitle"
         :notifications="notifications"
-        :showNotification="role === 'Student'"
+        :showNotification="role === 'Student' || role === 'Admin'"
         @logout="handleLogout"
         @update-notification="updateNotification"
       />
@@ -24,17 +21,15 @@
 </template>
 
 <script>
-import AppSidebar from '@/components/AppSidebar.vue';
-import AppNavbar from '@/components/AppNavbar.vue';
-import AdminNavbar from '@/components/AdminNavbar.vue'; // ✅ Import here
-import api from '@/api';
+import AppSidebar from "@/components/AppSidebar.vue";
+import AppNavbar from "@/components/AppNavbar.vue";
+import api from "@/api";
 
 export default {
-  name: 'AppLayout',
+  name: "AppLayout",
   components: {
     AppSidebar,
     AppNavbar,
-    AdminNavbar // ✅ Register here
   },
   props: {
     navItems: {
@@ -58,35 +53,43 @@ export default {
   methods: {
     handleNavigation() {},
     fetchNotifications() {
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user && user.role.toLowerCase() === 'student') {
-        api.get(`/students/${user.id}/notifications`)
-          .then(res => {
-            this.notifications = res.data.notifications.map(n => ({
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (user) {
+        const role = user.role.toLowerCase();
+        const endpoint =
+          role === "admin"
+            ? `/admin/notifications/${user.id}`
+            : `/students/${user.id}/notifications`;
+
+        api
+          .get(endpoint)
+          .then((res) => {
+            this.notifications = res.data.notifications.map((n) => ({
               ...n,
               read: !!n.seen,
-              time: new Date(n.created_at).toLocaleString()
+              time: new Date(n.created_at).toLocaleString(),
             }));
           })
-          .catch(err => console.error('❌ Notification fetch failed:', err));
+          .catch((err) => console.error("Notification fetch failed:", err));
       }
     },
     updateNotification(index) {
       const notif = this.notifications[index];
       notif.read = true;
 
-      api.post(`/student/notifications/${notif.id}/seen`)
+      api
+        .post(`/student/notifications/${notif.id}/seen`)
         .then(() => {
           this.notifications[index].read = true;
         })
-        .catch(() => console.error('Failed to mark notification as read'));
+        .catch(() => console.error("Failed to mark notification as read"));
     },
     handleLogout() {
-      this.$router.push('/login');
-    }
+      this.$router.push("/login");
+    },
   },
   mounted() {
     this.fetchNotifications();
-  }
+  },
 };
 </script>

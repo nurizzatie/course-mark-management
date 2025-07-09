@@ -48,7 +48,8 @@
       <!-- Chart Section -->
       <div class="mt-5">
         <h4 class="fw-semibold mb-3">Activity Overview</h4>
-        <canvas id="adminChart"></canvas>
+        <canvas id="adminChart" ref="adminChart" height="100"></canvas>
+        <div v-if="loading" class="text-muted mt-2">Loading chart data...</div>
       </div>
     </div>
   </AppLayout>
@@ -56,8 +57,9 @@
 
 <script>
 import AppLayout from '@/layouts/AppLayout.vue'
-import Chart from 'chart.js/auto'
 import navItems from '@/constants/adminNavItems'
+import Chart from 'chart.js/auto'
+import axios from 'axios'
 
 export default {
   name: 'AdminDashboard',
@@ -65,26 +67,57 @@ export default {
   data() {
     return {
       navItems,
-      pageTitle: 'Dashboard'
+      pageTitle: 'Dashboard',
+      loading: true,
+      chart: null
     }
   },
   mounted() {
-    const ctx = document.getElementById('adminChart')
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Users', 'Courses', 'Logins', 'Resets'],
-        datasets: [{
-          label: 'Weekly Activity',
-          data: [30, 12, 45, 6],
-          backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } }
-      }
-    })
+    this.loadChartData()
+  },
+  methods: {
+    loadChartData() {
+      this.loading = true
+      axios.get('http://localhost:8080/api/admin/dashboard-stats')
+        .then(res => {
+          const stats = res.data
+          const ctx = this.$refs.adminChart
+
+          if (this.chart) this.chart.destroy()
+
+          this.chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Users', 'Courses', 'Log Entries', 'Resets'],
+              datasets: [{
+                label: 'Total Count',
+                data: [stats.users, stats.courses, stats.logins, stats.resets],
+                backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#dc3545']
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { display: false }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 1
+                  }
+                }
+              }
+            }
+          })
+        })
+        .catch(err => {
+          console.error('Failed to load dashboard stats:', err)
+        })
+        .finally(() => {
+          this.loading = false
+        })
+    }
   }
 }
 </script>
