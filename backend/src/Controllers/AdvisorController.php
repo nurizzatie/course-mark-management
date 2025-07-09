@@ -275,22 +275,32 @@ public function getDashboardStats(Request $request, Response $response, array $a
         $stmt1->execute([$advisorId]);
         $assignedStudents = $stmt1->fetch()['total'];
 
-        // Count consultations given
-        $stmt2 = $db->prepare("SELECT COUNT(*) as total FROM advisor_consult_notes WHERE advisor_id = ?");
+        // Count consultation notes
+        $stmt2 = $db->prepare("SELECT COUNT(*) as total FROM advisor_notes WHERE advisor_id = ?");
         $stmt2->execute([$advisorId]);
         $consultGiven = $stmt2->fetch()['total'];
 
-        // Count mark reviews (based on feedback)
-        $stmt3 = $db->prepare("SELECT COUNT(*) as total FROM marks_feedback WHERE advisor_id = ?");
+        // Count reviewed marks from student_assessments
+        $stmt3 = $db->prepare("
+            SELECT COUNT(*) as total
+            FROM student_assessments sa
+            JOIN advisor_students a ON sa.student_id = a.student_id
+            WHERE a.advisor_id = ?
+        ");
         $stmt3->execute([$advisorId]);
         $totalReviews = $stmt3->fetch()['total'];
 
-        // Count analytics reports generated
-        $stmt4 = $db->prepare("SELECT COUNT(*) as total FROM analytics_reports WHERE advisor_id = ?");
+        // Count analytics entries for assigned students
+        $stmt4 = $db->prepare("
+            SELECT COUNT(*) as total
+            FROM analytics_data ad
+            JOIN advisor_students a ON ad.student_id = a.student_id
+            WHERE a.advisor_id = ?
+        ");
         $stmt4->execute([$advisorId]);
         $analyticsReports = $stmt4->fetch()['total'];
 
-        // Return data
+        // Return stats
         $data = [
             "assigned_students" => $assignedStudents,
             "feedback_given" => $consultGiven,
@@ -298,14 +308,18 @@ public function getDashboardStats(Request $request, Response $response, array $a
             "analytics_reports" => $analyticsReports
         ];
 
-        return $response->withJson($data);
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
 
     } catch (\Exception $e) {
-        return $response->withStatus(500)->withJson([
+        error_log('Dashboard stats error: ' . $e->getMessage());
+        $response->getBody()->write(json_encode([
             "error" => $e->getMessage()
-        ]);
+        ]));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
 }
+
 
     public function getAdviseeProgress(Request $request, Response $response, $args): Response
     {
