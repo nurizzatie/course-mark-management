@@ -18,13 +18,13 @@ final class CreateResetRequestsTable extends AbstractMigration
      * with the Table class.
      */
     public function change(): void
-{
-    $this->table('reset_requests')
-        ->addColumn('user_id', 'integer')
-        ->addColumn('status', 'enum', ['values' => ['pending', 'approved', 'rejected'], 'default' => 'pending'])
-        ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
-        ->addForeignKey('user_id', 'users', 'id', ['delete'=> 'CASCADE'])
-        ->create();
-}
+    {
+        $this->table('reset_requests')
+            ->addColumn('user_id', 'integer', ['signed' => false])
+            ->addColumn('status', 'enum', ['values' => ['pending', 'approved', 'rejected'], 'default' => 'pending'])
+            ->addColumn('created_at', 'timestamp', ['default' => 'CURRENT_TIMESTAMP'])
+            ->addForeignKey('user_id', 'users', 'id', ['delete' => 'CASCADE'])
+            ->create();
+    }
 
 }
