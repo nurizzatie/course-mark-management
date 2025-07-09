@@ -59,6 +59,35 @@ return function ($app) {
         return $controller->getAdviseeProgress($request, $response, $args);
     });
 
+    // Get courses for selection in review mark page
+    $app->get('/api/courses', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container); // or CourseController
+        return $controller->getAllCourses($request, $response);
+    });
+
+    // Get full mark breakdown for all students in each courses
+    $app->get('/api/advisor/courses/{id}/breakdown', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container);
+        return $controller->getCourseMarkBreakdown($request, $response, $args);
+    });
+
+    // Compare with Coursemates
+    $app->get('/api/advisor/courses/{id}/comparison', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container);
+        return $controller->getCourseComparison($request, $response, $args);
+    });
+
+    // Get class ranking
+    $app->get('/api/advisor/courses/{id}/ranking', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container);
+        return $controller->getCourseRanking($request, $response, $args);
+    });
+
+    // Get average by assessment
+    $app->get('/api/advisor/courses/{id}/class-average', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container);
+        return $controller->getClassAverageByComponent($request, $response, $args);
+    });
 
 };
 

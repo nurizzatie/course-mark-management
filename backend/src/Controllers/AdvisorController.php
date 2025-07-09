@@ -337,4 +337,157 @@ class AdvisorController
         }
     }
 
+    // Get all courses for selection review mark page
+    public function getAllCourses(Request $request, Response $response): Response
+    {
+        $sql = "SELECT id, course_name FROM courses ORDER BY course_name";
+
+        try {
+            $stmt = $this->db->query($sql);
+            $courses = $stmt->fetchAll();
+
+            $response->getBody()->write(json_encode($courses));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\PDOException $e) {
+            error_log('Error fetching all courses: ' . $e->getMessage());
+            $response->getBody()->write(json_encode(['error' => 'Failed to fetch courses']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    // Get course mark breakdown for all student in each courses
+    public function getCourseMarkBreakdown(Request $request, Response $response, $args): Response
+    {
+        $courseId = $args['id'];
+
+        $sql = "
+            SELECT 
+                u.id AS student_id,
+                u.name AS student_name,
+                u.matric_number,
+                a.title AS assessment_title,
+                a.type AS assessment_type,
+                a.max_mark,
+                a.weight_percentage,
+                sa.obtained_mark,
+                sc.remarks
+            FROM student_assessments sa
+            JOIN assessments a ON sa.assessment_id = a.id
+            JOIN users u ON sa.student_id = u.id
+            JOIN student_courses sc ON sc.student_id = u.id AND sc.course_id = a.course_id
+            WHERE a.course_id = :course_id
+            ORDER BY u.name, a.type
+        ";
+
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['course_id' => $courseId]);
+            $data = $stmt->fetchAll();
+
+            $response->getBody()->write(json_encode($data));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\PDOException $e) {
+            error_log('Error fetching mark breakdown: ' . $e->getMessage());
+            $response->getBody()->write(json_encode(['error' => 'Failed to fetch breakdown']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    // Compare with Coursemates
+    public function getCourseComparison(Request $request, Response $response, $args): Response
+    {
+        $courseId = $args['id'];
+
+        $sql = "
+            SELECT 
+                u.id AS student_id,
+                u.name AS student_name,
+                u.matric_number,
+                a.max_mark,
+                a.weight_percentage,
+                sa.obtained_mark
+            FROM student_assessments sa
+            JOIN assessments a ON sa.assessment_id = a.id
+            JOIN users u ON sa.student_id = u.id
+            WHERE a.course_id = :course_id
+        ";
+
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['course_id' => $courseId]);
+            $data = $stmt->fetchAll();
+
+            $response->getBody()->write(json_encode($data));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\PDOException $e) {
+            error_log('Error fetching course comparison: ' . $e->getMessage());
+            $response->getBody()->write(json_encode(['error' => 'Failed to fetch comparison']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    // Get class ranking
+    public function getCourseRanking(Request $request, Response $response, $args): Response
+    {
+        $courseId = $args['id'];
+
+        $sql = "
+            SELECT 
+                u.id AS student_id,
+                u.name AS student_name,
+                u.matric_number,
+                a.max_mark,
+                a.weight_percentage,
+                sa.obtained_mark,
+                sc.remarks
+            FROM student_assessments sa
+            JOIN assessments a ON sa.assessment_id = a.id
+            JOIN users u ON sa.student_id = u.id
+            JOIN student_courses sc ON sc.student_id = u.id AND sc.course_id = a.course_id
+            WHERE a.course_id = :course_id
+        ";
+
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['course_id' => $courseId]);
+            $data = $stmt->fetchAll();
+
+            $response->getBody()->write(json_encode($data));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\PDOException $e) {
+            error_log('Error fetching course ranking: ' . $e->getMessage());
+            $response->getBody()->write(json_encode(['error' => 'Failed to fetch ranking']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    // Get average by component
+    public function getClassAverageByComponent(Request $request, Response $response, $args): Response
+    {
+        $courseId = $args['id'];
+
+        $sql = "
+            SELECT 
+                a.type AS component_type,
+                sa.obtained_mark,
+                a.max_mark
+            FROM student_assessments sa
+            JOIN assessments a ON sa.assessment_id = a.id
+            WHERE a.course_id = :course_id
+        ";
+
+        try {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['course_id' => $courseId]);
+            $rows = $stmt->fetchAll();
+
+            $response->getBody()->write(json_encode($rows));
+            return $response->withHeader('Content-Type', 'application/json');
+        } catch (\PDOException $e) {
+            error_log('Error fetching class average: ' . $e->getMessage());
+            $response->getBody()->write(json_encode(['error' => 'Failed to fetch class average']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
 }
