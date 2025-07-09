@@ -509,4 +509,24 @@ public function getDashboardStats(Request $request, Response $response, array $a
         }
     }
 
+    // Update profile
+    public function updateProfile(Request $request, Response $response, $args): Response
+    {
+        $id = $args['id'];
+        $data = json_decode($request->getBody()->getContents(), true);
+
+        $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ?, matric_number = ? WHERE id = ?");
+        $stmt->execute([
+            $data['name'],
+            $data['email'],
+            $data['matric_number'],
+            $id
+        ]);
+
+        $response->getBody()->write(json_encode(['message' => 'Profile updated']));
+        return $response->withHeader('Content-Type', 'application/json')
+                        ->withStatus(200);
+
+    }
+
 }

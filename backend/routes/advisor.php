@@ -88,6 +88,13 @@ $app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $a
         return $controller->getClassAverageByComponent($request, $response, $args);
     });
 
+    // Profile update
+    $app->put('/api/advisor/profile/{id}', function ($request, $response, $args) use ($container) {
+        $controller = new \App\Controllers\AdvisorController($container);
+        return $controller->updateProfile($request, $response, $args);
+    });
+
+
 };
 
 

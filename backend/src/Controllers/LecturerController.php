@@ -740,4 +740,26 @@ class LecturerController
         return $response->withHeader('Content-Type', 'application/json');
     }
 
+    // Profile update
+    public function updateProfile(Request $request, Response $response): Response
+    {
+        $user = json_decode($request->getHeaderLine('X-User'), true);
+        $id = $user['id'];
+
+        $data = json_decode($request->getBody()->getContents(), true);
+        $name = $data['name'] ?? null;
+        $email = $data['email'] ?? null;
+
+        if (!$name || !$email) {
+            $response->getBody()->write(json_encode(['message' => 'Name and email are required']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+
+        $stmt = $this->db->prepare("UPDATE users SET name = ?, email = ? WHERE id = ?");
+        $stmt->execute([$name, $email, $id]);
+
+        $response->getBody()->write(json_encode(['message' => 'Profile updated']));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
 }
