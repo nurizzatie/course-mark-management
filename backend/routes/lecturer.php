@@ -25,4 +25,7 @@ return function (App $app) {
         $group->get('/remark-requests', LecturerController::class . ':getRemarkRequests');
         $group->put('/remark-requests/{id}', LecturerController::class . ':updateRemarkRequest');
     });
+
+    $app->get('/api/remark-file/{filename}', [\App\Controllers\RemarkController::class, 'downloadFile']);
+
 };
