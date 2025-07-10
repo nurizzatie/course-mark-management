@@ -23,9 +23,9 @@ return function (App $app) {
         $group->get('/{studentId}/performance-chart', [StudentController::class, 'getPerformanceChart']);
     });
 
-
     $app->get('/api/students/{id}/notifications', StudentController::class . ':getNotifications');
     $app->post('/api/student/notifications/{id}/seen', StudentController::class . ':markNotificationSeen');
+    
 
     $app->group('/api/remark', function ($group) {
         $group->post('/request', [RemarkController::class, 'submitRemarkRequest']);

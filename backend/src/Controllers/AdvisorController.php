@@ -529,4 +529,39 @@ public function getDashboardStats(Request $request, Response $response, array $a
 
     }
 
+    public function assignStudent(Request $request, Response $response, $args): Response
+{
+    $data = json_decode($request->getBody()->getContents(), true);
+    $advisorId = $data['advisor_id'] ?? null;
+    $studentId = $data['student_id'] ?? null;
+
+    if (!$advisorId || !$studentId) {
+        $response->getBody()->write(json_encode(['error' => 'Missing advisor_id or student_id']));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    try {
+        // Check if the student is already assigned
+        $check = $this->db->prepare("SELECT * FROM advisor_students WHERE advisor_id = ? AND student_id = ?");
+        $check->execute([$advisorId, $studentId]);
+        if ($check->fetch()) {
+            $response->getBody()->write(json_encode(['error' => 'Student already assigned to this advisor']));
+            return $response->withStatus(409)->withHeader('Content-Type', 'application/json');
+        }
+
+        // Assign student to advisor
+        $stmt = $this->db->prepare("INSERT INTO advisor_students (advisor_id, student_id) VALUES (?, ?)");
+        $stmt->execute([$advisorId, $studentId]);
+
+        $response->getBody()->write(json_encode(['message' => 'Student assigned successfully']));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
+    } catch (\PDOException $e) {
+        error_log('Assign student error: ' . $e->getMessage());
+        $response->getBody()->write(json_encode(['error' => 'Failed to assign student']));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    }
+}
+
+
+
 }
