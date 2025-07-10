@@ -101,23 +101,31 @@ class StudentController
 
     public function viewCourseMarks(Request $request, Response $response, array $args): Response
     {
-        $stmt = $this->db->prepare("
-        SELECT a.id AS assessment_id, a.title AS component, a.max_mark, a.weight_percentage,
-           c.course_name, c.course_code,
-           (
-             SELECT u.name
-             FROM lecturer_courses lc
-             JOIN users u ON lc.lecturer_id = u.id
-             WHERE lc.course_id = c.id AND u.role = 'lecturer'
-             LIMIT 1
-           ) AS lecturer_name,
-           sa.obtained_mark, rr.status AS remark_status
-            FROM assessments a
-            JOIN courses c ON a.course_id = c.id
-            JOIN student_assessments sa ON sa.assessment_id = a.id AND sa.student_id = :student_id
-            LEFT JOIN remark_requests rr ON rr.assessment_id = a.id AND rr.student_id = :student_id
-            WHERE a.course_id = :course_id
-     ");
+       $stmt = $this->db->prepare("
+  SELECT a.id AS assessment_id, a.title AS component, a.max_mark, a.weight_percentage,
+         c.course_name, c.course_code,
+         (
+           SELECT u.name
+           FROM lecturer_courses lc
+           JOIN users u ON lc.lecturer_id = u.id
+           WHERE lc.course_id = c.id AND u.role = 'lecturer'
+           LIMIT 1
+         ) AS lecturer_name,
+         sa.obtained_mark,
+         IF(rr.status = 'reviewed', 'pending', rr.status) AS remark_status
+        FROM assessments a
+        JOIN courses c ON a.course_id = c.id
+        JOIN student_assessments sa ON sa.assessment_id = a.id AND sa.student_id = :student_id
+        LEFT JOIN remark_requests rr ON rr.id = (
+          SELECT id FROM remark_requests
+          WHERE assessment_id = a.id AND student_id = :student_id
+          ORDER BY created_at DESC
+          LIMIT 1
+    )
+  WHERE a.course_id = :course_id
+");
+
+
 
         $stmt->execute([
             ':student_id' => $args['studentId'],
