@@ -4,7 +4,9 @@
       <div v-if="loading">Loading course marks...</div>
       <div v-else-if="error" class="text-danger">{{ error }}</div>
       <div v-else>
-        <h2><strong>{{ courseName }} ({{ courseCode }})</strong></h2>
+        <h2>
+          <strong>{{ courseName }} ({{ courseCode }})</strong>
+        </h2>
         <p class="text-muted mb-4">Lecturer: {{ lecturerName }}</p>
         <p class="text-muted mb-4">Component-wise Marks</p>
 
@@ -23,7 +25,9 @@
             <tr v-for="item in marks" :key="item.assessment_id">
               <td>{{ item.component }}</td>
               <td>{{ item.max_mark }}</td>
-              <td>{{ item.obtained_mark !== null ? item.obtained_mark : "-" }}</td>
+              <td>
+                {{ item.obtained_mark !== null ? item.obtained_mark : "-" }}
+              </td>
               <td>{{ item.weight_percentage }}</td>
               <td>{{ item.contribution }}</td>
               <td>
@@ -33,13 +37,15 @@
                   class="btn btn-outline-dark btn-sm"
                   @click="requestRemark(item)"
                   :disabled="!item.obtained_mark"
-                >Request Remark
+                >
+                  Request Remark
                 </button>
 
                 <!-- Pending status -->
                 <span
                   v-else-if="item.remark_status === 'pending'"
-                  class="badge badge-pill bg-warning text-dark">
+                  class="badge bg-warning text-dark rounded-pill"
+                >
                   Pending
                 </span>
 
@@ -57,6 +63,7 @@
                   class="d-flex gap-2 align-items-center"
                 >
                   <span class="badge badge-pill bg-danger">Rejected</span>
+
                   <button
                     v-if="item.appealCount < 2"
                     class="btn btn-sm btn-danger"
@@ -97,17 +104,16 @@ export default {
       percentage: 0,
       loading: true,
       error: null,
-      lecturerName: '',
-
+      lecturerName: "",
     };
   },
   async mounted() {
     await this.fetchMarks();
   },
   watch: {
-    '$route'() {
-      this.fetchMarks(); 
-    }
+    $route() {
+      this.fetchMarks();
+    },
   },
   methods: {
     async fetchMarks() {
@@ -138,7 +144,10 @@ export default {
 
             let appealCount = 0;
             if (item.remark_status === "rejected") {
-              appealCount = await this.fetchAppealCount(student.id, item.assessment_id);
+              appealCount = await this.fetchAppealCount(
+                student.id,
+                item.assessment_id
+              );
             }
 
             return {
@@ -152,8 +161,7 @@ export default {
         this.totalObtained = data.summary.total_obtained;
         this.totalMax = data.summary.total_max;
         this.percentage = data.summary.percentage;
-        this.lecturerName = data.components[0]?.lecturer_name || '';
-
+        this.lecturerName = data.components[0]?.lecturer_name || "";
 
         if (data.components.length > 0) {
           this.courseName = data.components[0].course_name || "Unknown Course";
