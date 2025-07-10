@@ -103,15 +103,21 @@ class StudentController
     {
         $stmt = $this->db->prepare("
         SELECT a.id AS assessment_id, a.title AS component, a.max_mark, a.weight_percentage,
-            c.course_name, c.course_code, u.name AS lecturer_name,
-            sa.obtained_mark, rr.status AS remark_status
-        FROM assessments a
-        JOIN courses c ON a.course_id = c.id
-        JOIN lecturer_courses lc ON lc.course_id = c.id
-        JOIN users u ON lc.lecturer_id = u.id AND u.role = 'lecturer'
-        JOIN student_assessments sa ON sa.assessment_id = a.id AND sa.student_id = :student_id
-        LEFT JOIN remark_requests rr ON rr.assessment_id = a.id AND rr.student_id = :student_id
-        WHERE a.course_id = :course_id ");
+           c.course_name, c.course_code,
+           (
+             SELECT u.name
+             FROM lecturer_courses lc
+             JOIN users u ON lc.lecturer_id = u.id
+             WHERE lc.course_id = c.id AND u.role = 'lecturer'
+             LIMIT 1
+           ) AS lecturer_name,
+           sa.obtained_mark, rr.status AS remark_status
+            FROM assessments a
+            JOIN courses c ON a.course_id = c.id
+            JOIN student_assessments sa ON sa.assessment_id = a.id AND sa.student_id = :student_id
+            LEFT JOIN remark_requests rr ON rr.assessment_id = a.id AND rr.student_id = :student_id
+            WHERE a.course_id = :course_id
+     ");
 
         $stmt->execute([
             ':student_id' => $args['studentId'],
@@ -184,13 +190,13 @@ class StudentController
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-     public function compareAssessmentMarks(Request $request, Response $response, array $args): Response
-{
-    $courseId = $args['courseId'];
-    $assessmentId = $args['assessmentId'];
-    $studentId = $request->getQueryParams()['student_id'] ?? null;
+    public function compareAssessmentMarks(Request $request, Response $response, array $args): Response
+    {
+        $courseId = $args['courseId'];
+        $assessmentId = $args['assessmentId'];
+        $studentId = $request->getQueryParams()['student_id'] ?? null;
 
-    $stmt = $this->db->prepare("
+        $stmt = $this->db->prepare("
         SELECT 
             sa.student_id,
             u.name AS student_name,
@@ -200,38 +206,38 @@ class StudentController
         JOIN users u ON sa.student_id = u.id
         WHERE a.course_id = :courseId AND sa.assessment_id = :assessmentId
     ");
-    $stmt->execute([
-        ':courseId' => $courseId,
-        ':assessmentId' => $assessmentId
-    ]);
+        $stmt->execute([
+            ':courseId' => $courseId,
+            ':assessmentId' => $assessmentId
+        ]);
 
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $totalMarks = 0;
-    $studentCount = count($results);
+        $totalMarks = 0;
+        $studentCount = count($results);
 
-    foreach ($results as &$row) {
-        $totalMarks += $row['total_contribution'];
+        foreach ($results as &$row) {
+            $totalMarks += $row['total_contribution'];
 
-        // Anonymize labels
-        if ($studentId && $row['student_id'] == $studentId) {
-            $row['student_label'] = 'You';
-        } else {
-            $row['student_label'] = 'Student ' . substr(md5($row['student_id']), 0, 5);
+            // Anonymize labels
+            if ($studentId && $row['student_id'] == $studentId) {
+                $row['student_label'] = 'You';
+            } else {
+                $row['student_label'] = 'Student ' . substr(md5($row['student_id']), 0, 5);
+            }
+
+            unset($row['student_name'], $row['student_id']);
         }
 
-        unset($row['student_name'], $row['student_id']);
+        $average = $studentCount > 0 ? round($totalMarks / $studentCount, 2) : 0;
+
+        $response->getBody()->write(json_encode([
+            'data' => $results,
+            'class_average' => $average
+        ]));
+
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
-
-    $average = $studentCount > 0 ? round($totalMarks / $studentCount, 2) : 0;
-
-    $response->getBody()->write(json_encode([
-        'data' => $results,
-        'class_average' => $average
-    ]));
-
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-}
 
 
 
@@ -317,169 +323,169 @@ class StudentController
     }
 
     public function getPerformanceChart(Request $request, Response $response, array $args): Response
-{
-    $studentId = $args['studentId'];
+    {
+        $studentId = $args['studentId'];
 
-    // 1. Get list of courses the student enrolled in
-    $stmt = $this->db->prepare("
+        // 1. Get list of courses the student enrolled in
+        $stmt = $this->db->prepare("
         SELECT c.id, c.course_name AS name
         FROM courses c
         JOIN student_courses sc ON sc.course_id = c.id
         WHERE sc.student_id = :studentId
     ");
-    $stmt->execute([':studentId' => $studentId]);
-    $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt->execute([':studentId' => $studentId]);
+        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $results = [];
-    $assessmentTypes = [];
+        $results = [];
+        $assessmentTypes = [];
 
-    foreach ($courses as $course) {
-        // 2. Get assessments for this course (using type now)
-        $stmtAssessments = $this->db->prepare("
+        foreach ($courses as $course) {
+            // 2. Get assessments for this course (using type now)
+            $stmtAssessments = $this->db->prepare("
             SELECT a.id, a.type
             FROM assessments a
             WHERE a.course_id = :courseId
             ORDER BY a.id ASC
         ");
-        $stmtAssessments->execute([':courseId' => $course['id']]);
-        $assessments = $stmtAssessments->fetchAll(PDO::FETCH_ASSOC);
+            $stmtAssessments->execute([':courseId' => $course['id']]);
+            $assessments = $stmtAssessments->fetchAll(PDO::FETCH_ASSOC);
 
-        // Store types only once
-        if (empty($assessmentTypes)) {
-            $assessmentTypes = array_column($assessments, 'type');
-        }
+            // Store types only once
+            if (empty($assessmentTypes)) {
+                $assessmentTypes = array_column($assessments, 'type');
+            }
 
-        // 3. Get student's marks for each assessment
-        $marks = [];
-        foreach ($assessments as $assessment) {
-            $stmtMark = $this->db->prepare("
+            // 3. Get student's marks for each assessment
+            $marks = [];
+            foreach ($assessments as $assessment) {
+                $stmtMark = $this->db->prepare("
                 SELECT obtained_mark 
                 FROM student_assessments 
                 WHERE student_id = :studentId AND assessment_id = :assessmentId
             ");
-            $stmtMark->execute([
-                ':studentId' => $studentId,
-                ':assessmentId' => $assessment['id']
-            ]);
-            $mark = $stmtMark->fetchColumn();
-            $marks[] = $mark !== false ? floatval($mark) : null;
+                $stmtMark->execute([
+                    ':studentId' => $studentId,
+                    ':assessmentId' => $assessment['id']
+                ]);
+                $mark = $stmtMark->fetchColumn();
+                $marks[] = $mark !== false ? floatval($mark) : null;
+            }
+
+            $results[] = [
+                'course' => $course['name'],
+                'marks' => $marks
+            ];
         }
 
-        $results[] = [
-            'course' => $course['name'],
-            'marks' => $marks
+        // Final output with types instead of titles
+        $final = [
+            'assessments' => $assessmentTypes,
+            'courses' => $results
         ];
+
+        $response->getBody()->write(json_encode($final));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     }
 
-    // Final output with types instead of titles
-    $final = [
-        'assessments' => $assessmentTypes,
-        'courses' => $results
-    ];
+    public function getStudentProfile(Request $request, Response $response, array $args): Response
+    {
+        $userHeader = $request->getHeaderLine('X-User');
+        $user = json_decode($userHeader, true);
 
-    $response->getBody()->write(json_encode($final));
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
-}
-
-public function getStudentProfile(Request $request, Response $response, array $args): Response
-{
-    $userHeader = $request->getHeaderLine('X-User');
-    $user = json_decode($userHeader, true);
-
-    if (!$user || !isset($user['id'])) {
-        $response->getBody()->write(json_encode([
-            'error' => 'Invalid or missing user header.'
-        ]));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-    }
-
-    $userId = $user['id'];
-
-    try {
-        // Get user details
-        $stmt = $this->db->prepare("SELECT id, name, email, matric_number FROM users WHERE id = ?");
-        $stmt->execute([$userId]);
-        $profile = $stmt->fetch(PDO::FETCH_ASSOC); 
-        if (!$profile) {
-            $response->getBody()->write(json_encode(['error' => 'User not found.']));
-            return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+        if (!$user || !isset($user['id'])) {
+            $response->getBody()->write(json_encode([
+                'error' => 'Invalid or missing user header.'
+            ]));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
 
-        // Get enrolled courses
-        $stmt = $this->db->prepare("
+        $userId = $user['id'];
+
+        try {
+            // Get user details
+            $stmt = $this->db->prepare("SELECT id, name, email, matric_number FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$profile) {
+                $response->getBody()->write(json_encode(['error' => 'User not found.']));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            }
+
+            // Get enrolled courses
+            $stmt = $this->db->prepare("
             SELECT c.course_code, c.course_name, c.semester, c.year
             FROM courses c
             JOIN student_courses sc ON sc.course_id = c.id
             WHERE sc.student_id = ?
         ");
-        $stmt->execute([$userId]);
-        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt->execute([$userId]);
+            $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Use latest course semester (if any)
-        $latestSemester = $courses[0]['semester'] ?? 'Unknown';
+            // Use latest course semester (if any)
+            $latestSemester = $courses[0]['semester'] ?? 'Unknown';
 
-        // Add semester manually into profile
-        $profile['semester'] = $latestSemester;
+            // Add semester manually into profile
+            $profile['semester'] = $latestSemester;
 
-        $response->getBody()->write(json_encode([
-            'profile' => $profile,
-            'courses' => $courses
-        ]));
-        return $response->withHeader('Content-Type', 'application/json');
+            $response->getBody()->write(json_encode([
+                'profile' => $profile,
+                'courses' => $courses
+            ]));
+            return $response->withHeader('Content-Type', 'application/json');
 
-    } catch (\PDOException $e) {
-        $response->getBody()->write(json_encode(['error' => 'Server error while fetching profile.']));
-        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
-    }
-}
-
-public function updateProfile(Request $request, Response $response, array $args): Response
-{
-    $user = $request->getHeaderLine('X-User');
-    $student = json_decode($user, true);
-    $studentId = $student['id'] ?? null;
-
-    if (!$studentId || $studentId != $args['id']) {
-        return $this->json($response, ['error' => 'Unauthorized'], 401);
+        } catch (\PDOException $e) {
+            $response->getBody()->write(json_encode(['error' => 'Server error while fetching profile.']));
+            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        }
     }
 
-    $data = $request->getParsedBody();
+    public function updateProfile(Request $request, Response $response, array $args): Response
+    {
+        $user = $request->getHeaderLine('X-User');
+        $student = json_decode($user, true);
+        $studentId = $student['id'] ?? null;
 
-    $fields = [
-        'name' => $data['name'] ?? null,
-        'email' => $data['email'] ?? null
-    ];
+        if (!$studentId || $studentId != $args['id']) {
+            return $this->json($response, ['error' => 'Unauthorized'], 401);
+        }
 
-    // Optional password update
-    if (!empty($data['password'])) {
-        $fields['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        $data = $request->getParsedBody();
+
+        $fields = [
+            'name' => $data['name'] ?? null,
+            'email' => $data['email'] ?? null
+        ];
+
+        // Optional password update
+        if (!empty($data['password'])) {
+            $fields['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+        }
+
+        // Build dynamic SQL SET clause
+        $setClause = implode(', ', array_map(fn($k) => "$k = :$k", array_keys($fields)));
+        $stmt = $this->db->prepare("UPDATE users SET $setClause WHERE id = :id");
+        $fields['id'] = $studentId;
+        $stmt->execute($fields);
+
+        // Return fixed structure
+        return $this->json($response, [
+            'message' => 'Profile updated successfully',
+            'profile' => [
+                'id' => $studentId,
+                'name' => $fields['name'],
+                'email' => $fields['email'],
+                'matric_number' => $student['matric_number'],
+                'semester' => $student['semester'] ?? null,
+                'role' => 'student'
+            ]
+        ]);
     }
 
-    // Build dynamic SQL SET clause
-    $setClause = implode(', ', array_map(fn($k) => "$k = :$k", array_keys($fields)));
-    $stmt = $this->db->prepare("UPDATE users SET $setClause WHERE id = :id");
-    $fields['id'] = $studentId;
-    $stmt->execute($fields);
-
-    // Return fixed structure
-    return $this->json($response, [
-        'message' => 'Profile updated successfully',
-        'profile' => [
-            'id' => $studentId,
-            'name' => $fields['name'],
-            'email' => $fields['email'],
-            'matric_number' => $student['matric_number'],
-            'semester' => $student['semester'] ?? null,
-            'role' => 'student'
-        ]
-    ]);
-}
 
 
 
-
- // 
- // 📌 NOTIFICATIONS
+    // 
+    // 📌 NOTIFICATIONS
     // =========================
     public function getNotifications(Request $request, Response $response, $args): Response
     {
