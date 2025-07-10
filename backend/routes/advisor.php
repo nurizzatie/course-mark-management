@@ -17,6 +17,12 @@ return function ($app) {
         return $controller->getStudentMarks($request, $response, $args);
     });
 
+    $app->post('/api/advisor/students', function ($request, $response, $args) use ($container) {
+    $controller = new AdvisorController($container);
+    return $controller->assignStudent($request, $response, $args);
+});
+
+
     // GET performance analytics
     $app->get('/api/advisor/analytics', function ($request, $response, $args) use ($container) {
         $controller = new AdvisorController($container);
