@@ -123,12 +123,8 @@ export default {
         .catch(() => alert("Failed to update request."));
     },
     getFileUrl(path) {
-    if (path.startsWith('uploads/')) {
-      const filename = path.split('/').pop();
-      return `http://localhost:8080/api/remark-file/${filename}`;
+      return `http://localhost:8080/${path}`;
     }
-    return path; 
-  }
 },
   }
 </script>
