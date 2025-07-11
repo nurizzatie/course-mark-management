@@ -544,24 +544,20 @@ public function getDashboardStats(Request $request, Response $response, array $a
 
     }
 
-   private function buildAnalyticsForStudent(int $studentId): void
+  private function buildAnalyticsForStudent(int $studentId): void
 {
     error_log("📊 Building analytics for student ID: $studentId");
-    
 
-    /**
-     * Build analytics rows per course this student has marks for.
-     * If the student has no marks yet we’ll skip (they will still
-     * show up in Analytics thanks to the LEFT JOIN).
-     */
     $sql = "
         SELECT
             a.course_id,
-            SUM(sa.obtained_mark)                AS total_mark,
-            MAX(CASE WHEN a.type = 'Final' 
-                     THEN sa.obtained_mark END)  AS final_exam_mark,
-            SUM(sa.obtained_mark / a.max_mark * a.weight_percentage) 
-                                                 AS overall_percentage
+            SUM(sa.obtained_mark) AS total_mark,
+            MAX(CASE
+            WHEN LOWER(a.type) LIKE '%final%' THEN sa.obtained_mark ELSE 0 END) AS final_exam_mark,
+            ROUND(SUM(CASE 
+            WHEN a.max_mark > 0 THEN (sa.obtained_mark / a.max_mark * a.weight_percentage)
+            ELSE 0
+            END), 2) AS overall_percentage
         FROM assessments a
         JOIN student_assessments sa ON sa.assessment_id = a.id
         WHERE sa.student_id = :student_id
@@ -571,31 +567,58 @@ public function getDashboardStats(Request $request, Response $response, array $a
     $stmt = $this->db->prepare($sql);
     $stmt->execute(['student_id' => $studentId]);
     $rows = $stmt->fetchAll();
-    error_log("No analytics rows generated for student $studentId");
+    error_log("Analytics raw rows: " . json_encode($rows));
+
+
+    if (!$rows || count($rows) === 0) {
+        error_log("⚠️ No analytics rows generated for student $studentId");
+        return;
+    }
 
     foreach ($rows as $r) {
-        // Insert or replace (in case analytics already exists)
+        $courseId = $r['course_id'];
+        $totalMark = $r['total_mark'] ?? 0;
+        $finalExamMark = $r['final_exam_mark'] ?? 0;
+        $overall = $r['overall_percentage'] ?? 0;
+
+        // Determine risk level
+        $risk = 'Low';
+        if ($overall < 50) {
+            $risk = 'High';
+        } elseif ($overall < 65) {
+            $risk = 'Medium';
+        }
+
         $insert = $this->db->prepare("
             INSERT INTO analytics_data
-              (student_id, course_id, total_mark, final_exam_mark, overall_percentage)
-            VALUES (:student_id, :course_id, :total_mark, :final_exam_mark, :overall)
+                (student_id, course_id, total_mark, final_exam_mark, overall_percentage, rank, percentile, risk_level)
+            VALUES
+                (:student_id, :course_id, :total_mark, :final_exam_mark, :overall, 0, 0, :risk_level)
             ON DUPLICATE KEY UPDATE
-              total_mark = VALUES(total_mark),
-              final_exam_mark = VALUES(final_exam_mark),
-              overall_percentage = VALUES(overall_percentage)
+                total_mark = VALUES(total_mark),
+                final_exam_mark = VALUES(final_exam_mark),
+                overall_percentage = VALUES(overall_percentage),
+                risk_level = VALUES(risk_level)
         ");
+
         $insert->execute([
             'student_id'      => $studentId,
-            'course_id'       => $r['course_id'],
-            'total_mark'      => $r['total_mark'],
-            'final_exam_mark' => $r['final_exam_mark'],
-            'overall'         => $r['overall_percentage']
+            'course_id'       => $courseId,
+            'total_mark'      => $totalMark,
+            'final_exam_mark' => $finalExamMark,
+            'overall'         => $overall,
+            'risk_level'      => $risk
         ]);
 
-        // ── (optional) recalc rank / percentile for that course ──────────
-        $this->reRankCourse($r['course_id']);
+        error_log("✅ Inserted/updated analytics for student $studentId in course $courseId");
+
+        // 🔁 Recalculate rank/percentile if method exists
+        if (method_exists($this, 'reRankCourse')) {
+            $this->reRankCourse($courseId);
+        }
     }
 }
+
 
 private function reRankCourse(int $courseId): void
 {
