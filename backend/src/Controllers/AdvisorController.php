@@ -546,6 +546,9 @@ public function getDashboardStats(Request $request, Response $response, array $a
 
    private function buildAnalyticsForStudent(int $studentId): void
 {
+    error_log("📊 Building analytics for student ID: $studentId");
+    
+
     /**
      * Build analytics rows per course this student has marks for.
      * If the student has no marks yet we’ll skip (they will still
@@ -568,6 +571,7 @@ public function getDashboardStats(Request $request, Response $response, array $a
     $stmt = $this->db->prepare($sql);
     $stmt->execute(['student_id' => $studentId]);
     $rows = $stmt->fetchAll();
+    error_log("No analytics rows generated for student $studentId");
 
     foreach ($rows as $r) {
         // Insert or replace (in case analytics already exists)
