@@ -48,7 +48,7 @@
                 <td>{{ item.student_name }}</td>
                 <td>{{ item.matric_number }}</td>
                 <td>{{ item.course_name }}</td>
-                <td>{{ item.total_mark }}</td>
+                <td>{{ item.total_mark ?? 'N/A' }}</td>
                 <td>{{ item.final_exam_mark }}</td>
                 <td>{{ item.overall_percentage }}%</td>
                 <td>{{ item.rank }}</td>
@@ -74,6 +74,7 @@ export default {
   components: { AppLayout },
   data() {
     return {
+      user: JSON.parse(localStorage.getItem('user') || '{}'),
       pageTitle: 'Performance Analytics',
       analytics: [],
       searchQuery: '',
@@ -99,7 +100,12 @@ export default {
   methods: {
     async fetchAnalytics() {
       try {
-        const res = await api.get('/advisor/analytics');
+        const res = await api.get('/advisor/analytics', {
+  headers: {
+    'X-User': JSON.stringify(this.user)
+  }
+});
+
         this.analytics = res.data;
       } catch (err) {
         console.error('Failed to fetch analytics data:', err);

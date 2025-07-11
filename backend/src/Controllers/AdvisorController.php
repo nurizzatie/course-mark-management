@@ -90,37 +90,52 @@ class AdvisorController
             return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
     }
-    //get student analytics
-    public function getAnalytics(Request $request, Response $response, $args): Response
-    {
-        try {
-            $stmt = $this->db->query("
-                SELECT 
-                    a.student_id,
-                    u.name AS student_name,
-                    u.matric_number,
-                    a.course_id,
-                    c.course_name,
-                    a.total_mark,
-                    a.final_exam_mark,
-                    a.overall_percentage,
-                    a.rank,
-                    a.percentile,
-                    a.risk_level
-                FROM analytics_data a
-                JOIN users u ON a.student_id = u.id
-                JOIN courses c ON a.course_id = c.id
-            ");
-            $data = $stmt->fetchAll();
 
-            $response->getBody()->write(json_encode($data));
-            return $response->withHeader('Content-Type', 'application/json');
-        } catch (\PDOException $e) {
-            error_log('Error fetching analytics data: ' . $e->getMessage());
-            $response->getBody()->write(json_encode(['error' => 'Failed to fetch analytics']));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+    //get performance analytics
+    public function getAnalytics(Request $request, Response $response, $args): Response
+{
+    try {
+        $userHeader = $request->getHeaderLine('X-User');
+        $advisor = json_decode($userHeader);
+        $advisorId = $advisor->id ?? null;
+
+        if (!$advisorId) {
+            $response->getBody()->write(json_encode(['error' => 'Missing advisor ID']));
+            return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
+
+        $stmt = $this->db->prepare("
+    SELECT 
+        u.id            AS student_id,
+        u.name          AS student_name,
+        u.matric_number,
+        c.course_name,
+        ad.total_mark,
+        ad.final_exam_mark,
+        ad.overall_percentage,
+        ad.rank,
+        ad.percentile,
+        ad.risk_level
+    FROM advisor_students s
+    JOIN users u           ON u.id = s.student_id
+    LEFT JOIN analytics_data ad ON ad.student_id = u.id
+    LEFT JOIN courses c         ON c.id = ad.course_id
+    WHERE s.advisor_id = ?
+");
+$stmt->execute([$advisorId]);
+
+        $data = $stmt->fetchAll();
+
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json');
+
+    } catch (\PDOException $e) {
+        error_log('Error fetching analytics data: ' . $e->getMessage());
+        $response->getBody()->write(json_encode(['error' => 'Failed to fetch analytics']));
+        return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
     }
+}
+
 
     public function getHighRiskStudents(Request $request, Response $response, $args): Response
     {
@@ -529,49 +544,117 @@ public function getDashboardStats(Request $request, Response $response, array $a
 
     }
 
-   public function assignStudent(Request $request, Response $response, $args): Response
+   private function buildAnalyticsForStudent(int $studentId): void
 {
-    $data = json_decode($request->getBody()->getContents(), true);
-    $matric = $data['matric_number'] ?? null;
+    /**
+     * Build analytics rows per course this student has marks for.
+     * If the student has no marks yet we’ll skip (they will still
+     * show up in Analytics thanks to the LEFT JOIN).
+     */
+    $sql = "
+        SELECT
+            a.course_id,
+            SUM(sa.obtained_mark)                AS total_mark,
+            MAX(CASE WHEN a.type = 'Final' 
+                     THEN sa.obtained_mark END)  AS final_exam_mark,
+            SUM(sa.obtained_mark / a.max_mark * a.weight_percentage) 
+                                                 AS overall_percentage
+        FROM assessments a
+        JOIN student_assessments sa ON sa.assessment_id = a.id
+        WHERE sa.student_id = :student_id
+        GROUP BY a.course_id
+    ";
 
-    $userHeader = $request->getHeaderLine('X-User');
-    $advisor = json_decode($userHeader);
-    $advisorId = $advisor->id ?? null;
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute(['student_id' => $studentId]);
+    $rows = $stmt->fetchAll();
 
-    if (!$matric || !$advisorId) {
-        $response->getBody()->write(json_encode(['error' => 'Missing advisor ID or matric number']));
-        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    foreach ($rows as $r) {
+        // Insert or replace (in case analytics already exists)
+        $insert = $this->db->prepare("
+            INSERT INTO analytics_data
+              (student_id, course_id, total_mark, final_exam_mark, overall_percentage)
+            VALUES (:student_id, :course_id, :total_mark, :final_exam_mark, :overall)
+            ON DUPLICATE KEY UPDATE
+              total_mark = VALUES(total_mark),
+              final_exam_mark = VALUES(final_exam_mark),
+              overall_percentage = VALUES(overall_percentage)
+        ");
+        $insert->execute([
+            'student_id'      => $studentId,
+            'course_id'       => $r['course_id'],
+            'total_mark'      => $r['total_mark'],
+            'final_exam_mark' => $r['final_exam_mark'],
+            'overall'         => $r['overall_percentage']
+        ]);
+
+        // ── (optional) recalc rank / percentile for that course ──────────
+        $this->reRankCourse($r['course_id']);
     }
-
-    // Find student by matric number
-    $stmt = $this->db->prepare("SELECT id FROM users WHERE matric_number = ? AND role = 'student'");
-    $stmt->execute([$matric]);
-    $student = $stmt->fetch();
-
-    if (!$student) {
-        $response->getBody()->write(json_encode(['error' => 'Student not found']));
-        return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
-    }
-
-    $studentId = $student['id'];
-
-    // Check if already assigned
-    $check = $this->db->prepare("SELECT * FROM advisor_students WHERE advisor_id = ? AND student_id = ?");
-    $check->execute([$advisorId, $studentId]);
-
-    if ($check->fetch()) {
-        $response->getBody()->write(json_encode(['error' => 'Student already assigned to this advisor']));
-        return $response->withStatus(409)->withHeader('Content-Type', 'application/json');
-    }
-
-    // Assign student
-    $insert = $this->db->prepare("INSERT INTO advisor_students (advisor_id, student_id) VALUES (?, ?)");
-    $insert->execute([$advisorId, $studentId]);
-
-    $response->getBody()->write(json_encode(['message' => 'Student assigned successfully']));
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
 }
 
+private function reRankCourse(int $courseId): void
+{
+    // Fetch all analytics rows for this course ordered by overall desc
+    $rows = $this->db
+       ->prepare("SELECT id, overall_percentage 
+                  FROM analytics_data
+                  WHERE course_id = ?
+                  ORDER BY overall_percentage DESC");
+    $rows->execute([$courseId]);
+    $students = $rows->fetchAll();
+
+    $total = count($students);
+    foreach ($students as $idx => $row) {
+        $rank       = $idx + 1;
+        $percentile = round((1 - ($rank - 1) / $total) * 100, 2);
+        $risk       = $row['overall_percentage'] < 50 ? 'High'
+                   : ($row['overall_percentage'] < 65 ? 'Medium' : 'Low');
+
+        $upd = $this->db->prepare("
+            UPDATE analytics_data
+            SET rank = ?, percentile = ?, risk_level = ?
+            WHERE id = ?
+        ");
+        $upd->execute([$rank, $percentile, $risk, $row['id']]);
+    }
+}
+
+public function assignStudent(Request $request, Response $response): Response
+{
+    $body       = json_decode($request->getBody()->getContents(), true);
+    $matric     = trim($body['matric_number'] ?? '');
+    $advisorHdr = json_decode($request->getHeaderLine('X-User') ?: '{}');
+    $advisorId  = $advisorHdr->id ?? null;
+
+    if (!$matric || !$advisorId) {
+        return $response->withStatus(400)
+                        ->withHeader('Content-Type', 'application/json')
+                        ->write(json_encode(['error' => 'Missing advisor ID or matric']));
+    }
+
+    // 1. locate student
+    $stu = $this->db->prepare(
+        "SELECT id FROM users WHERE matric_number = ? AND role='student'"
+    );
+    $stu->execute([$matric]);
+    $studentId = $stu->fetchColumn();
+    if (!$studentId) {
+        return $response->withStatus(404)
+                        ->withHeader('Content-Type', 'application/json')
+                        ->write(json_encode(['error' => 'Student not found']));
+    }
+
+    // 2. insert into advisor_students (ignore duplicates)
+    $this->db->prepare("
+        INSERT IGNORE INTO advisor_students (advisor_id, student_id) VALUES (?, ?)
+    ")->execute([$advisorId, $studentId]);
+
+    // 3. build analytics row(s) for the new student
+    $this->buildAnalyticsForStudent((int)$studentId);
+
+    return $response->withJson(['message' => 'Student assigned & analytics generated'], 201);
+}
 
 
 }
