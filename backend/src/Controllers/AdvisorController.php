@@ -548,80 +548,84 @@ public function getDashboardStats(Request $request, Response $response, array $a
 {
     error_log("📊 Building analytics for student ID: $studentId");
 
-    $sql = "
-        SELECT
-    a.course_id,
-    SUM(sa.obtained_mark) AS total_mark,
-    MAX(CASE WHEN LOWER(a.type) IN ('final', 'final exam') THEN sa.obtained_mark ELSE 0 END)
-    AS final_exam_mark,
-    ROUND(SUM(
-    CASE 
-    WHEN a.max_mark > 0 AND a.weight_percentage > 0 
-    THEN (sa.obtained_mark / a.max_mark) * a.weight_percentage 
-    ELSE 0 
-    END
-    ),2) AS overall_percentage
-    FROM assessments a
-    JOIN student_assessments sa ON sa.assessment_id = a.id
-    WHERE sa.student_id = :student_id
-    GROUP BY a.course_id;
+    try {
+        $sql = "
+            SELECT
+                a.course_id,
+                SUM(sa.obtained_mark) AS total_mark,
+                MAX(CASE WHEN LOWER(a.type) IN ('final', 'final exam') THEN sa.obtained_mark ELSE 0 END)
+                    AS final_exam_mark,
+                ROUND(SUM(
+                    CASE 
+                        WHEN a.max_mark > 0 AND a.weight_percentage > 0 
+                        THEN (sa.obtained_mark / a.max_mark) * a.weight_percentage 
+                        ELSE 0 
+                    END
+                ),2) AS overall_percentage
+            FROM assessments a
+            JOIN student_assessments sa ON sa.assessment_id = a.id
+            WHERE sa.student_id = :student_id
+            GROUP BY a.course_id;
+        ";
 
-    ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['student_id' => $studentId]);
+        $rows = $stmt->fetchAll();
 
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute(['student_id' => $studentId]);
-    $rows = $stmt->fetchAll();
-    error_log("Analytics raw rows: " . json_encode($rows));
+        error_log("📥 Analytics raw rows: " . json_encode($rows));
 
-
-    if (!$rows || count($rows) === 0) {
-        error_log("⚠️ No analytics rows generated for student $studentId");
-        return;
-    }
-
-    foreach ($rows as $r) {
-        $courseId = $r['course_id'];
-        $totalMark = $r['total_mark'] ?? 0;
-        $finalExamMark = $r['final_exam_mark'] ?? 0;
-        $overall = $r['overall_percentage'] ?? 0;
-
-        // Determine risk level
-        $risk = 'Low';
-        if ($overall < 50) {
-            $risk = 'High';
-        } elseif ($overall < 65) {
-            $risk = 'Medium';
+        if (!$rows || count($rows) === 0) {
+            error_log("⚠️ No analytics rows generated for student $studentId");
+            return;
         }
 
-        $insert = $this->db->prepare("
-            INSERT INTO analytics_data
-                (student_id, course_id, total_mark, final_exam_mark, overall_percentage, rank, percentile, risk_level)
-            VALUES
-                (:student_id, :course_id, :total_mark, :final_exam_mark, :overall, 0, 0, :risk_level)
-            ON DUPLICATE KEY UPDATE
-                total_mark = VALUES(total_mark),
-                final_exam_mark = VALUES(final_exam_mark),
-                overall_percentage = VALUES(overall_percentage),
-                risk_level = VALUES(risk_level)
-        ");
+        foreach ($rows as $r) {
+            $courseId       = $r['course_id'];
+            $totalMark      = $r['total_mark'] ?? 0;
+            $finalExamMark  = $r['final_exam_mark'] ?? 0;
+            $overall        = $r['overall_percentage'] ?? 0;
 
-        $insert->execute([
-            'student_id'      => $studentId,
-            'course_id'       => $courseId,
-            'total_mark'      => $totalMark,
-            'final_exam_mark' => $finalExamMark,
-            'overall'         => $overall,
-            'risk_level'      => $risk
-        ]);
+            // ✅ Lowercase risk levels
+            $risk = 'low';
+            if ($overall < 50) {
+                $risk = 'high';
+            } elseif ($overall < 65) {
+                $risk = 'medium';
+            }
 
-        error_log("✅ Inserted/updated analytics for student $studentId in course $courseId");
+            $insert = $this->db->prepare("
+                INSERT INTO analytics_data
+                    (student_id, course_id, total_mark, final_exam_mark, overall_percentage, rank, percentile, risk_level)
+                VALUES
+                    (:student_id, :course_id, :total_mark, :final_exam_mark, :overall, 0, 0, :risk_level)
+                ON DUPLICATE KEY UPDATE
+                    total_mark = VALUES(total_mark),
+                    final_exam_mark = VALUES(final_exam_mark),
+                    overall_percentage = VALUES(overall_percentage),
+                    risk_level = VALUES(risk_level)
+            ");
 
-        // 🔁 Recalculate rank/percentile if method exists
-        if (method_exists($this, 'reRankCourse')) {
-            $this->reRankCourse($courseId);
+            $insert->execute([
+                'student_id'      => $studentId,
+                'course_id'       => $courseId,
+                'total_mark'      => $totalMark,
+                'final_exam_mark' => $finalExamMark,
+                'overall'         => $overall,
+                'risk_level'      => $risk
+            ]);
+
+            error_log("✅ Inserted/updated analytics for student $studentId in course $courseId");
+
+            // 🔁 Recalculate rank/percentile if method exists
+            if (method_exists($this, 'reRankCourse')) {
+                $this->reRankCourse($courseId);
+            }
         }
+    } catch (\Throwable $e) {
+        error_log("❌ Error building analytics for student $studentId: " . $e->getMessage());
     }
 }
+
 
 
 private function reRankCourse(int $courseId): void
@@ -653,39 +657,65 @@ private function reRankCourse(int $courseId): void
 
 public function assignStudent(Request $request, Response $response): Response
 {
-    $body       = json_decode($request->getBody()->getContents(), true);
-    $matric     = trim($body['matric_number'] ?? '');
-    $advisorHdr = json_decode($request->getHeaderLine('X-User') ?: '{}');
-    $advisorId  = $advisorHdr->id ?? null;
+    $body   = json_decode($request->getBody()->getContents(), true);
+    $matric = trim($body['matric_number'] ?? '');
+
+    $advisor = json_decode($request->getHeaderLine('X-User') ?: '{}');
+    $advisorId = $advisor->id ?? null;
 
     if (!$matric || !$advisorId) {
-        return $response->withStatus(400)
-                        ->withHeader('Content-Type', 'application/json')
-                        ->write(json_encode(['error' => 'Missing advisor ID or matric']));
+        $response->getBody()->write(json_encode(['error' => 'Missing advisor ID or matric']));
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(400);
     }
 
-    // 1. locate student
+    // Find student
     $stu = $this->db->prepare(
-        "SELECT id FROM users WHERE matric_number = ? AND role='student'"
+        "SELECT id FROM users WHERE matric_number = ? AND role = 'student'"
     );
     $stu->execute([$matric]);
     $studentId = $stu->fetchColumn();
+
     if (!$studentId) {
-        return $response->withStatus(404)
-                        ->withHeader('Content-Type', 'application/json')
-                        ->write(json_encode(['error' => 'Student not found']));
+        $response->getBody()->write(json_encode(['error' => 'Student not found']));
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(404);
     }
 
-    // 2. insert into advisor_students (ignore duplicates)
-    $this->db->prepare("
-        INSERT IGNORE INTO advisor_students (advisor_id, student_id) VALUES (?, ?)
-    ")->execute([$advisorId, $studentId]);
+    // Try insert
+    try {
+        $ins = $this->db->prepare(
+            "INSERT INTO advisor_students (advisor_id, student_id)
+             VALUES (?, ?)"
+        );
+        $ins->execute([$advisorId, $studentId]);
+    } catch (\PDOException $e) {
+        error_log('❌ DB Insert Error: ' . $e->getMessage());
+        if ($e->getCode() === '23000') {
+            $response->getBody()->write(json_encode(['error' => 'Student already assigned']));
+            return $response
+                ->withHeader('Content-Type', 'application/json')
+                ->withStatus(409);
+        }
+        throw $e;
+    }
 
-    // 3. build analytics row(s) for the new student
-    $this->buildAnalyticsForStudent((int)$studentId);
+    // Try build analytics
+    try {
+        $this->buildAnalyticsForStudent((int) $studentId);
+    } catch (\Throwable $e) {
+        error_log("⚠️ Failed to build analytics for student $studentId: " . $e->getMessage());
+    }
 
-    return $response->withJson(['message' => 'Student assigned & analytics generated'], 201);
+    $response->getBody()->write(json_encode(['message' => 'Student assigned']));
+    return $response
+        ->withHeader('Content-Type', 'application/json')
+        ->withStatus(201);
 }
+
+
 
 public function removeStudent(Request $request, Response $response, array $args): Response
 {

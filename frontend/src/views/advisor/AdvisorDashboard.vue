@@ -1,7 +1,6 @@
 <template>
   <AppLayout :role="'Advisor'" :navItems="navItems" :pageTitle="pageTitle">
     <div class="container py-4">
-
       <!-- Statistic Cards -->
       <div class="row mb-4">
         <div class="col-md-3">
@@ -50,26 +49,36 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Matric No</th>
+                <th>Course</th>
+                <th>Overall %</th>
                 <th>Percentile</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(s, i) in highRiskStudents" :key="s.id">
+              <tr
+                v-for="(s, i) in highRiskStudents"
+                :key="s.student_id + '-' + s.course_id"
+              >
                 <td>{{ i + 1 }}</td>
                 <td>{{ s.student_name }}</td>
                 <td>{{ s.matric_number }}</td>
-                <td>{{ s.percentile ?? '-' }}</td>
+                <td>{{ s.course_name }}</td>
+                <td>{{ s.overall_percentage }}%</td>
+                <td>{{ s.percentile }}</td>
                 <td>
                   <span class="badge bg-danger">At Risk</span>
                 </td>
               </tr>
+              <tr v-if="!highRiskStudents.length">
+                <td colspan="7" class="text-muted text-center py-3">
+                  🎉 No high-risk students currently.
+                </td>
+              </tr>
             </tbody>
           </table>
-          <p v-if="!highRiskStudents.length" class="text-muted text-center py-3">No high-risk students currently.</p>
         </div>
       </div>
-
     </div>
   </AppLayout>
 </template>
@@ -102,42 +111,53 @@ export default {
   },
   mounted() {
     this.loadDashboardStats();
-    this.loadHighRiskStudents();
+    this.fetchAnalytics();
   },
   methods: {
-  async loadDashboardStats() {
-  const user = JSON.parse(localStorage.getItem('user'));
+    async loadDashboardStats() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user?.id) return;
 
-  console.log("User from localStorage:", user);
-
-  if (!user?.id) return;
-
-  try {
-    const res = await api.get(`/advisor/${user.id}/dashboard-stats`);
-    const stats = res.data;
-
-    this.assignedStudents = stats.assigned_students ?? 0;
-    this.ConsultGiven = stats.feedback_given ?? 0;
-    this.TotalReviews = stats.pending_reviews ?? 0;
-    this.analyticsReports = stats.analytics_reports ?? 0;
-  } catch (err) {
-    console.error('Error loading dashboard stats:', err);
-  }
-},
-
-
-      async loadHighRiskStudents() {
       try {
-        const res = await api.get('/advisor/high-risk-students');
-        this.highRiskStudents = res.data || [];
+        const res = await api.get(`/advisor/${user.id}/dashboard-stats`);
+        const stats = res.data;
+
+        this.assignedStudents = stats.assigned_students ?? 0;
+        this.ConsultGiven = stats.feedback_given ?? 0;
+        this.TotalReviews = stats.pending_reviews ?? 0;
+        this.analyticsReports = stats.analytics_reports ?? 0;
       } catch (err) {
-        console.error('Failed to load high-risk students:', err);
+        console.error('Error loading dashboard stats:', err);
+      }
+    },
+
+    async fetchAnalytics() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user?.id) return;
+
+      try {
+        const res = await api.get('/advisor/analytics', {
+          headers: {
+            'X-User': JSON.stringify(user)
+          }
+        });
+
+        const analytics = res.data || [];
+
+        // Filter high-risk students only
+        this.highRiskStudents = analytics.filter(
+      (item) => item.risk_level?.toLowerCase() === 'high'
+    );
+      } catch (err) {
+        console.error('Failed to load analytics data:', err);
         this.highRiskStudents = [];
       }
     }
   }
 };
 </script>
+
+
 
 
 
