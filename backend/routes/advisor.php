@@ -100,6 +100,13 @@ $app->get('/api/advisor/{id}/dashboard-stats', function ($request, $response, $a
         return $controller->updateProfile($request, $response, $args);
     });
 
+    // DELETE  /api/advisor/students/{studentId}
+    $app->delete('/api/advisor/students/{id}', function ($request, $response, $args) use ($container) {
+    $controller = new \App\Controllers\AdvisorController($container);
+    return $controller->removeStudent($request, $response, $args);   // ← you’ll add this method next
+    });
+
+
 
 };
 

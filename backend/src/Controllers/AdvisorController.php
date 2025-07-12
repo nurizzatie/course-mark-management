@@ -550,18 +550,22 @@ public function getDashboardStats(Request $request, Response $response, array $a
 
     $sql = "
         SELECT
-            a.course_id,
-            SUM(sa.obtained_mark) AS total_mark,
-            MAX(CASE
-            WHEN LOWER(a.type) LIKE '%final%' THEN sa.obtained_mark ELSE 0 END) AS final_exam_mark,
-            ROUND(SUM(CASE 
-            WHEN a.max_mark > 0 THEN (sa.obtained_mark / a.max_mark * a.weight_percentage)
-            ELSE 0
-            END), 2) AS overall_percentage
-        FROM assessments a
-        JOIN student_assessments sa ON sa.assessment_id = a.id
-        WHERE sa.student_id = :student_id
-        GROUP BY a.course_id
+    a.course_id,
+    SUM(sa.obtained_mark) AS total_mark,
+    MAX(CASE WHEN LOWER(a.type) IN ('final', 'final exam') THEN sa.obtained_mark ELSE 0 END)
+    AS final_exam_mark,
+    ROUND(SUM(
+    CASE 
+    WHEN a.max_mark > 0 AND a.weight_percentage > 0 
+    THEN (sa.obtained_mark / a.max_mark) * a.weight_percentage 
+    ELSE 0 
+    END
+    ),2) AS overall_percentage
+    FROM assessments a
+    JOIN student_assessments sa ON sa.assessment_id = a.id
+    WHERE sa.student_id = :student_id
+    GROUP BY a.course_id;
+
     ";
 
     $stmt = $this->db->prepare($sql);
@@ -681,6 +685,33 @@ public function assignStudent(Request $request, Response $response): Response
     $this->buildAnalyticsForStudent((int)$studentId);
 
     return $response->withJson(['message' => 'Student assigned & analytics generated'], 201);
+}
+
+public function removeStudent(Request $request, Response $response, array $args): Response
+{
+    $studentId = (int) $args['id'];
+    $advisorHdr = json_decode($request->getHeaderLine('X-User') ?: '{}');
+    $advisorId  = $advisorHdr->id ?? null;
+
+    if (!$advisorId || !$studentId) {
+        $data = ['error' => 'Missing advisor ID or student ID'];
+        $response->getBody()->write(json_encode($data));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
+    // Delete advisor-student mapping
+    $del = $this->db->prepare(
+        "DELETE FROM advisor_students WHERE advisor_id = ? AND student_id = ?"
+    );
+    $del->execute([$advisorId, $studentId]);
+
+    // Optionally delete analytics data
+    $this->db->prepare("DELETE FROM analytics_data WHERE student_id = ?")
+             ->execute([$studentId]);
+
+    $data = ['message' => 'Student removed'];
+    $response->getBody()->write(json_encode($data));
+    return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
 }
 
 
