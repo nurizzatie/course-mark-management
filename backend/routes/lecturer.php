@@ -27,6 +27,4 @@ return function (App $app) {
         $group->put('/profile', LecturerController::class . ':updateProfile');
     });
 
-    $app->get('/api/remark-file/{filename}', [\App\Controllers\RemarkController::class, 'downloadFile']);
-
 };

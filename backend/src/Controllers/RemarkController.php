@@ -13,7 +13,7 @@ class RemarkController
     public function __construct($container)
     {
         $this->db = $container->get('db');
-        $this->uploadDir = __DIR__ . '/../../uploads/remarks';
+        $this->uploadDir = __DIR__ . '/../../public/uploads/remarks';
         if (!is_dir($this->uploadDir)) {
             mkdir($this->uploadDir, 0777, true);
         }
