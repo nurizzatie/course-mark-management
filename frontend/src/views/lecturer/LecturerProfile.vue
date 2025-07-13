@@ -58,6 +58,12 @@
                 <td>{{ course.semester }}</td>
                 <td>{{ course.year }}</td>
               </tr>
+
+              <tr v-if="courses.length === 0">
+                <td colspan="5" class="text-center text-muted">
+                  No students in this course.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

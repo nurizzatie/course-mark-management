@@ -41,7 +41,6 @@
                 class="badge"
                 :class="{
                   'bg-warning': req.status === 'pending',
-                  'bg-info': req.status === 'reviewed',
                   'bg-success': req.status === 'approved',
                   'bg-danger': req.status === 'rejected',
                 }"
@@ -50,15 +49,7 @@
               </span>
             </td>
             <td>
-              <div v-if="req.status === 'pending'">
-                <button
-                  class="btn btn-sm btn-success me-1"
-                  @click="respond(req.id, 'reviewed')"
-                >
-                  Reviewed
-                </button>
-              </div>
-              <div v-else-if="req.status === 'reviewed'">
+              <div v-if="req.status === 'pending'" class="d-flex gap-1">
                 <button
                   class="btn btn-sm btn-success me-1"
                   @click="respond(req.id, 'approved')"
@@ -73,6 +64,12 @@
                 </button>
               </div>
               <span v-else>-</span>
+            </td>
+          </tr>
+
+          <tr v-if="requests.length === 0">
+            <td colspan="8" class="text-center text-muted">
+              No students in this course.
             </td>
           </tr>
         </tbody>

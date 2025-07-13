@@ -70,6 +70,12 @@
                     <button class="btn btn-sm btn-warning me-1" @click="editAssessment(a)">Edit</button>
                 </td>
               </tr>
+
+              <tr v-if="assessments.length === 0">
+                <td colspan="6" class="text-center text-muted">
+                  No assessment in this course.
+                </td>
+              </tr>
             </tbody>
           </table>
           <div class="text-end mb-3">

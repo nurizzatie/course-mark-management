@@ -43,6 +43,12 @@
               <td>{{ student.email }}</td>
               <td><button class="btn btn-danger btn-sm" @click="removeStudent(student.id)">Remove</button></td>
             </tr>
+
+            <tr v-if="filteredStudents.length === 0">
+              <td colspan="5" class="text-center text-muted">
+                No students in this course.
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
