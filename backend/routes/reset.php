@@ -8,7 +8,7 @@ return function (App $app) {
 
     $app->post('/api/reset-request', [$controller, 'requestReset']);
     $app->get('/api/reset-requests', [$controller, 'getRequests']);
-    $app->put('/api/reset-done', [$controller, 'markResetDone']); // ✅ MAKE SURE THIS IS REGISTERED
+    $app->put('/api/reset-done', [$controller, 'markResetDone']);
     $app->get('/api/admin/notifications/{id}', [$controller, 'getNotifications']);
 
 };
