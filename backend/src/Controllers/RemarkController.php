@@ -181,24 +181,24 @@ class RemarkController
     }
 
     public function downloadFile(Request $request, Response $response, array $args): Response
-{
-    $filename = basename($args['filename']);
-    $filePath = $this->uploadDir . '/' . $filename;
+    {
+        $filename = basename($args['filename']);
+        $filePath = $this->uploadDir . '/' . $filename;
 
-    if (!file_exists($filePath)) {
-        $response->getBody()->write("File not found.");
-        return $response->withStatus(404);
+        if (!file_exists($filePath)) {
+            $response->getBody()->write("File not found.");
+            return $response->withStatus(404);
+        }
+
+        $stream = new \Slim\Psr7\Stream(fopen($filePath, 'rb'));
+
+        return $response
+            ->withBody($stream)
+            ->withHeader('Content-Type', mime_content_type($filePath))
+            ->withHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
+            ->withHeader('Content-Length', filesize($filePath))
+            ->withStatus(200);
     }
-
-    $stream = new \Slim\Psr7\Stream(fopen($filePath, 'rb'));
-
-    return $response
-        ->withBody($stream)
-        ->withHeader('Content-Type', mime_content_type($filePath))
-        ->withHeader('Content-Disposition', 'inline; filename="' . $filename . '"')
-        ->withHeader('Content-Length', filesize($filePath))
-        ->withStatus(200);
-}
 
 
     // ==============================

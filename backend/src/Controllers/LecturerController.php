@@ -708,7 +708,7 @@ class LecturerController
         $status = $data['status'] ?? 'pending';
 
         // Validate status
-        if (!in_array($status, ['pending', 'reviewed', 'approved', 'rejected'])) {
+        if (!in_array($status, ['pending', 'approved', 'rejected'])) {
             $response->getBody()->write(json_encode(['message' => 'Invalid status']));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
         }
