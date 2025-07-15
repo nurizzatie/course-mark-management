@@ -71,10 +71,10 @@
             ref="fileInput"
           />
           <div v-if="file" class="mt-2 text-muted">
-  Selected file: {{ file.name }}
-</div>
+            Selected file: {{ file.name }}
+          </div>
 
-          <small class="form-text text-muted">Max file size: 5MB</small><br>
+          <small class="form-text text-muted">Max file size: 5MB</small><br />
 
           <small class="form-text text-muted"
             >Supported formats: PDF, ZIP, JPG, PNG</small
@@ -82,10 +82,13 @@
         </div>
 
         <div class="text-end">
-         <button type="submit" class="btn btn-dark" :disabled="submitAttempted">
-  {{ submitAttempted ? "Submitting..." : "Submit Request" }}
-</button>
-
+          <button
+            type="submit"
+            class="btn btn-dark"
+            :disabled="submitAttempted"
+          >
+            {{ submitAttempted ? "Submitting..." : "Submit Request" }}
+          </button>
         </div>
       </form>
     </div>
@@ -94,6 +97,7 @@
 
 <script>
 import AppLayout from "@/layouts/AppLayout.vue";
+import api from "@/api";
 
 export default {
   name: "RequestRemark",
@@ -102,7 +106,11 @@ export default {
     return {
       navItems: [
         { name: "Dashboard", link: "/student/dashboard", active: false },
-        { name: "Performance Tools", link: "/student/performance", active: false},
+        {
+          name: "Performance Tools",
+          link: "/student/performance",
+          active: false,
+        },
       ],
       studentId: null,
       courseId: null,
@@ -128,25 +136,24 @@ export default {
     this.courseName = query.course_name;
     this.courseCode = query.course_code;
     this.component = query.component;
-
   },
   methods: {
-   handleFile(event) {
-  const selectedFile = event.target.files[0];
-  const maxSizeMB = 5;
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+    handleFile(event) {
+      const selectedFile = event.target.files[0];
+      const maxSizeMB = 5;
+      const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-  if (selectedFile && selectedFile.size > maxSizeBytes) {
-    this.error = `File size exceeds ${maxSizeMB}MB limit. Please upload a smaller file.`;
-    this.file = null;
-    event.target.value = ''; // reset file input
-  } else {
-    this.file = selectedFile;
-    this.error = ''; // clear error if previously triggered
-  }
-},
+      if (selectedFile && selectedFile.size > maxSizeBytes) {
+        this.error = `File size exceeds ${maxSizeMB}MB limit. Please upload a smaller file.`;
+        this.file = null;
+        event.target.value = "";
+      } else {
+        this.file = selectedFile;
+        this.error = "";
+      }
+    },
     async submitRequest() {
-       this.submitAttempted = true;
+      this.submitAttempted = true;
 
       const formData = new FormData();
       formData.append("student_id", this.studentId);
@@ -154,44 +161,43 @@ export default {
       formData.append("justification", this.justification);
 
       if (!this.file) {
-      this.error = "Please upload a supporting file.";
-      this.submitAttempted = false;
-      return;
-    }
+        this.error = "Please upload a supporting file.";
+        this.submitAttempted = false;
+        return;
+      }
 
       formData.append("file", this.file);
 
-    if (this.supportingLink.trim()) {
-      formData.append("supporting_link", this.supportingLink.trim());
-    }
+      if (this.supportingLink.trim()) {
+        formData.append("supporting_link", this.supportingLink.trim());
+      }
 
-    console.log("🧪 Sending:", [...formData.entries()]);
+      console.log("Sending:", [...formData.entries()]);
 
-  try {
-    const res = await fetch(`/api/remark/request`, {
-      method: "POST",
-      body: formData,
-    });
+      try {
+        const res = await api.post("/remark/request", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
 
-    const result = await res.json();
-    console.log("✅ Response:", result);
+        console.log(" Response:", res.data);
 
-    this.message = "Remark request submitted successfully!";
-    this.error = "";
-    this.justification = "";
-    this.supportingLink = "";
-    this.file = null;
-    this.$refs.fileInput.value = "";
-  } catch (err) {
-    console.error("Error:", err);
-    this.error = "Something went wrong. Please try again.";
-    this.message = "";
-  } finally {
-    this.submitAttempted = false; 
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-}
-
+        this.message = "Remark request submitted successfully!";
+        this.error = "";
+        this.justification = "";
+        this.supportingLink = "";
+        this.file = null;
+        this.$refs.fileInput.value = "";
+      } catch (err) {
+        console.error("Error:", err);
+        this.error = "Something went wrong. Please try again.";
+        this.message = "";
+      } finally {
+        this.submitAttempted = false;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
   },
 };
 </script>

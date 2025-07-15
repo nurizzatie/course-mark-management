@@ -92,6 +92,8 @@
 </template>
 
 <script>
+import api from '@/api';
+
 export default {
   name: "CourseMarks",
   data() {
@@ -128,10 +130,10 @@ export default {
 
       try {
         this.loading = true;
-        const res = await fetch(
-          `/api/student/${student.id}/course/${courseId}/marks`
+        const res = await api.get(
+          `/student/${student.id}/course/${courseId}/marks`
         );
-        const data = await res.json();
+       const data =  await res.data;
 
         // Fix: await Promise.all for async inside map
         this.marks = await Promise.all(
@@ -180,10 +182,10 @@ export default {
 
     async fetchAppealCount(studentId, assessmentId) {
       try {
-        const res = await fetch(
-          `http://localhost:8080/api/remark/appeal-count?student_id=${studentId}&assessment_id=${assessmentId}`
+        const res = await api.get(
+          `/remark/appeal-count?student_id=${studentId}&assessment_id=${assessmentId}`
         );
-        const data = await res.json();
+        const data = res.data;
         return data.appeal_count || 0;
       } catch (err) {
         console.error("Failed to fetch appeal count:", err);

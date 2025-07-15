@@ -13,7 +13,7 @@
       </select>
     </div>
 
-    <!-- 📋 Assessments Table -->
+    <!-- Assessments Table -->
     <table class="table table-bordered">
       <thead class =" table-dark">
         <tr>
@@ -54,7 +54,7 @@
 
     </table>
 
-   <!-- 🔽 Buttons Row -->
+   <!-- Buttons Row -->
 <div class="d-flex gap-2 mb-3 flex-wrap">
   <!-- How It Works Button -->
  <button class="btn btn-secondary" @click="showInstructions = !showInstructions">
@@ -87,7 +87,7 @@
 </div>
 </transition>
 
-<!-- 📊 Prediction Result -->
+<!-- Prediction Result -->
 <div v-if="predictionResult" class="alert alert-info mt-3">
   <strong>Predicted Percentage:</strong> {{ predictionResult.predicted_percentage }}% <br />
   <strong>Predicted Grade:</strong> {{ predictionResult.predicted_grade }} <br />
@@ -97,6 +97,7 @@
 </template>
 
 <script>
+import api from "@/api";
 export default {
   name: 'GradePredictor',
   data() {
@@ -119,12 +120,12 @@ export default {
         }
         this.studentId = user.id;
 
-        const res = await fetch(`/api/student/${this.studentId}/courses`);
-        const data = await res.json();
+        const res = await api.get(`/student/${this.studentId}/courses`);
+        const data =  res.data;
         this.courses = data;
-        console.log("✅ Courses loaded:", this.courses);
+        console.log("Courses loaded:", this.courses);
       } catch (e) {
-        console.error('❌ Failed to fetch courses:', e);
+        console.error('Failed to fetch courses:', e);
         alert("Could not load courses.");
       }
     },
@@ -136,11 +137,11 @@ export default {
       }
 
       try {
-        const res = await fetch(
-          `/api/course/${this.selectedCourse}/assessments/with-student/${this.studentId}`
+        const res = await api.get(
+          `/course/${this.selectedCourse}/assessments/with-student/${this.studentId}`
         );
-        const data = await res.json();
-        console.log("✅ Assessments received:", data);
+        const data = res.data;
+        console.log("Assessments received:", data);
 
         this.assessments = data.map(a => ({
           ...a,
@@ -150,12 +151,13 @@ export default {
 
         const allMarked = this.assessments.every(a => a.obtained_mark !== null);
         if (allMarked) {
-          this.predictGrade(); // Auto-predict if all marks available
+          this.predictGrade(); 
         }
 
-        this.predictionResult = null; // Reset result
+
+        this.predictionResult = null; 
       } catch (e) {
-        console.error("❌ Failed to fetch assessments:", e);
+        console.error(" Failed to fetch assessments:", e);
         alert("Unable to load assessments.");
       }
     },
@@ -185,26 +187,13 @@ export default {
   };
 
   try {
-    const res = await fetch(`/api/grade-predictor`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    const result = await res.json();
-    if (res.ok) {
-      this.predictionResult = result;
-      console.log("📊 Prediction result:", result);
-    } else {
-      this.predictionResult = null;
-      alert(result.error || "Prediction failed.");
-    }
-  } catch (e) {
-    console.error("❌ Prediction error:", e);
-    alert("Prediction failed.");
-  }
+  const res = await api.post('/grade-predictor', body);
+  this.predictionResult = res.data;
+} catch (e) {
+  console.error("Prediction error:", e);
+  alert("Prediction failed.");
 }
-
+    }
   },
   watch: {
     selectedCourse(newCourseId) {

@@ -78,6 +78,7 @@
 
 <script>
 import BarChart from "@/components/BarChart.vue";
+import api from '@/api';
 
 export default {
   name: "CompareMarks",
@@ -107,10 +108,10 @@ export default {
     },
     async fetchCourseInfo() {
       try {
-        const res = await fetch(
-          `/api/course/${this.courseId}`
+        const res = await api.get(
+          `/course/${this.courseId}`
         );
-        const data = await res.json();
+        const data = res.data;
         this.course = data;
       } catch (err) {
         console.error("Error fetching course info:", err);
@@ -118,20 +119,20 @@ export default {
     },
     async fetchAssessments() {
   try {
-    const res = await fetch(
-      `/api/student/course/${this.courseId}/assessment-list`
+    const res = await api.get(
+      `/student/course/${this.courseId}/assessment-list`
     );
-    const allAssessments = await res.json();
+    const allAssessments = res.data;
 
     const student = JSON.parse(localStorage.getItem("user")) || { id: 1 };
 
     const gradedAssessments = [];
 
     for (const a of allAssessments) {
-      const res = await fetch(
-        `/api/student/course/${this.courseId}/compare/${a.id}?student_id=${student.id}`
+      const res = await api.get(
+        `/student/course/${this.courseId}/compare/${a.id}?student_id=${student.id}`
       );
-      const resData = await res.json();
+      const resData = res.data;
 
       const isGraded = resData.data?.some(
         (d) => d.total_contribution !== null && d.total_contribution > 0
@@ -162,10 +163,10 @@ export default {
 
       try {
         const student = JSON.parse(localStorage.getItem("user")) || { id: 1 };
-        const res = await fetch(
-          `/api/student/course/${this.courseId}/compare/${this.selectedAssessmentId}?student_id=${student.id}`
+        const res = await api.get(
+          `/student/course/${this.courseId}/compare/${this.selectedAssessmentId}?student_id=${student.id}`
         );
-        const resData = await res.json();
+        const resData =  res.data;
 
         if (
           !resData ||
