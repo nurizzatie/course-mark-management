@@ -76,8 +76,10 @@
 
 <script>
 import AppLayout from "@/layouts/AppLayout.vue";
+ import api from '@/api';
 
 export default {
+ 
   name: "StudentAppealRemark",
   components: { AppLayout },
   data() {
@@ -148,16 +150,10 @@ export default {
       }
 
       try {
-        const res = await fetch("http://localhost:8080/api/remark/appeal", {
-          method: "POST",
-          body: formData,
-        });
+        const res = await api.post(`/remark/appeal`, formData);
+        const result =  res.data;
 
-        const result = await res.json();
-
-        if (!res.ok) throw new Error(result.error || "Failed to submit appeal.");
-
-        this.message = " Appeal submitted successfully!";
+        this.message = result.message || "Appeal submitted successfully!";
         this.error = "";
         this.justification = "";
         this.supportingLink = "";
@@ -171,7 +167,7 @@ export default {
       }
     },
   },
-    mounted() {
+  async  mounted() {
   const student = JSON.parse(localStorage.getItem("user"));
 
   // Get query data first
@@ -182,15 +178,12 @@ export default {
   this.courseCode = query.course_code;
   this.component = query.component;
 
-  // Now it's safe to fetch appeal count
-  fetch(`/api/remark/appeal-count?student_id=${student.id}&assessment_id=${this.assessmentId}`)
-    .then((res) => res.json())
-    .then((data) => {
-      this.appealCount = data.appeal_count || 0;
-    })
-    .catch((err) => {
-      console.error("⚠️ Failed to fetch appeal count:", err);
-    });
+  try {
+    const res = await api.get(`/api/remark/appeal-count?student_id=${student.id}&assessment_id=${this.assessmentId}`);
+    this.appealCount = res.data.appeal_count || 0;
+  } catch (err) {
+    console.error("Failed to fetch appeal count:", err);
+  }
 }
 
 };

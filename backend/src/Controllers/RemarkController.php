@@ -67,7 +67,7 @@ class RemarkController
     $stmt->execute([':id' => $newId]);
     $detail = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-    // ✅ Return the full inserted remark detail
+    // Return the full inserted remark detail
     return $this->json($response, $detail, 201);
 }
 

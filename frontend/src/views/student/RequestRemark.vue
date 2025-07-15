@@ -175,7 +175,7 @@ export default {
       console.log("Sending:", [...formData.entries()]);
 
       try {
-        const res = await api.post("/remark/request", formData, {
+        const res = await api.post(`/remark/request`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
