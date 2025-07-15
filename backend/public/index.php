@@ -10,8 +10,10 @@ use Dotenv\Dotenv;
 use DI\Container;
 
 // Load .env
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+if (file_exists(__DIR__ . '/../.env')) {
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+    $dotenv->load();
+}
 
 // Create container
 $container = new \DI\Container();
