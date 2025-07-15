@@ -86,7 +86,7 @@
                  Your Course Percentiles
               </div>
               <div class="card-body">
-                <BarChart :chartData="barChartData" />
+                <BarChart :chartData="barChartData" :chartTitle="'Your Course Percentiles'" />
               </div>
             </div>
           </div>
