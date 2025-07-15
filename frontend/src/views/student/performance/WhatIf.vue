@@ -119,7 +119,7 @@ export default {
         }
         this.studentId = user.id;
 
-        const res = await fetch(`http://localhost:8080/api/student/${this.studentId}/courses`);
+        const res = await fetch(`/api/student/${this.studentId}/courses`);
         const data = await res.json();
         this.courses = data;
         console.log("✅ Courses loaded:", this.courses);
@@ -137,7 +137,7 @@ export default {
 
       try {
         const res = await fetch(
-          `http://localhost:8080/api/course/${this.selectedCourse}/assessments/with-student/${this.studentId}`
+          `/api/course/${this.selectedCourse}/assessments/with-student/${this.studentId}`
         );
         const data = await res.json();
         console.log("✅ Assessments received:", data);
@@ -185,7 +185,7 @@ export default {
   };
 
   try {
-    const res = await fetch('http://localhost:8080/api/grade-predictor', {
+    const res = await fetch(`/api/grade-predictor`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)

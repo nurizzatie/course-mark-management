@@ -133,7 +133,7 @@ export default {
     try {
       // Individual performance
       const res = await fetch(
-        `http://localhost:8080/api/student/course/${this.courseId}/rank/${studentId}`
+        `/api/student/course/${this.courseId}/rank/${studentId}`
       );
       const data = await res.json();
       this.rank = data.rank;
@@ -142,7 +142,7 @@ export default {
 
       //  Table data
       const tableRes = await fetch(
-        `http://localhost:8080/api/student/course/${this.courseId}/rank-table`
+        `/api/student/course/${this.courseId}/rank-table`
       );
       const tableData = await tableRes.json();
       this.students = tableData.map((student) => ({

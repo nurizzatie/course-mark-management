@@ -196,7 +196,7 @@ export default {
 
       try {
         const res = await fetch(
-          `http://localhost:8080/api/student/${user.id}/dashboard`
+          `/api/student/${user.id}/dashboard`
         );
         const data = await res.json();
 

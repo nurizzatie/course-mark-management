@@ -183,7 +183,7 @@ export default {
   this.component = query.component;
 
   // Now it's safe to fetch appeal count
-  fetch(`http://localhost:8080/api/remark/appeal-count?student_id=${student.id}&assessment_id=${this.assessmentId}`)
+  fetch(`/api/remark/appeal-count?student_id=${student.id}&assessment_id=${this.assessmentId}`)
     .then((res) => res.json())
     .then((data) => {
       this.appealCount = data.appeal_count || 0;

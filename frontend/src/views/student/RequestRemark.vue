@@ -168,7 +168,7 @@ export default {
     console.log("🧪 Sending:", [...formData.entries()]);
 
   try {
-    const res = await fetch("http://localhost:8080/api/remark/request", {
+    const res = await fetch(`/api/remark/request`, {
       method: "POST",
       body: formData,
     });
