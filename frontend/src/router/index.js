@@ -37,43 +37,43 @@ import AdviseeProgress from '@/views/advisor/AdviseeProgress.vue'
 
 const routes = [
   { path: '/', redirect: '/login' },
-  { path: '/login', component: Login },
+  { path: '/login', component: Login, meta: { title: 'Login' } },
 
   // Admin Routes (layout)
   {
     path: '/admin',
     component: AdminLayout,
     children: [
-      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard },
-      { path: 'users', name: 'ManageUsers', component: ManageUsers },
-      { path: 'assign-lecturers', name: 'AssignLecturers', component: AssignLecturers },
-      { path: 'logs', name: 'SystemLogs', component: Logs },
-      { path: 'reset', name: 'ResetPassword', component: ResetPassword },
-      { path: 'profile', name: 'AdminProfile', component: AdminProfile }
+      { path: 'dashboard', name: 'AdminDashboard', component: AdminDashboard, meta: { title: 'Admin Dashboard' } },
+      { path: 'users', name: 'ManageUsers', component: ManageUsers, meta: { title: 'Manage Users' } },
+      { path: 'assign-lecturers', name: 'AssignLecturers', component: AssignLecturers, meta: { title: 'Assign Lecturers' } },
+      { path: 'logs', name: 'SystemLogs', component: Logs, meta: { title: 'System Logs' } },
+      { path: 'reset', name: 'ResetPassword', component: ResetPassword, meta: { title: 'Reset Password' } },
+      { path: 'profile', name: 'AdminProfile', component: AdminProfile, meta: { title: 'My Profile' } }
     ]
   },
 
   // Lecturer Routes
-  { path: '/lecturer/dashboard', component: LecturerDashboard },
-  { path: '/lecturer/profile', component: LecturerProfile },
-  { path: '/lecturer/students', component: LecturerManageStudents },
-  { path: '/lecturer/courses', component: LecturerCourses },
-  { path: '/lecturer/courses/:id/assessments', component: LecturerAssessments },
-  { path: '/lecturer/courses/:id/marks', component: LecturerMarks },
-  { path: '/lecturer/remark-requests', component: LecturerRemarkRequests },
+  { path: '/lecturer/dashboard', component: LecturerDashboard, meta: { title: 'Lecturer Dashboard' } },
+  { path: '/lecturer/profile', component: LecturerProfile, meta: { title: 'My Profile' } },
+  { path: '/lecturer/students', component: LecturerManageStudents, meta: { title: 'Manage Students' } },
+  { path: '/lecturer/courses', component: LecturerCourses, meta: { title: 'My Courses' } },
+  { path: '/lecturer/courses/:id/assessments', component: LecturerAssessments, meta: { title: 'Assessments' } },
+  { path: '/lecturer/courses/:id/marks', component: LecturerMarks, meta: { title: 'Assessment Marks' } },
+  { path: '/lecturer/remark-requests', component: LecturerRemarkRequests, meta: { title: 'Remark Requests' } },
 
   // Advisor Routes
-  { path: '/advisor/dashboard', name: 'AdvisorDashboard', component: AdvisorDashboard },
-  { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList },
-  { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview },
-  { path: '/advisor/advisee/:id/progress', name: 'AdviseeProgress', component: AdviseeProgress },
-  { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics },
-  { path: '/advisor/profile', name: 'AdvisorProfile', component: AdvisorProfile },
-  { path: '/advisor/notes', name: 'AdvisorNotes', component: () => import('@/views/advisor/AdvisorNotes.vue') },
+  { path: '/advisor/dashboard', name: 'AdvisorDashboard', component: AdvisorDashboard, meta: { title: 'Advisor Dashboard' } },
+  { path: '/advisor/students', name: 'AdvisorStudentList', component: AdvisorStudentList, meta: { title: 'Student List' } },
+  { path: '/advisor/reviews', name: 'AdvisorMarkReview', component: AdvisorMarkReview, meta: { title: 'Mark Review' } },
+  { path: '/advisor/advisee/:id/progress', name: 'AdviseeProgress', component: AdviseeProgress, meta: { title: 'Advisee Progress' } },
+  { path: '/advisor/analytics', name: 'AdvisorAnalytics', component: AdvisorAnalytics, meta: { title: 'Analytics' } },
+  { path: '/advisor/profile', name: 'AdvisorProfile', component: AdvisorProfile, meta: { title: 'My Profile' } },
+  { path: '/advisor/notes', name: 'AdvisorNotes', component: () => import('@/views/advisor/AdvisorNotes.vue'), meta: { title: 'Notes' } },
 
   // Student Routes
-  { path: '/student/dashboard', component: StudentDashboard },
-  { path: '/student/profile', component: StudentProfile },
+  { path: '/student/dashboard', component: StudentDashboard, meta: { title: 'Student Dashboard' } },
+  { path: '/student/profile', component: StudentProfile, meta: { title: 'My Profile' } },
   {
     path: '/student/performance',
     component: PerformanceToolsLayout,
@@ -82,7 +82,8 @@ const routes = [
       { path: 'gpa', component: GpaCalculator },
       { path: 'cgpa', component: CumulativeGpa },
       { path: 'what-if', component: WhatIf }
-    ]
+    ], 
+    meta: { title: 'Performance' }
   },
   {
     path: '/student/course/:id',
@@ -91,15 +92,24 @@ const routes = [
       { path: '', name: 'StudentCourseMarks', component: () => import('@/views/student/StudentCourseMarks.vue') },
       { path: 'compare', name: 'CompareMarks', component: () => import('@/views/student/CompareMarks.vue') },
       { path: 'rank', name: 'RankAndPercentile', component: () => import('@/views/student/RankAndPercentile.vue') }
-    ]
+    ],
+    meta: { title: 'Course Marks' }
   },
-  { path: '/student/request-remark', name: 'RequestRemark', component: () => import('@/views/student/RequestRemark.vue') },
-  { path: '/student/appeal-remark', name: 'AppealRemark', component: () => import('@/views/student/StudentAppealRemark.vue') }
+  { path: '/student/request-remark', name: 'RequestRemark', component: () => import('@/views/student/RequestRemark.vue'), meta: { title: 'Request Remark' } },
+  { path: '/student/appeal-remark', name: 'AppealRemark', component: () => import('@/views/student/StudentAppealRemark.vue'), meta: { title: 'Appeal' } }
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes
+});
+
+router.afterEach((to) => {
+  if (to.meta?.title) {
+    document.title = to.meta.title;
+  } else {
+    document.title = 'GradeWise'; // fallback
+  }
 });
 
 export default router;
