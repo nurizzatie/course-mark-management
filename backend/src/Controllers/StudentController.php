@@ -59,9 +59,9 @@ class StudentController
                 'name' => $user['name'],
                 'matric_number' => $user['matric_number'],
                 'semester' => $courses[0]['semester'] ?? 'Unknown',
-                'rank' => 'Top 15%',
-                'percentile' => 75, // Optional: overall percentile
-                'total_students' => 40
+                // 'rank' => 'Top 15%',
+                // 'percentile' => 75, // Optional: overall percentile
+                // 'total_students' => 40
             ],
             'courses' => $courses
         ]);
