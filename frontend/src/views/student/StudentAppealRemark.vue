@@ -153,7 +153,7 @@ export default {
         const res = await api.post(`/remark/appeal`, formData);
         const result =  res.data;
 
-        this.message = " Appeal submitted successfully!";
+        this.message = result.message || "Appeal submitted successfully!";
         this.error = "";
         this.justification = "";
         this.supportingLink = "";
@@ -167,7 +167,7 @@ export default {
       }
     },
   },
-    mounted() {
+  async  mounted() {
   const student = JSON.parse(localStorage.getItem("user"));
 
   // Get query data first
@@ -178,15 +178,12 @@ export default {
   this.courseCode = query.course_code;
   this.component = query.component;
 
-  // Now it's safe to fetch appeal count
-  fetch(`/api/remark/appeal-count?student_id=${student.id}&assessment_id=${this.assessmentId}`)
-    .then((res) => res.json())
-    .then((data) => {
-      this.appealCount = data.appeal_count || 0;
-    })
-    .catch((err) => {
-      console.error("Failed to fetch appeal count:", err);
-    });
+  try {
+    const res = await api.get(`/api/remark/appeal-count?student_id=${student.id}&assessment_id=${this.assessmentId}`);
+    this.appealCount = res.data.appeal_count || 0;
+  } catch (err) {
+    console.error("Failed to fetch appeal count:", err);
+  }
 }
 
 };
