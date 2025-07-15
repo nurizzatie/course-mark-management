@@ -76,8 +76,10 @@
 
 <script>
 import AppLayout from "@/layouts/AppLayout.vue";
+ import api from '@/api';
 
 export default {
+ 
   name: "StudentAppealRemark",
   components: { AppLayout },
   data() {
@@ -148,14 +150,8 @@ export default {
       }
 
       try {
-        const res = await fetch("http://localhost:8080/api/remark/appeal", {
-          method: "POST",
-          body: formData,
-        });
-
-        const result = await res.json();
-
-        if (!res.ok) throw new Error(result.error || "Failed to submit appeal.");
+        const res = await api.post(`/remark/appeal`, formData);
+        const result =  res.data;
 
         this.message = " Appeal submitted successfully!";
         this.error = "";
@@ -189,7 +185,7 @@ export default {
       this.appealCount = data.appeal_count || 0;
     })
     .catch((err) => {
-      console.error("⚠️ Failed to fetch appeal count:", err);
+      console.error("Failed to fetch appeal count:", err);
     });
 }
 
