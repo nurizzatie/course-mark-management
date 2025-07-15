@@ -23,7 +23,11 @@
         />
         <select v-model="course.grade" class="form-select">
           <option disabled value="">Grade</option>
-          <option v-for="(value, grade) in gradeMap" :key="grade" :value="grade">
+          <option
+            v-for="(value, grade) in gradeMap"
+            :key="grade"
+            :value="grade"
+          >
             {{ grade }}
           </option>
         </select>
@@ -53,7 +57,7 @@
 
     <!-- Grade Table -->
     <hr class="my-4" />
-    <h5> Grade Conversion Table</h5>
+    <h5>Grade Conversion Table</h5>
     <table class="table table-striped">
       <thead class="table-dark">
         <tr>
@@ -63,54 +67,121 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>A+</td><td>90-100</td><td>4.00</td></tr>
-        <tr><td>A</td><td>80-89</td><td>4.00</td></tr>
-        <tr><td>A-</td><td>75-79</td><td>3.67</td></tr>
-        <tr><td>B+</td><td>70-74</td><td>3.33</td></tr>
-        <tr><td>B</td><td>65-69</td><td>3.00</td></tr>
-        <tr><td>B-</td><td>60-64</td><td>2.67</td></tr>
-        <tr><td>C+</td><td>55-59</td><td>2.33</td></tr>
-        <tr><td>C</td><td>50-54</td><td>2.00</td></tr>
-        <tr><td>C-</td><td>45-49</td><td>1.67</td></tr>
-        <tr><td>D+</td><td>40-44</td><td>1.33</td></tr>
-        <tr><td>D</td><td>35-39</td><td>1.00</td></tr>
-        <tr><td>D-</td><td>30-34</td><td>0.67</td></tr>
-        <tr><td>E</td><td>0-29</td><td>0.00</td></tr>
+        <tr>
+          <td>A+</td>
+          <td>90-100</td>
+          <td>4.00</td>
+        </tr>
+        <tr>
+          <td>A</td>
+          <td>80-89</td>
+          <td>4.00</td>
+        </tr>
+        <tr>
+          <td>A-</td>
+          <td>75-79</td>
+          <td>3.67</td>
+        </tr>
+        <tr>
+          <td>B+</td>
+          <td>70-74</td>
+          <td>3.33</td>
+        </tr>
+        <tr>
+          <td>B</td>
+          <td>65-69</td>
+          <td>3.00</td>
+        </tr>
+        <tr>
+          <td>B-</td>
+          <td>60-64</td>
+          <td>2.67</td>
+        </tr>
+        <tr>
+          <td>C+</td>
+          <td>55-59</td>
+          <td>2.33</td>
+        </tr>
+        <tr>
+          <td>C</td>
+          <td>50-54</td>
+          <td>2.00</td>
+        </tr>
+        <tr>
+          <td>C-</td>
+          <td>45-49</td>
+          <td>1.67</td>
+        </tr>
+        <tr>
+          <td>D+</td>
+          <td>40-44</td>
+          <td>1.33</td>
+        </tr>
+        <tr>
+          <td>D</td>
+          <td>35-39</td>
+          <td>1.00</td>
+        </tr>
+        <tr>
+          <td>D-</td>
+          <td>30-34</td>
+          <td>0.67</td>
+        </tr>
+        <tr>
+          <td>E</td>
+          <td>0-29</td>
+          <td>0.00</td>
+        </tr>
       </tbody>
     </table>
   </div>
 </template>
 
 <script>
+import api from "@/api";
 export default {
-  name: 'GpaCalculator',
+  name: "GpaCalculator",
   data() {
     return {
-      courses: [{ name: '', credit: '', grade: '' }],
+      courses: [{ name: "", credit: "", grade: "" }],
       gpa: null,
       gradeMap: {
-        'A+': 4.0, 'A': 4.0, 'A-': 3.67,
-        'B+': 3.33, 'B': 3.0, 'B-': 2.67,
-        'C+': 2.33, 'C': 2.0, 'C-': 1.67,
-        'D+': 1.33, 'D': 1.0, 'D-': 0.67,
-        'E': 0.0
-      }
+        "A+": 4.0,
+        A: 4.0,
+        "A-": 3.67,
+        "B+": 3.33,
+        B: 3.0,
+        "B-": 2.67,
+        "C+": 2.33,
+        C: 2.0,
+        "C-": 1.67,
+        "D+": 1.33,
+        D: 1.0,
+        "D-": 0.67,
+        E: 0.0,
+      },
     };
   },
   computed: {
     isFormValid() {
-      return this.courses.some(c => c.name && c.credit > 0 && c.grade);
-    }
+      return this.courses.some((c) => c.name && c.credit > 0 && c.grade);
+    },
   },
   methods: {
     addCourse() {
-      this.courses.push({ name: '', credit: '', grade: '' });
+      this.courses.push({ name: "", credit: "", grade: "" });
     },
     removeCourse(index) {
       this.courses.splice(index, 1);
     },
     blockNonNumbers(event) {
-      const allowedKeys = ['Backspace', 'ArrowLeft', 'ArrowRight', 'Tab', 'Delete'];
+      const allowedKeys = [
+        "Backspace",
+        "ArrowLeft",
+        "ArrowRight",
+        "Tab",
+        "Delete",
+      ];
       if (
         event.key.length === 1 &&
         !/^[0-9]$/.test(event.key) &&
@@ -133,47 +204,38 @@ export default {
 
       this.gpa = totalCredits > 0 ? totalPoints / totalCredits : null;
 
-      // Optional API Call (kalau nak simpan GPA ke server)
       try {
-        const res = await fetch(`/api/calculate-gpa`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ courses: this.courses })
+        const res = await api.post(`/calculate-gpa`, {
+          courses: this.courses,
         });
 
-        const result = await res.json();
-        console.log('API GPA Response:', result);
-
-        // Optional override
-        if (result.gpa !== undefined) {
-          this.gpa = result.gpa;
-        }
+        const result = res.data;
+        console.log("API GPA Response:", result);
       } catch (error) {
-        console.error('API error:', error);
+        console.error("Failed to calculate GPA:", error);
       }
     },
     async fetchCourses(studentId) {
       try {
-        const res = await fetch(`/api/student/${studentId}/courses`);
-        const data = await res.json();
-        this.courses = data.map(course => ({
+        const res = await api.get(`/student/${studentId}/courses`);
+        const data =  res.data;
+
+        this.courses = data.map((course) => ({
           name: `${course.course_code} - ${course.course_name}`,
           credit: course.credit_hour,
-          grade: ''
+          grade: "",
         }));
       } catch (err) {
-        console.error('Error fetching courses:', err);
+        console.error("Error fetching courses:", err);
       }
-    }
+    },
   },
   mounted() {
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem("user"));
     if (user?.id) {
       this.fetchCourses(user.id);
     }
-  }
+  },
 };
 </script>
 

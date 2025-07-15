@@ -108,6 +108,7 @@
 </template>
 
 <script>
+import api from "@/api"; 
 export default {
   props: ["courseId"],
   data() {
@@ -132,20 +133,18 @@ export default {
 
     try {
       // Individual performance
-      const res = await fetch(
-        `/api/student/course/${this.courseId}/rank/${studentId}`
+      const res = await api.get(
+        `/student/course/${this.courseId}/rank/${studentId}`
       );
-      const data = await res.json();
-      this.rank = data.rank;
-      this.percentile = data.percentile;
-      this.total = data.total_students;
+      this.rank = res.data.rank;
+      this.percentile = res.data.percentile;
+      this.total = res.data.total_students;
 
       //  Table data
-      const tableRes = await fetch(
-        `/api/student/course/${this.courseId}/rank-table`
+      const tableRes = await api.get(
+        `/student/course/${this.courseId}/rank-table`
       );
-      const tableData = await tableRes.json();
-      this.students = tableData.map((student) => ({
+      this.students = tableRes.data.map((student) => ({
         ...student,
         is_you: student.student_id === studentId,
       }));
