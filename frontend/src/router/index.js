@@ -102,4 +102,12 @@ const router = createRouter({
   routes
 });
 
+router.afterEach((to) => {
+  if (to.meta?.title) {
+    document.title = to.meta.title;
+  } else {
+    document.title = 'GradeWise'; // fallback
+  }
+});
+
 export default router;
