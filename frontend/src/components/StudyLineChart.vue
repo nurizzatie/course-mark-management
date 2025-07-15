@@ -8,8 +8,8 @@
 
 <script setup>
 import { onMounted, nextTick } from 'vue';
-import axios from 'axios';
 import { Chart, registerables } from 'chart.js';
+import api from '@/api';
 
 Chart.register(...registerables);
 
@@ -31,7 +31,8 @@ onMounted(() => {
     const studentId = localStorage.getItem('studentId');
 
     try {
-      const res = await axios.get(`api/student/${studentId}/performance-chart`);
+     
+      const res = await api.get(`/student/${studentId}/performance-chart`);
       const { assessments, courses } = res.data;
       console.log("API data:", res.data);
 

@@ -1,7 +1,4 @@
-<script setup>
-import StudyLineChart from "@/components/StudyLineChart.vue";
-import BarChart from "@/components/BarChart.vue";
-</script>
+
 
 <template>
   <AppLayout :role="'Student'" :navItems="navItems" :pageTitle="'Dashboard'">
@@ -118,13 +115,17 @@ import AppLayout from "@/layouts/AppLayout.vue";
 import { DatePicker } from "v-calendar";
 import "vue3-carousel/dist/carousel.css";
 import "v-calendar/style.css";
+import StudyLineChart from "@/components/StudyLineChart.vue";
+import BarChart from "@/components/BarChart.vue";
+import api from '@/api';
 
 export default {
   name: "StudentDashboard",
   components: {
     AppLayout,
     BarChart,
-    DatePicker,
+    StudyLineChart,
+    DatePicker
   },
 
   data() {
@@ -195,10 +196,8 @@ export default {
       }
 
       try {
-        const res = await fetch(
-          `/api/student/${user.id}/dashboard`
-        );
-        const data = await res.json();
+        const res = await api.get(`/student/${user.id}/dashboard`);
+        const data = await res.data;
 
         this.studentName = data.student.name;
         this.studentMatricNumber = data.student.matric_number;
@@ -216,7 +215,6 @@ export default {
           percentile: course.percentile ?? 0,
         }));
 
-        this.summaryCards = data.summaryCards;
       } catch (error) {
         console.error("Failed to load dashboard:", error);
         alert("Unable to load student dashboard data.");
