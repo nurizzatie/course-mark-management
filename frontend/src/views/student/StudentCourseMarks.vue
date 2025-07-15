@@ -129,7 +129,7 @@ export default {
       try {
         this.loading = true;
         const res = await fetch(
-          `http://localhost:8080/api/student/${student.id}/course/${courseId}/marks`
+          `/api/student/${student.id}/course/${courseId}/marks`
         );
         const data = await res.json();
 

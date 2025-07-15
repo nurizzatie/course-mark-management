@@ -135,7 +135,7 @@ export default {
 
       // Optional API Call (kalau nak simpan GPA ke server)
       try {
-        const res = await fetch('http://localhost:8080/api/calculate-gpa', {
+        const res = await fetch(`/api/calculate-gpa`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -156,7 +156,7 @@ export default {
     },
     async fetchCourses(studentId) {
       try {
-        const res = await fetch(`http://localhost:8080/api/student/${studentId}/courses`);
+        const res = await fetch(`/api/student/${studentId}/courses`);
         const data = await res.json();
         this.courses = data.map(course => ({
           name: `${course.course_code} - ${course.course_name}`,

@@ -108,7 +108,7 @@ export default {
     async fetchCourseInfo() {
       try {
         const res = await fetch(
-          `http://localhost:8080/api/course/${this.courseId}`
+          `/api/course/${this.courseId}`
         );
         const data = await res.json();
         this.course = data;
@@ -119,7 +119,7 @@ export default {
     async fetchAssessments() {
   try {
     const res = await fetch(
-      `http://localhost:8080/api/student/course/${this.courseId}/assessment-list`
+      `/api/student/course/${this.courseId}/assessment-list`
     );
     const allAssessments = await res.json();
 
@@ -129,7 +129,7 @@ export default {
 
     for (const a of allAssessments) {
       const res = await fetch(
-        `http://localhost:8080/api/student/course/${this.courseId}/compare/${a.id}?student_id=${student.id}`
+        `/api/student/course/${this.courseId}/compare/${a.id}?student_id=${student.id}`
       );
       const resData = await res.json();
 
@@ -163,7 +163,7 @@ export default {
       try {
         const student = JSON.parse(localStorage.getItem("user")) || { id: 1 };
         const res = await fetch(
-          `http://localhost:8080/api/student/course/${this.courseId}/compare/${this.selectedAssessmentId}?student_id=${student.id}`
+          `/api/student/course/${this.courseId}/compare/${this.selectedAssessmentId}?student_id=${student.id}`
         );
         const resData = await res.json();
 
