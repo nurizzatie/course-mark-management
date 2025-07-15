@@ -21,6 +21,10 @@ export default {
   name: 'BarChart',
   components: { Bar },
   props: {
+    chartTitle: {
+    type: String,
+    required: true
+  },
     chartData: {
       type: Object,
       required: true
@@ -37,7 +41,7 @@ export default {
           },
           title: {
             display: true,
-            text: 'Student Mark Comparison'
+            text: this.chartTitle
           }
         },
         scales: {

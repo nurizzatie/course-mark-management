@@ -30,7 +30,7 @@
             <div style="max-width: 700px; width: 100%">
               <BarChart
                 v-if="chartData.labels && chartData.labels.length"
-                :chart-data="chartData"
+                :chart-data="chartData" :chart-title="'Student Mark Comparison'"
               />
               <p v-else>No chart data found for this assessment.</p>
             </div>
