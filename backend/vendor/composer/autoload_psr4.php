@@ -41,4 +41,5 @@ return array(
     'Cake\\Database\\' => array($vendorDir . '/cakephp/database'),
     'Cake\\Core\\' => array($vendorDir . '/cakephp/core'),
     'Cake\\Chronos\\' => array($vendorDir . '/cakephp/chronos/src'),
+    'App\\' => array($baseDir . '/src'),
 );
