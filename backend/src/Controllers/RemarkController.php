@@ -13,7 +13,13 @@ class RemarkController
     public function __construct($container)
     {
         $this->db = $container->get('db');
-        $this->uploadDir = __DIR__ . '/../../public/uploads/remarks';
+
+        // Prefer public uploads dir if writable
+        $preferred = __DIR__ . '/../../public/uploads/remarks';
+        $fallback = sys_get_temp_dir() . '/uploads/remarks';
+
+        $this->uploadDir = is_writable(dirname($preferred)) ? $preferred : $fallback;
+
         if (!is_dir($this->uploadDir)) {
             mkdir($this->uploadDir, 0777, true);
         }
