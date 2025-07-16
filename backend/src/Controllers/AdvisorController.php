@@ -595,14 +595,16 @@ public function getDashboardStats(Request $request, Response $response, array $a
 
             $insert = $this->db->prepare("
                 INSERT INTO analytics_data
-                    (student_id, course_id, total_mark, final_exam_mark, overall_percentage, rank, percentile, risk_level)
+                    (student_id, course_id, total_mark, final_exam_mark, overall_percentage, `rank`, `percentile`, risk_level)
                 VALUES
                     (:student_id, :course_id, :total_mark, :final_exam_mark, :overall, 0, 0, :risk_level)
                 ON DUPLICATE KEY UPDATE
                     total_mark = VALUES(total_mark),
                     final_exam_mark = VALUES(final_exam_mark),
                     overall_percentage = VALUES(overall_percentage),
-                    risk_level = VALUES(risk_level)
+                    risk_level = VALUES(risk_level),
+                    `rank` = VALUES(`rank`),
+                    `percentile` = VALUES(`percentile`)
             ");
 
             $insert->execute([
