@@ -120,7 +120,8 @@ export default {
         .catch(() => alert("Failed to update request."));
     },
     getFileUrl(path) {
-      return `http://localhost:8080/${path}`;
+      const baseUrl = process.env.VUE_APP_API_URL || "http://localhost:8080";
+      return `${baseUrl.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
     }
 },
   }
