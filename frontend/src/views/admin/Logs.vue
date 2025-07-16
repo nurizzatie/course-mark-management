@@ -93,7 +93,7 @@ export default {
   methods: {
     fetchLogs() {
       this.loading = true
-      axios.get('http://localhost:8080/api/admin/logs')
+      axios.get(`${process.env.VUE_APP_API_URL}/api/admin/logs`)
         .then(res => {
           this.logs = res.data.logs || []
         })

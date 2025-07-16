@@ -231,7 +231,7 @@ export default {
       }
     },
     fetchUsers() {
-      axios.get('http://localhost:8080/api/admin/users')
+      axios.get(`${process.env.VUE_APP_API_URL}/api/admin/users`)
         .then(res => {
           const rawUsers = Array.isArray(res.data) ? res.data : res.data.users
           this.users = rawUsers.map(user => ({ ...user, tempRole: user.role }))
@@ -247,7 +247,7 @@ export default {
         this.showAlert('danger', '❌ Please complete all fields correctly')
         return
       }
-      axios.post('http://localhost:8080/api/admin/create-user', this.newUser)
+      axios.post(`${process.env.VUE_APP_API_URL}/api/admin/create-user`, this.newUser)
         .then(() => {
           this.fetchUsers()
           this.newUser = { name: '', matric_number: '', email: '', password: '', role: '' }
@@ -263,7 +263,7 @@ export default {
       this.selectedUser = { ...user }
     },
     saveRoleUpdate() {
-      axios.put(`http://localhost:8080/api/admin/users/${this.selectedUser.id}/role`, {
+      axios.put(`${process.env.VUE_APP_API_URL}/api/admin/users/${this.selectedUser.id}/role`, {
         role: this.selectedUser.tempRole
       })
       .then(() => {
@@ -276,7 +276,7 @@ export default {
     },
     deleteUser(id) {
       if (confirm('Are you sure you want to delete this user?')) {
-        axios.delete(`http://localhost:8080/api/admin/users/${id}`, {
+        axios.delete(`${process.env.VUE_APP_API_URL}/api/admin/users/${id}`, {
           data: {
             action_by: localStorage.getItem('user_id')
           }

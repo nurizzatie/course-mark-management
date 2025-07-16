@@ -54,6 +54,13 @@ class AdminController {
     public function createUser(Request $request, Response $response): Response {
     $data = $request->getParsedBody();
 
+    // Validate required fields
+    if (!isset($data['name'], $data['email'], $data['password'], $data['role'])) {
+        return $response->withStatus(400)
+                        ->withHeader('Content-Type', 'application/json')
+                        ->write(json_encode(['error' => 'Missing required fields']));
+    }
+
     try {
         $stmt = $this->db->prepare("INSERT INTO users (name, email, password, role, matric_number) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([
@@ -64,16 +71,15 @@ class AdminController {
             $data['matric_number'] ?? null
         ]);
 
-        // No echo/print here
         $response->getBody()->write(json_encode(['message' => 'User created']));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
-
     } catch (\PDOException $e) {
         $error = $e->getCode() == '23000' ? 'Matric number or email already exists' : 'Database error';
         $response->getBody()->write(json_encode(['error' => $error]));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
 }
+
 
     // Delete user
     public function deleteUser(Request $request, Response $response, $args): Response {
