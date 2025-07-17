@@ -78,7 +78,7 @@ export default {
   methods: {
     loadChartData() {
       this.loading = true
-      axios.get('http://localhost:8080/api/admin/dashboard-stats')
+      axios.get(`${process.env.VUE_APP_API_URL}/api/admin/dashboard-stats`)
         .then(res => {
           const stats = res.data
           const ctx = this.$refs.adminChart

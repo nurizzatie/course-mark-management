@@ -137,7 +137,7 @@ export default {
   methods: {
     async fetchData() {
       try {
-        const res = await axios.get('http://localhost:8080/api/admin/assign-data')
+        const res = await axios.get(`${process.env.VUE_APP_API_URL}/api/admin/assign-data`)
         this.courses = res.data.courses
         this.lecturers = res.data.lecturers
         this.assignedLectures = res.data.assignments || []
@@ -153,7 +153,7 @@ export default {
       }
       this.loading = true
       try {
-        await axios.post('http://localhost:8080/api/admin/assign-lecturer-direct', {
+        await axios.post(`${process.env.VUE_APP_API_URL}/api/admin/assign-lecturer-direct`, {
           lecturer_id: this.selectedLecturer,
           course_id: this.selectedCourse
         })
@@ -171,7 +171,7 @@ export default {
     async submitNewCourse() {
       this.loading = true
       try {
-        await axios.post('http://localhost:8080/api/admin/courses', this.newCourse)
+        await axios.post(`${process.env.VUE_APP_API_URL}/api/admin/courses`, this.newCourse)
         this.showToast('Course added successfully', 'success')
         this.showAddModal = false
         this.newCourse = {

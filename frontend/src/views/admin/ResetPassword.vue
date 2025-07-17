@@ -106,10 +106,10 @@ export default {
     },
    handleReset() {
   axios
-    .put('http://localhost:8080/api/admin/reset-password', this.form)
+    .put(`${process.env.VUE_APP_API_URL}/api/admin/reset-password`, this.form)
     .then(() => {
       // ✅ Now mark the reset request as done
-      return axios.put('http://localhost:8080/api/reset-done',
+      return axios.put(`${process.env.VUE_APP_API_URL}/api/reset-done`,
         { matric_number: this.form.matric_number },
         { headers: { 'Content-Type': 'application/json' } } // make sure it's JSON
       );
@@ -133,7 +133,7 @@ export default {
     
     fetchPendingRequests() {
       axios
-        .get('http://localhost:8080/api/reset-requests')
+        .get(`${process.env.VUE_APP_API_URL}/api/reset-requests`)
         .then(res => {
           this.pendingRequests = res.data
         })
