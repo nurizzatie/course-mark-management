@@ -43,13 +43,14 @@
         </div>
 
         <div class="mb-4">
-          <label class="form-label fw-bold">Upload Supporting File (Optional)</label>
+          <label class="form-label fw-bold">Upload Supporting File (Required)</label>
           <input
             type="file"
             class="form-control"
             @change="handleFile"
             accept=".pdf,.zip,.jpg,.jpeg,.png"
             ref="fileInput"
+            required
           />
           <div v-if="file" class="mt-2 text-muted">
             Selected file: {{ file.name }}
